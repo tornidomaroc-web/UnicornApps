@@ -13,7 +13,9 @@ import {
   FileDown,
   Zap,
   CreditCard as CreditCardIcon,
+  Sparkles,
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -135,100 +137,114 @@ export default function DashboardClient({
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+        >
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
             AI Product Copywriter
           </h2>
           
           {/* Top Up / Upgrade Section */}
           <div className="flex flex-wrap gap-3">
-            <Button
-              variant="outline"
-              className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-sm"
-              asChild
-            >
-              <a 
-                href={`https://jadtrader.lemonsqueezy.com/checkout/buy/173d1849-c625-4fe5-952e-0372e6e337de?checkout[custom][user_id]=${userId}`}
-                className="flex items-center gap-2"
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="outline"
+                className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-sm group"
+                asChild
               >
-                <CreditCardIcon className="w-4 h-4 text-zinc-500" />
-                Starter Plan ($9)
-              </a>
-            </Button>
-            <Button
-              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20"
-              asChild
-            >
-              <a 
-                href={`https://jadtrader.lemonsqueezy.com/checkout/buy/46ed7c0f-c7ad-4b0b-90f2-11cf50168bf2?checkout[custom][user_id]=${userId}`}
-                className="flex items-center gap-2"
+                <a 
+                  href={`https://jadtrader.lemonsqueezy.com/checkout/buy/173d1849-c625-4fe5-952e-0372e6e337de?checkout[custom][user_id]=${userId}`}
+                  className="flex items-center gap-2"
+                >
+                  <CreditCardIcon className="w-4 h-4 text-zinc-500 group-hover:rotate-12 transition-transform" />
+                  Starter Plan ($9)
+                </a>
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20 group"
+                asChild
               >
-                <Zap className="w-4 h-4" />
-                Upgrade to Pro ($29)
-              </a>
-            </Button>
+                <a 
+                  href={`https://jadtrader.lemonsqueezy.com/checkout/buy/46ed7c0f-c7ad-4b0b-90f2-11cf50168bf2?checkout[custom][user_id]=${userId}`}
+                  className="flex items-center gap-2"
+                >
+                  <Zap className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                  Upgrade to Pro ($29)
+                </a>
+              </Button>
+            </motion.div>
           </div>
-        </div>
-        <Card className="border-dashed border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-          <CardContent className="p-12 text-center">
-            {!preview ? (
-              <div
-                className="flex flex-col items-center gap-4 cursor-pointer"
-                onClick={() => document.getElementById('file-upload')?.click()}
-              >
-                <div className="p-4 bg-zinc-100 dark:bg-zinc-800 rounded-full">
-                  <UploadCloud className="w-8 h-8 text-zinc-500" />
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
+          <Card className="border-dashed border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden group hover:border-primary/50 transition-colors">
+            <CardContent className="p-12 text-center">
+              {!preview ? (
+                <div
+                  className="flex flex-col items-center gap-4 cursor-pointer"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                >
+                  <div className="p-4 bg-zinc-100 dark:bg-zinc-800 rounded-full group-hover:scale-110 transition-transform duration-500">
+                    <UploadCloud className="w-8 h-8 text-zinc-500 group-hover:text-primary transition-colors" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-medium">Drag & Drop or Click to upload</p>
+                    <p className="text-sm text-zinc-500">Supported formats: JPEG, PNG (Max 4MB)</p>
+                  </div>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                  />
                 </div>
-                <div>
-                  <p className="text-lg font-medium">Drag & Drop or Click to upload</p>
-                  <p className="text-sm text-zinc-500">Supported formats: JPEG, PNG (Max 4MB)</p>
+              ) : (
+                <div className="space-y-6">
+                  <div className="relative mx-auto w-full max-w-sm aspect-square rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-lg">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={preview} alt="Product preview" className="object-contain w-full h-full transform transition-transform group-hover:scale-105 duration-700" />
+                    <button
+                      onClick={() => {
+                        setFile(null)
+                        setPreview(null)
+                        setResults(null)
+                      }}
+                      className="absolute top-2 right-2 p-1 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors z-10"
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex justify-center gap-4">
+                    <Button
+                      onClick={handleGenerate}
+                      disabled={loading || initialCredits <= 0}
+                      className="w-full max-w-xs shadow-lg shadow-primary/10"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : initialCredits <= 0 ? (
+                        'No Credits Available'
+                      ) : (
+                        'Generate Copy (1 Credit)'
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                <input
-                  id="file-upload"
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <div className="relative mx-auto w-full max-w-sm aspect-square rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={preview} alt="Product preview" className="object-contain w-full h-full" />
-                  <button
-                    onClick={() => {
-                      setFile(null)
-                      setPreview(null)
-                      setResults(null)
-                    }}
-                    className="absolute top-2 right-2 p-1 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
-                  >
-                    <AlertCircle className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="flex justify-center gap-4">
-                  <Button
-                    onClick={handleGenerate}
-                    disabled={loading || initialCredits <= 0}
-                    className="w-full max-w-xs"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : initialCredits <= 0 ? (
-                      'No Credits Available'
-                    ) : (
-                      'Generate Copy (1 Credit)'
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       {error && (
@@ -238,87 +254,102 @@ export default function DashboardClient({
         </div>
       )}
 
-      {results && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <Card className="col-span-full">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Generated E-commerce Assets</CardTitle>
-                <div className="flex items-center gap-1 text-green-600 text-sm font-medium">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Completed
+      <AnimatePresence mode="wait">
+        {results && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+          >
+            <Card className="col-span-full bg-zinc-50/50 dark:bg-zinc-900/50 border-emerald-500/20">
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-emerald-500" />
+                    Generated E-commerce Assets
+                  </CardTitle>
+                  <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Completed
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">SEO Title</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => copyToClipboard(results.seoTitle, 'title')}
-              >
-                {copySuccess === 'title' ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <p className="text-base text-zinc-900 dark:text-zinc-50">{results.seoTitle}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Meta Description</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => copyToClipboard(results.metaDescription, 'meta')}
-              >
-                {copySuccess === 'meta' ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <p className="text-base text-zinc-900 dark:text-zinc-50">{results.metaDescription}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="col-span-full">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Product Description</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => copyToClipboard(results.productDescription, 'desc')}
-              >
-                {copySuccess === 'desc' ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <p className="text-base text-zinc-900 dark:text-zinc-50 leading-relaxed">
-                {results.productDescription}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="col-span-full">
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">Social Media Tags</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              {results.socialMediaTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded text-sm text-zinc-600 dark:text-zinc-400"
+              </CardHeader>
+            </Card>
+ 
+            <Card className="group hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-zinc-500">SEO Title</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(results.seoTitle, 'title')}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  {tag}
-                </span>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                  {copySuccess === 'title' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <p className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{results.seoTitle}</p>
+              </CardContent>
+            </Card>
+ 
+            <Card className="group hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-zinc-500">Meta Description</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(results.metaDescription, 'meta')}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  {copySuccess === 'meta' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <p className="text-base text-zinc-900 dark:text-zinc-50 leading-relaxed">{results.metaDescription}</p>
+              </CardContent>
+            </Card>
+ 
+            <Card className="col-span-full group hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-zinc-500">Product Description</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(results.productDescription, 'desc')}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  {copySuccess === 'desc' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <p className="text-base text-zinc-900 dark:text-zinc-50 leading-relaxed whitespace-pre-line">
+                  {results.productDescription}
+                </p>
+              </CardContent>
+            </Card>
+ 
+            <Card className="col-span-full">
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-zinc-500">Social Media Tags</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                {results.socialMediaTags.map((tag) => (
+                  <motion.span
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    key={tag}
+                    className="px-3 py-1 bg-primary/5 dark:bg-primary/10 border border-primary/10 rounded-full text-sm text-primary font-medium"
+                  >
+                    {tag}
+                  </motion.span>
+                ))}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Recent Generations History */}
       <div className="mt-12 space-y-6">
