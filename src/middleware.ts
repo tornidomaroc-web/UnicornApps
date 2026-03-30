@@ -2,13 +2,13 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  // We need to create a response before creating the client
-  let supabaseResponse = NextResponse.next({
-    request,
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
   })
 
   try {
-    // Standard Supabase initialization for Middleware
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -18,58 +18,48 @@ export async function middleware(request: NextRequest) {
             return request.cookies.getAll()
           },
           setAll(cookiesToSet) {
-            // Updated pattern for cookie setting in middleware
-            cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-            supabaseResponse = NextResponse.next({
+            cookiesToSet.forEach(({ name, value, options }) =>
+              request.cookies.set(name, value)
+            )
+            response = NextResponse.next({
               request,
             })
             cookiesToSet.forEach(({ name, value, options }) =>
-              supabaseResponse.cookies.set(name, value, options)
+              response.cookies.set(name, value, options)
             )
           },
         },
       }
     )
 
-    // IMPORTANT: refreshing the auth token
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
-    // 1. Force redirects for dashboard access
-    if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
+    if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       return NextResponse.redirect(url)
     }
 
-    // 2. Redirect logged-in users away from login page
-    if (request.nextUrl.pathname === '/login' && user) {
+    if (user && request.nextUrl.pathname.startsWith('/login')) {
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)
     }
 
-    return supabaseResponse
-  } catch (error) {
-    // If anything fails in the middleware (e.g. auth service down), 
-    // we fallback to allowing the request to proceed to avoid a site-wide 500 error.
-    console.error('Middleware Invocation Error:', error)
+    return response
+  } catch (e) {
     return NextResponse.next({
-      request,
+      request: {
+        headers: request.headers,
+      },
     })
   }
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - Public assets like svg, png, etc.
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
