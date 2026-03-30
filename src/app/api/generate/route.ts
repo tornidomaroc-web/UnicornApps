@@ -81,19 +81,42 @@ export async function POST(req: Request) {
       },
     }
 
-    const prompt = `You are an expert E-commerce Copywriter. Analyze this product image and output ONLY a valid JSON object with these exact keys: 
-    "seoTitle" (max 60 chars), 
-    "metaDescription" (max 160 chars), 
-    "productDescription" (detailed, based on visible features), 
-    "socialMediaTags" (array of 5 hashtags).`
+    const prompt = `You are an elite E-commerce Growth Architect. Analyze the product image and return ONLY a valid JSON object with this EXACT schema, no formatting or backticks:
+{
+  "seoTitle": "String (60 chars max)",
+  "metaDescription": "String (160 chars max)",
+  "productDescription": "String (detailed, based on visible features)",
+  "shopifyHtml": "HTML string containing <h2>, <p> tags, and a <ul> with features",
+  "amazonBullets": ["Array of exactly 5 benefit-driven bullet points"],
+  "structuredData": {
+    "material": "String",
+    "dominantColor": "String",
+    "targetAudience": "String",
+    "careInstructions": "String"
+  },
+  "viralScript": {
+    "hook": "Magnetic first 3-second hook",
+    "concept": "Visual storyboard for a 15s Reel/TikTok"
+  },
+  "socialMediaTags": ["Array of 5 hashtags"]
+}`
 
     const result = await model.generateContent([prompt, imagePart])
     const response = await result.response
     const text = response.text()
 
     // Clean response text to ensure it's valid JSON (Gemini sometimes adds markdown blocks)
-    const cleanedText = text.replace(/```json|```/g, '').trim()
-    const generatedContent = JSON.parse(cleanedText)
+    const cleanedText = text.replace(/```json|```/gi, '').trim()
+    let generatedContent;
+    try {
+      generatedContent = JSON.parse(cleanedText)
+    } catch (parseError) {
+      console.error('SERVER ERROR: AI returned malformed JSON.', cleanedText)
+      return NextResponse.json(
+        { error: 'AI generation failed due to formatting issues. Please try again.' },
+        { status: 422 }
+      )
+    }
 
     // 4. Deduct 1 credit
     const { error: updateError } = await supabase

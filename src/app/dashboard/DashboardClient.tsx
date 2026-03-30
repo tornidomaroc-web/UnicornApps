@@ -30,6 +30,18 @@ interface GeneratedContent {
   metaDescription: string
   productDescription: string
   socialMediaTags: string[]
+  shopifyHtml?: string
+  amazonBullets?: string[]
+  structuredData?: {
+    material: string
+    dominantColor: string
+    targetAudience: string
+    careInstructions: string
+  }
+  viralScript?: {
+    hook: string
+    concept: string
+  }
 }
 
 interface Generation {
@@ -56,6 +68,7 @@ export default function DashboardClient({
   const [error, setError] = useState<string | null>(null)
   const [copySuccess, setCopySuccess] = useState<string | null>(null)
   const [history, setHistory] = useState<Generation[]>(initialHistory)
+  const [activeTab, setActiveTab] = useState<'seo' | 'shopify' | 'amazon' | 'social' | 'data'>('seo')
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -110,12 +123,30 @@ export default function DashboardClient({
   }
 
   const downloadCSV = (data: Generation[], filename: string) => {
-    const headers = ['SEO Title', 'Meta Description', 'Product Description', 'Social Media Tags', 'Created At']
+    const headers = [
+      'SEO Title', 'Meta Description', 'Product Description', 'Social Media Tags',
+      'Shopify HTML', 'Amazon Bullet 1', 'Amazon Bullet 2', 'Amazon Bullet 3', 'Amazon Bullet 4', 'Amazon Bullet 5',
+      'Material', 'Dominant Color', 'Target Audience', 'Care Instructions',
+      'Viral Hook', 'Viral Concept',
+      'Created At'
+    ]
     const rows = data.map(item => [
-      item.content.seoTitle,
-      item.content.metaDescription,
-      item.content.productDescription,
-      item.content.socialMediaTags.join('; '),
+      item.content.seoTitle || '',
+      item.content.metaDescription || '',
+      item.content.productDescription || '',
+      item.content.socialMediaTags?.join('; ') || '',
+      item.content.shopifyHtml || '',
+      item.content.amazonBullets?.[0] || '',
+      item.content.amazonBullets?.[1] || '',
+      item.content.amazonBullets?.[2] || '',
+      item.content.amazonBullets?.[3] || '',
+      item.content.amazonBullets?.[4] || '',
+      item.content.structuredData?.material || '',
+      item.content.structuredData?.dominantColor || '',
+      item.content.structuredData?.targetAudience || '',
+      item.content.structuredData?.careInstructions || '',
+      item.content.viralScript?.hook || '',
+      item.content.viralScript?.concept || '',
       new Date(item.created_at).toLocaleString()
     ])
 
@@ -260,11 +291,11 @@ export default function DashboardClient({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            className="flex flex-col gap-6"
           >
             <Card className="col-span-full bg-zinc-50/50 dark:bg-zinc-900/50 border-emerald-500/20">
               <CardHeader>
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <CardTitle className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-emerald-500" />
                     Generated E-commerce Assets
@@ -276,77 +307,264 @@ export default function DashboardClient({
                 </div>
               </CardHeader>
             </Card>
- 
-            <Card className="group hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-zinc-500">SEO Title</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(results.seoTitle, 'title')}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  {copySuccess === 'title' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <p className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{results.seoTitle}</p>
-              </CardContent>
-            </Card>
- 
-            <Card className="group hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-zinc-500">Meta Description</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(results.metaDescription, 'meta')}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  {copySuccess === 'meta' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <p className="text-base text-zinc-900 dark:text-zinc-50 leading-relaxed">{results.metaDescription}</p>
-              </CardContent>
-            </Card>
- 
-            <Card className="col-span-full group hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-zinc-500">Product Description</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(results.productDescription, 'desc')}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  {copySuccess === 'desc' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <p className="text-base text-zinc-900 dark:text-zinc-50 leading-relaxed whitespace-pre-line">
-                  {results.productDescription}
-                </p>
-              </CardContent>
-            </Card>
- 
-            <Card className="col-span-full">
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-zinc-500">Social Media Tags</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                {results.socialMediaTags.map((tag) => (
-                  <motion.span
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    key={tag}
-                    className="px-3 py-1 bg-primary/5 dark:bg-primary/10 border border-primary/10 rounded-full text-sm text-primary font-medium"
+
+            {/* Tabs Navigation */}
+            <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-x-auto w-full md:w-fit custom-scrollbar">
+              <button onClick={() => setActiveTab('seo')} className={`whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'seo' ? 'bg-white shadow-sm dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'}`}>SEO & Basic</button>
+              <button onClick={() => setActiveTab('shopify')} className={`whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'shopify' ? 'bg-white shadow-sm dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'}`}>Shopify HTML</button>
+              <button onClick={() => setActiveTab('amazon')} className={`whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'amazon' ? 'bg-white shadow-sm dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'}`}>Amazon Bullets</button>
+              <button onClick={() => setActiveTab('social')} className={`whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'social' ? 'bg-white shadow-sm dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'}`}>Social & Viral</button>
+              <button onClick={() => setActiveTab('data')} className={`whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'data' ? 'bg-white shadow-sm dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'}`}>Structured Data</button>
+            </div>
+
+            <div className="relative">
+              <AnimatePresence mode="wait">
+                {activeTab === 'seo' && (
+                  <motion.div
+                    key="seo"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-6"
                   >
-                    {tag}
-                  </motion.span>
-                ))}
-              </CardContent>
-            </Card>
+                    <Card className="group hover:shadow-md transition-shadow">
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-zinc-500">SEO Title</CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(results.seoTitle, 'title')}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          {copySuccess === 'title' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{results.seoTitle}</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="group hover:shadow-md transition-shadow">
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-zinc-500">Meta Description</CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(results.metaDescription, 'meta')}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          {copySuccess === 'meta' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-base text-zinc-900 dark:text-zinc-50 leading-relaxed">{results.metaDescription}</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="col-span-full group hover:shadow-md transition-shadow">
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-zinc-500">Product Description</CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(results.productDescription, 'desc')}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          {copySuccess === 'desc' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-base text-zinc-900 dark:text-zinc-50 leading-relaxed whitespace-pre-line">
+                          {results.productDescription}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+
+                {activeTab === 'shopify' && (
+                  <motion.div
+                    key="shopify"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    className="grid grid-cols-1 gap-6"
+                  >
+                    <Card className="group hover:shadow-md transition-shadow">
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 rounded-t-xl">
+                        <CardTitle className="text-sm font-medium text-zinc-500">Shopify HTML Formatted</CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(results.shopifyHtml || '', 'shopify')}
+                        >
+                          {copySuccess === 'shopify' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </CardHeader>
+                      <CardContent className="pt-6 overflow-x-auto">
+                        {results.shopifyHtml ? (
+                           <div className="prose dark:prose-invert max-w-none text-zinc-900 dark:text-zinc-100" dangerouslySetInnerHTML={{ __html: results.shopifyHtml }} />
+                        ) : (
+                           <p className="text-zinc-500 italic">No Shopify HTML generated (Legacy Record).</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+
+                {activeTab === 'amazon' && (
+                  <motion.div
+                    key="amazon"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    className="grid grid-cols-1 gap-6"
+                  >
+                    <Card className="group hover:shadow-md transition-shadow">
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-zinc-500">A9-Optimized Bullets</CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(results.amazonBullets?.join('\n') || '', 'amazon')}
+                        >
+                          {copySuccess === 'amazon' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </CardHeader>
+                      <CardContent className="pt-4">
+                        {results.amazonBullets?.length ? (
+                          <ul className="space-y-3">
+                            {results.amazonBullets.map((bullet, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-zinc-900 dark:text-zinc-50">
+                                <span className="font-bold text-primary shrink-0 mt-0.5">•</span>
+                                <span>{bullet}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-zinc-500 italic">No Amazon Bullets generated (Legacy Record).</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+
+                {activeTab === 'social' && (
+                  <motion.div
+                    key="social"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
+                    <Card className="group hover:shadow-md transition-shadow">
+                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-zinc-500">TikTok/Reels Hook</CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(results.viralScript?.hook || '', 'hook')}
+                        >
+                          {copySuccess === 'hook' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </CardHeader>
+                      <CardContent>
+                        {results.viralScript?.hook ? (
+                          <p className="text-base text-zinc-900 dark:text-zinc-50 font-medium italic border-l-4 border-indigo-500 pl-4 py-1">&quot;{results.viralScript.hook}&quot;</p>
+                        ) : (
+                          <p className="text-zinc-500 italic">No hook generated (Legacy Record).</p>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    <Card className="group hover:shadow-md transition-shadow">
+                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-zinc-500">Visual Concept</CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(results.viralScript?.concept || '', 'concept')}
+                        >
+                          {copySuccess === 'concept' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </CardHeader>
+                      <CardContent>
+                        {results.viralScript?.concept ? (
+                          <p className="text-base text-zinc-900 dark:text-zinc-50 leading-relaxed">{results.viralScript.concept}</p>
+                        ) : (
+                          <p className="text-zinc-500 italic">No concept generated (Legacy Record).</p>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    <Card className="col-span-full">
+                      <CardHeader>
+                        <CardTitle className="text-sm font-medium text-zinc-500">Social Media Tags</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex flex-wrap gap-2">
+                        {results.socialMediaTags?.map((tag) => (
+                          <motion.span
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            key={tag}
+                            className="px-3 py-1 bg-primary/5 dark:bg-primary/10 border border-primary/10 rounded-full text-sm text-primary font-medium"
+                          >
+                            {tag}
+                          </motion.span>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+
+                {activeTab === 'data' && (
+                  <motion.div
+                    key="data"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    className="grid grid-cols-1 gap-6"
+                  >
+                     <Card className="group hover:shadow-md transition-shadow">
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-zinc-500">Structured Data (Filters/Variants)</CardTitle>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(JSON.stringify(results.structuredData, null, 2) || '', 'data')}
+                        >
+                          {copySuccess === 'data' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </CardHeader>
+                      <CardContent>
+                        {results.structuredData ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                             <div>
+                               <p className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Material</p>
+                               <p className="text-zinc-900 dark:text-zinc-50 font-medium">{results.structuredData.material}</p>
+                             </div>
+                             <div>
+                               <p className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Dominant Color</p>
+                               <p className="text-zinc-900 dark:text-zinc-50 font-medium">{results.structuredData.dominantColor}</p>
+                             </div>
+                             <div>
+                               <p className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Target Audience</p>
+                               <p className="text-zinc-900 dark:text-zinc-50 font-medium">{results.structuredData.targetAudience}</p>
+                             </div>
+                             <div>
+                               <p className="text-xs text-zinc-500 uppercase tracking-wider font-semibold">Care Instructions</p>
+                               <p className="text-zinc-900 dark:text-zinc-50 font-medium">{results.structuredData.careInstructions}</p>
+                             </div>
+                          </div>
+                        ) : (
+                          <p className="text-zinc-500 italic">No structured data generated (Legacy Record).</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,0 +1,69 @@
+
+> unicorn-apps@0.1.1 build
+> next build
+
+  ▲ Next.js 14.2.4
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/13) ...
+Dashboard Server Error: n [Error]: Dynamic server usage: Route /dashboard couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at u (D:\RAGHAD JAD\UnicornApps\.next\server\chunks\317.js:1:42200)
+    at f (D:\RAGHAD JAD\UnicornApps\.next\server\chunks\355.js:23:4112)
+    at a (D:\RAGHAD JAD\UnicornApps\.next\server\app\_not-found\page.js:1:9545)
+    at p (D:\RAGHAD JAD\UnicornApps\.next\server\app\dashboard\page.js:24:220)
+    at eh (D:\RAGHAD JAD\UnicornApps\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:134786)
+    at e (D:\RAGHAD JAD\UnicornApps\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:137671)
+    at ek (D:\RAGHAD JAD\UnicornApps\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:138145)
+    at Array.toJSON (D:\RAGHAD JAD\UnicornApps\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135755)
+    at stringify (<anonymous>)
+    at eP (D:\RAGHAD JAD\UnicornApps\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142219) {
+  description: "Route /dashboard couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Dashboard Server Error: n [Error]: Dynamic server usage: Route /dashboard couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at u (D:\RAGHAD JAD\UnicornApps\.next\server\chunks\317.js:1:42200)
+    at f (D:\RAGHAD JAD\UnicornApps\.next\server\chunks\355.js:23:4112)
+    at a (D:\RAGHAD JAD\UnicornApps\.next\server\app\_not-found\page.js:1:9545)
+    at p (D:\RAGHAD JAD\UnicornApps\.next\server\app\dashboard\page.js:24:220)
+    at eh (D:\RAGHAD JAD\UnicornApps\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:134786)
+    at e (D:\RAGHAD JAD\UnicornApps\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:137671)
+    at ek (D:\RAGHAD JAD\UnicornApps\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:138145)
+    at Array.toJSON (D:\RAGHAD JAD\UnicornApps\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:135755)
+    at stringify (<anonymous>)
+    at eP (D:\RAGHAD JAD\UnicornApps\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:142219) {
+  description: "Route /dashboard couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+   Generating static pages (3/13) 
+   Generating static pages (6/13) 
+   Generating static pages (9/13) 
+ ✓ Generating static pages (13/13)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ƒ /                                    3.14 kB         145 kB
+├ ƒ /_not-found                          871 B            88 kB
+├ ƒ /about                               176 B          94.1 kB
+├ ƒ /api/generate                        0 B                0 B
+├ ƒ /api/webhook                         0 B                0 B
+├ ƒ /api/webhooks/lemonsqueezy           0 B                0 B
+├ ƒ /auth/callback                       0 B                0 B
+├ ƒ /dashboard                           8.37 kB         144 kB
+├ ƒ /features                            176 B          94.1 kB
+├ ƒ /login                               137 B          87.2 kB
+└ ƒ /pricing                             2.76 kB         145 kB
++ First Load JS shared by all            87.1 kB
+  ├ chunks/23-6b2f11c951be23ff.js        31.5 kB
+  ├ chunks/fd9d1056-844a5cc198651369.js  53.6 kB
+  └ other shared chunks (total)          1.95 kB
+
+
+ƒ Middleware                             79.6 kB
+
+ƒ  (Dynamic)  server-rendered on demand
+
