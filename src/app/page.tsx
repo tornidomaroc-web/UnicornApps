@@ -1,27 +1,116 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Sparkles, Image as ImageIcon, Search, Database } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-      <h1 className="text-4xl font-bold tracking-tight sm:text-6xl text-slate-900">
-        Transform Product Images into <br />
-        <span className="text-indigo-600">SEO-Optimized Content</span>
-      </h1>
-      <p className="mt-6 text-lg leading-8 text-slate-600 max-w-2xl">
-        The ultimate B2B SaaS tool for e-commerce marketers. Scale your content 
-        production effortlessly with the power of Gemini AI.
-      </p>
-      <div className="mt-10 flex items-center justify-center gap-x-6">
-        <Link
-          href="/dashboard"
-          className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-        >
-          Get Started
-        </Link>
-        <Link href="/demo" className="text-sm font-semibold leading-6 text-slate-900">
-          View Demo <span aria-hidden="true">→</span>
-        </Link>
-      </div>
+    <div className="flex flex-col min-h-[calc(100vh-4rem)]">
+      {/* Hero Section */}
+      <section className="flex flex-col items-center justify-center text-center px-4 py-24 md:py-32 max-w-5xl mx-auto">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-900 text-sm font-medium text-zinc-600 dark:text-zinc-300 mb-8 border border-zinc-200 dark:border-zinc-800">
+          <Sparkles className="w-4 h-4 text-primary" />
+          <span>Gemini-powered generation is now live</span>
+        </div>
+        
+        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 mb-8 leading-tight">
+          AI-Powered <br className="hidden md:block" />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-indigo-500">
+            Product Success
+          </span>
+        </h1>
+        
+        <p className="text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl mb-12 leading-relaxed">
+          The ultimate B2B SaaS tool for modern e-commerce. Upload product photography and instantly
+          generate SEO-optimized titles, rich descriptions, and trending social tags.
+        </p>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
+          <Link href="/login" className="w-full sm:w-auto">
+            <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-lg rounded-full shadow-lg hover:shadow-xl transition-all font-semibold group gap-2">
+              Start Free Trial 
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
+          <Link href="/features" className="w-full sm:w-auto">
+            <Button variant="outline" size="lg" className="w-full sm:w-auto h-14 px-8 text-lg rounded-full font-medium">
+              View Features
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Feature Bento Grid */}
+      <section className="px-4 py-20 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800/50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+              Everything you need to list faster
+            </h2>
+            <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
+              Purpose-built tools designed to eliminate manual data entry.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Bento Card 1 */}
+            <div className="md:col-span-2 bg-white dark:bg-zinc-950 rounded-3xl p-8 md:p-10 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between hover:border-primary/50 transition-colors">
+              <div>
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
+                  <ImageIcon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mb-3">AI Vision</h3>
+                <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-md">
+                  We use Google Gemini&apos;s advanced multimodal vision capabilities to analyze your raw product images. We identify textures, materials, and distinct branding automatically.
+                </p>
+              </div>
+            </div>
+
+            {/* Bento Card 2 */}
+            <div className="bg-white dark:bg-zinc-950 rounded-3xl p-8 md:p-10 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between hover:border-indigo-500/50 transition-colors">
+               <div>
+                <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center mb-6">
+                  <Search className="w-6 h-6 text-indigo-500" />
+                </div>
+                <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mb-3">SEO Magic</h3>
+                <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  Stop guessing. Generate algorithm-friendly titles and meta descriptions that actually rank on search engines.
+                </p>
+              </div>
+            </div>
+
+            {/* Bento Card 3 */}
+            <div className="md:col-span-3 bg-white dark:bg-zinc-950 rounded-3xl p-8 md:p-10 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-8 hover:border-emerald-500/50 transition-colors">
+               <div className="max-w-xl">
+                <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-6">
+                  <Database className="w-6 h-6 text-emerald-500" />
+                </div>
+                <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mb-3">Export Flow</h3>
+                <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  Your work is never trapped. Access your full generation history securely and export everything into clean, structured CSV files for seamless uploading into Shopify or Amazon.
+                </p>
+              </div>
+              <div className="w-full sm:w-72 h-44 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center text-zinc-400 font-medium overflow-hidden group">
+                 <div className="translate-y-4 group-hover:translate-y-0 transition-transform flex flex-col items-center">
+                   <Database className="w-8 h-8 mb-2 text-zinc-300 dark:text-zinc-600" />
+                   <span>CSV Download Ready</span>
+                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Simple Footer */}
+      <footer className="mt-auto border-t border-zinc-200 dark:border-zinc-800 py-10 px-4 text-center text-sm text-zinc-500 bg-white dark:bg-zinc-950">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>&copy; {new Date().getFullYear()} UnicornApps. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <Link href="/about" className="hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors">About</Link>
+            <Link href="/pricing" className="hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors">Pricing</Link>
+            <Link href="https://twitter.com" target="_blank" className="hover:text-zinc-900 dark:hover:text-zinc-300 transition-colors">Twitter</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
