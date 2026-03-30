@@ -159,6 +159,7 @@ export default function DashboardClient({
             ) : (
               <div className="space-y-6">
                 <div className="relative mx-auto w-full max-w-sm aspect-square rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={preview} alt="Product preview" className="object-contain w-full h-full" />
                   <button
                     onClick={() => {
@@ -321,6 +322,7 @@ export default function DashboardClient({
                     <tr key={gen.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
                       <td className="px-6 py-4">
                         <div className="w-12 h-12 rounded border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-white flex items-center justify-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={gen.image_url} alt="" className="object-contain max-w-full max-h-full" />
                         </div>
                       </td>

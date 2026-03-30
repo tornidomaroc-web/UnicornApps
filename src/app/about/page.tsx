@@ -16,7 +16,7 @@ export default function AboutPage() {
 
       <div className="prose prose-zinc dark:prose-invert max-w-none mb-16 space-y-8">
         <p className="text-lg leading-relaxed">
-          We believe that small businesses shouldn't have to spend thousands of 
+          We believe that small businesses shouldn&apos;t have to spend thousands of 
           dollars on specialized copywriters just to list their inventory online. 
           UnicornApps was built to bridge the gap between incredible physical 
           products and digital conversions.
@@ -42,8 +42,8 @@ export default function AboutPage() {
               <h3 className="text-xl font-semibold">Google Gemini Vision</h3>
             </div>
             <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              We leverage Google's flagship multimodal AI to process images with 
-              extraordinary accuracy. Gemini literally "sees" the textures, 
+              We leverage Google&apos;s flagship multimodal AI to process images with 
+              extraordinary accuracy. Gemini literally &quot;sees&quot; the textures, 
               branding, and specific materials of your products.
             </p>
           </div>
