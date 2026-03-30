@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   UploadCloud,
@@ -8,6 +8,9 @@ import {
   AlertCircle,
   Loader2,
   Copy,
+  Download,
+  History,
+  FileDown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,7 +20,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
 
 interface GeneratedContent {
   seoTitle: string
@@ -26,7 +28,20 @@ interface GeneratedContent {
   socialMediaTags: string[]
 }
 
-export default function DashboardClient({ initialCredits }: { initialCredits: number }) {
+interface Generation {
+  id: string
+  created_at: string
+  content: GeneratedContent
+  image_url: string
+}
+
+export default function DashboardClient({ 
+  initialCredits, 
+  initialHistory 
+}: { 
+  initialCredits: number,
+  initialHistory: Generation[]
+}) {
   const router = useRouter()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -34,6 +49,7 @@ export default function DashboardClient({ initialCredits }: { initialCredits: nu
   const [results, setResults] = useState<GeneratedContent | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copySuccess, setCopySuccess] = useState<string | null>(null)
+  const [history, setHistory] = useState<Generation[]>(initialHistory)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -73,7 +89,7 @@ export default function DashboardClient({ initialCredits }: { initialCredits: nu
       }
 
       setResults(data)
-      router.refresh() // Refresh to update the credit count on the server
+      router.refresh() // Refresh to update context
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -85,6 +101,31 @@ export default function DashboardClient({ initialCredits }: { initialCredits: nu
     navigator.clipboard.writeText(text)
     setCopySuccess(id)
     setTimeout(() => setCopySuccess(null), 2000)
+  }
+
+  const downloadCSV = (data: Generation[], filename: string) => {
+    const headers = ['SEO Title', 'Meta Description', 'Product Description', 'Social Media Tags', 'Created At']
+    const rows = data.map(item => [
+      item.content.seoTitle,
+      item.content.metaDescription,
+      item.content.productDescription,
+      item.content.socialMediaTags.join('; '),
+      new Date(item.created_at).toLocaleString()
+    ])
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', filename)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   return (
@@ -242,6 +283,95 @@ export default function DashboardClient({ initialCredits }: { initialCredits: nu
           </Card>
         </div>
       )}
+
+      {/* Recent Generations History */}
+      <div className="mt-12 space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+            <History className="w-5 h-5 text-primary" />
+            Recent Generations
+          </h2>
+          {history.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => downloadCSV(history, 'all_generations.csv')}
+              className="border-zinc-200 dark:border-zinc-800"
+            >
+              <FileDown className="w-4 h-4 mr-2" />
+              Export All (CSV)
+            </Button>
+          )}
+        </div>
+        
+        <Card className="border-zinc-200 dark:border-zinc-800 overflow-hidden">
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs text-zinc-500 uppercase bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200 dark:border-zinc-800">
+                  <tr>
+                    <th className="px-6 py-4 font-medium">Image</th>
+                    <th className="px-6 py-4 font-medium">Title</th>
+                    <th className="px-6 py-4 font-medium">Date</th>
+                    <th className="px-6 py-4 font-medium text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {history.map((gen) => (
+                    <tr key={gen.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="w-12 h-12 rounded border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-white flex items-center justify-center">
+                          <img src={gen.image_url} alt="" className="object-contain max-w-full max-h-full" />
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 font-medium text-zinc-900 dark:text-zinc-100 truncate max-w-[240px]">
+                        {gen.content.seoTitle}
+                      </td>
+                      <td className="px-6 py-4 text-zinc-500">
+                        {new Date(gen.created_at).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </td>
+                      <td className="px-6 py-4 text-right space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(JSON.stringify(gen.content, null, 2), gen.id)}
+                          title="Copy Full Content"
+                          className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                        >
+                          {copySuccess === gen.id ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => downloadCSV([gen], `generation_${gen.id.slice(0, 8)}.csv`)}
+                          title="Download CSV"
+                          className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                  {history.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-12 text-center text-zinc-500 italic">
+                        <div className="flex flex-col items-center gap-2">
+                          <UploadCloud className="w-8 h-8 opacity-20" />
+                          <p>No generations found yet. Your history will appear here.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

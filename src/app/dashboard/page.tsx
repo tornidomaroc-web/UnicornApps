@@ -24,6 +24,16 @@ export default async function DashboardPage() {
 
   const credits = profile?.credits ?? 0
 
+  // Fetch recent generations
+  const { data: generations } = await supabase
+    .from('generations')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(10)
+
+  const history = generations ?? []
+
   return (
     <div className="container mx-auto py-10 px-4 max-w-5xl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
@@ -46,14 +56,14 @@ export default async function DashboardPage() {
             <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
               {credits} {credits === 1 ? 'Credit' : 'Credits'}
             </div>
-            <p className="text-xs text-zinc-500 mt-1">
+            <p className="text-xs text-zinc-500 mt-1 text-primary hover:underline cursor-pointer">
               Top up for more generations
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <DashboardClient initialCredits={credits} />
+      <DashboardClient initialCredits={credits} initialHistory={history} />
     </div>
   )
 }

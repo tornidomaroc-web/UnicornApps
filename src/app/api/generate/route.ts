@@ -89,6 +89,19 @@ export async function POST(req: Request) {
       // but in production, you might want to handle this more strictly.
     }
 
+    // 5. Save generation to database
+    const { error: insertError } = await supabase
+      .from('generations')
+      .insert({
+        user_id: user.id,
+        content: generatedContent,
+        image_url: image, // base64 string
+      })
+
+    if (insertError) {
+      console.error('Error saving generation:', insertError)
+    }
+
     return NextResponse.json(generatedContent)
   } catch (error: any) {
     console.error('Generation error:', error)

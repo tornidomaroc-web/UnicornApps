@@ -37,3 +37,26 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- 5. Create the generations table
+CREATE TABLE public.generations (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users ON DELETE CASCADE NOT NULL,
+  image_url TEXT,
+  content JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- 6. Enable RLS for generations
+ALTER TABLE public.generations ENABLE ROW LEVEL SECURITY;
+
+-- 7. Create RLS Policies for generations
+CREATE POLICY "Users can view own generations" 
+ON public.generations 
+FOR SELECT 
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own generations" 
+ON public.generations 
+FOR INSERT 
+WITH CHECK (auth.uid() = user_id);
