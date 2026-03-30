@@ -11,6 +11,8 @@ import {
   Download,
   History,
   FileDown,
+  Zap,
+  CreditCard as CreditCardIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -36,9 +38,11 @@ interface Generation {
 }
 
 export default function DashboardClient({ 
+  userId,
   initialCredits, 
   initialHistory 
 }: { 
+  userId: string,
   initialCredits: number,
   initialHistory: Generation[]
 }) {
@@ -131,9 +135,40 @@ export default function DashboardClient({
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-          AI Product Copywriter
-        </h2>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+            AI Product Copywriter
+          </h2>
+          
+          {/* Top Up / Upgrade Section */}
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant="outline"
+              className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-sm"
+              asChild
+            >
+              <a 
+                href={`https://jadtrader.lemonsqueezy.com/checkout/buy/173d1849-c625-4fe5-952e-0372e6e337de?checkout[custom][user_id]=${userId}`}
+                className="flex items-center gap-2"
+              >
+                <CreditCardIcon className="w-4 h-4 text-zinc-500" />
+                Starter Plan ($9)
+              </a>
+            </Button>
+            <Button
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md shadow-primary/20"
+              asChild
+            >
+              <a 
+                href={`https://jadtrader.lemonsqueezy.com/checkout/buy/46ed7c0f-c7ad-4b0b-90f2-11cf50168bf2?checkout[custom][user_id]=${userId}`}
+                className="flex items-center gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                Upgrade to Pro ($29)
+              </a>
+            </Button>
+          </div>
+        </div>
         <Card className="border-dashed border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
           <CardContent className="p-12 text-center">
             {!preview ? (

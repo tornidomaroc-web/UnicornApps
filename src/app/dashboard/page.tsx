@@ -8,6 +8,7 @@ export default async function DashboardPage() {
   let credits = 0
   let history: any[] = []
   let mustRedirect = false
+  let userId = ''
 
   try {
     const supabase = createClient()
@@ -30,6 +31,7 @@ export default async function DashboardPage() {
     if (userError || !user) {
       mustRedirect = true
     } else {
+      userId = user.id
       // Fetch user credit count
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -95,7 +97,11 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      <DashboardClient initialCredits={credits} initialHistory={history} />
+      <DashboardClient 
+        userId={userId} 
+        initialCredits={credits} 
+        initialHistory={history} 
+      />
     </div>
   )
 }

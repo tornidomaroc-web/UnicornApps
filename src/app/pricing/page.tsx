@@ -72,11 +72,10 @@ export default function PricingPage() {
         {tiers.map((tier) => (
           <Card
             key={tier.name}
-            className={`flex flex-col relative transition-all duration-300 hover:-translate-y-1 bg-white dark:bg-zinc-950/50 ${
-              tier.featured 
-                ? "border-primary border-2 shadow-xl shadow-primary/20 scale-100 lg:scale-105 z-10" 
+            className={`flex flex-col relative transition-all duration-300 hover:-translate-y-1 bg-white dark:bg-zinc-950/50 ${tier.featured
+                ? "border-primary border-2 shadow-xl shadow-primary/20 scale-100 lg:scale-105 z-10"
                 : "border-zinc-200 dark:border-zinc-800 shadow-sm"
-            }`}
+              }`}
           >
             {tier.featured && (
               <div className="absolute -top-4 left-0 right-0 flex justify-center">
@@ -112,11 +111,10 @@ export default function PricingPage() {
             <CardFooter className="pt-8">
               <Link href={tier.href} className="w-full">
                 <Button
-                  className={`w-full h-14 text-lg font-semibold rounded-xl shadow-sm transition-all ${
-                    tier.featured
+                  className={`w-full h-14 text-lg font-semibold rounded-xl shadow-sm transition-all ${tier.featured
                       ? "bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-md"
                       : "bg-zinc-100 hover:bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-50"
-                  }`}
+                    }`}
                 >
                   {tier.cta}
                 </Button>
@@ -125,7 +123,7 @@ export default function PricingPage() {
           </Card>
         ))}
       </div>
-      
+
       <div className="mt-20 text-center text-sm text-zinc-500 dark:text-zinc-400">
         <p>
           Need a custom plan?{" "}
