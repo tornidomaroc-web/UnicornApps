@@ -354,7 +354,7 @@ export default function DashboardClient({
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
         >
-          <h2 className="text-xl font-semibold text-zinc-50">
+          <h2 className="text-xl font-semibold text-white">
             AI Product Copywriter
           </h2>
           
@@ -397,7 +397,7 @@ export default function DashboardClient({
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
-          <Card className="border-dashed border-white/20 bg-black/40 backdrop-blur-xl overflow-hidden group hover:border-[var(--theme-primary)] hover:shadow-[0_0_30px_-5px_var(--theme-primary)] transition-all duration-500">
+          <Card className="border-white/10 bg-white/20 backdrop-blur-xl overflow-hidden group hover:border-[var(--theme-primary)] hover:shadow-[0_0_30px_-5px_var(--theme-primary)] transition-all duration-500">
             <CardContent className="p-12 text-center text-zinc-100">
               {!preview ? (
                 <div
@@ -528,7 +528,7 @@ export default function DashboardClient({
               <Card className="col-span-full bg-black/40 backdrop-blur-xl border border-white/10 shadow-lg">
                 <CardHeader>
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <CardTitle className="flex items-center gap-2 text-zinc-100">
+                    <CardTitle className="flex items-center gap-2 text-white">
                       <Sparkles className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--theme-primary)' }} />
                       <span 
                          className="bg-clip-text text-transparent bg-gradient-to-r"
@@ -828,7 +828,7 @@ export default function DashboardClient({
                       transition={{ duration: 0.4 }}
                       className="space-y-8"
                     >
-                      <div className="flex justify-center gap-4 p-1 bg-white/5 rounded-full w-fit mx-auto border border-white/10">
+                      <div className="flex justify-center gap-4 p-1 bg-white/20 rounded-full w-fit mx-auto border border-white/10">
                         <button
                           onClick={() => setActiveTab('amazon')}
                           className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'amazon' ? 'bg-[#FF9900] text-black shadow-lg shadow-[#FF9900]/20' : 'text-zinc-400 hover:text-zinc-200'}`}
@@ -852,9 +852,9 @@ export default function DashboardClient({
               {/* MATRIX CHAT SIDEBAR */}
               <div className="lg:sticky lg:top-8 order-none lg:order-last">
                 <Card className="bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl h-[600px] flex flex-col group/sidebar">
-                  <CardHeader className="border-b border-white/5 bg-white/5 p-4">
+                  <CardHeader className="border-b border-white/10 bg-white/20 p-4">
                     <div className="flex items-center justify-between">
-                       <CardTitle className="text-sm font-bold flex items-center gap-2">
+                       <CardTitle className="text-sm font-bold flex items-center gap-2 text-white">
                          <MessagesSquare className="w-4 h-4" style={{ color: 'var(--theme-primary)' }} />
                          Matrix Chat
                        </CardTitle>
@@ -867,7 +867,7 @@ export default function DashboardClient({
                   
                   <CardContent className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-4">
                     <div className="space-y-4">
-                       <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-xs leading-relaxed text-zinc-300">
+                       <div className="bg-white/20 border border-white/10 rounded-2xl p-4 text-xs leading-relaxed text-white">
                          Welcome to the **Matrix Refinement**. Tell me how you&apos;d like to adjust this generation.
                        </div>
                        
@@ -883,7 +883,7 @@ export default function DashboardClient({
                              key={chip.label}
                              onClick={() => handleRefine(`Make the output more ${chip.label.toLowerCase()}`)}
                              disabled={isRefining}
-                             className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold text-zinc-400 hover:text-white hover:bg-white/10 hover:border-[var(--theme-primary)] transition-all group/chip"
+                             className="flex items-center gap-2 px-3 py-2 bg-gray-800/50 border border-white/10 rounded-xl text-[10px] font-bold text-white hover:bg-gray-700/50 hover:border-[var(--theme-primary)] transition-all group/chip"
                            >
                              <chip.icon className="w-3 h-3 group-hover/chip:text-[var(--theme-primary)] transition-colors" />
                              {chip.label}
@@ -893,20 +893,20 @@ export default function DashboardClient({
                     </div>
 
                     {isRefining && (
-                      <div className="flex items-center gap-3 text-zinc-400 text-xs py-4">
+                      <div className="flex items-center gap-3 text-white text-xs py-4">
                         <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--theme-primary)' }} />
                         Recalculating Matrix...
                       </div>
                     )}
                   </CardContent>
 
-                  <div className="p-4 border-t border-white/5 bg-white/5">
+                  <div className="p-4 border-t border-white/10 bg-white/20">
                     <div className="relative group">
                       <textarea
                         value={refineInput}
                         onChange={(e) => setRefineInput(e.target.value)}
                         placeholder="Refine this generation..."
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-[var(--theme-primary)] transition-all resize-none h-24"
+                        className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-[var(--theme-primary)] transition-all resize-none h-24"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault()
@@ -933,7 +933,7 @@ export default function DashboardClient({
       {/* Recent Generations History */}
       <div className="mt-12 space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-zinc-50 flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
             <History className="w-5 h-5" style={{ color: 'var(--theme-primary)' }} />
             Recent Generations
           </h2>
@@ -942,7 +942,7 @@ export default function DashboardClient({
               variant="outline"
               size="sm"
               onClick={() => downloadCSV(history, 'all_generations.csv')}
-              className="border-white/10 bg-white/5 hover:bg-white/10 text-zinc-100"
+              className="border-white/10 bg-white/20 hover:bg-white/30 text-white"
             >
               <FileDown className="w-4 h-4 mr-2" />
               Export All (CSV)
@@ -950,11 +950,11 @@ export default function DashboardClient({
           )}
         </div>
         
-        <Card className="border-white/10 bg-black/40 backdrop-blur-xl overflow-hidden">
+        <Card className="border-white/10 bg-white/20 backdrop-blur-xl overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
-                <thead className="text-xs text-gray-100 uppercase bg-black/60 border-b border-zinc-700">
+                <thead className="text-xs text-white uppercase bg-black/60 border-b border-white/10">
                   <tr>
                     <th className="px-6 py-4 font-medium">Image</th>
                     <th className="px-6 py-4 font-medium">Title</th>
@@ -962,11 +962,11 @@ export default function DashboardClient({
                     <th className="px-6 py-4 font-medium text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-700">
+                <tbody className="divide-y divide-white/10">
                   {history.map((gen) => (
                     <tr 
                       key={gen.id} 
-                      className="hover:bg-white/5 transition-colors cursor-pointer group border-zinc-700"
+                      className="hover:bg-white/5 transition-colors cursor-pointer group border-white/10"
                       onClick={() => {
                         setResults(gen.content)
                         setPreview(gen.image_url)
@@ -980,10 +980,10 @@ export default function DashboardClient({
                           <img src={gen.image_url} alt="" className="object-cover max-w-full max-h-full" />
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-medium text-gray-100 truncate max-w-[240px] group-hover:text-white">
+                      <td className="px-6 py-4 font-medium text-gray-200 truncate max-w-[240px] group-hover:text-white">
                         {gen.content.seoTitle}
                       </td>
-                      <td className="px-6 py-4 text-gray-100 group-hover:text-white">
+                      <td className="px-6 py-4 text-gray-200 group-hover:text-white">
                         {new Date(gen.created_at).toLocaleDateString(undefined, {
                           month: 'short',
                           day: 'numeric',
@@ -996,7 +996,7 @@ export default function DashboardClient({
                           size="sm"
                           onClick={(e) => { e.stopPropagation(); copyToClipboard(JSON.stringify(gen.content, null, 2), gen.id) }}
                           title="Copy Full Content"
-                          className="text-gray-100 hover:text-white"
+                          className="text-gray-200 hover:text-white"
                         >
                           {copySuccess === gen.id ? <CheckCircle2 className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
                         </Button>
@@ -1005,7 +1005,7 @@ export default function DashboardClient({
                           size="sm"
                           onClick={(e) => { e.stopPropagation(); downloadCSV([gen], `generation_${gen.id.slice(0, 8)}.csv`) }}
                           title="Download CSV"
-                          className="text-gray-100 hover:text-white"
+                          className="text-gray-200 hover:text-white"
                         >
                           <Download className="h-4 w-4" />
                         </Button>
