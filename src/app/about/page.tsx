@@ -16,16 +16,16 @@ export default function AboutPage() {
 
       <div className="prose prose-zinc dark:prose-invert max-w-none mb-16 space-y-8">
         <p className="text-lg leading-relaxed">
-          We believe that small businesses shouldn&apos;t have to spend thousands of 
-          dollars on specialized copywriters just to list their inventory online. 
-          UnicornApps was built to bridge the gap between incredible physical 
+          We believe that small businesses shouldn&apos;t have to spend thousands of
+          dollars on specialized copywriters just to list their inventory online.
+          UnicornApps was built to bridge the gap between incredible physical
           products and digital conversions.
         </p>
         <p className="text-lg leading-relaxed">
-          By combining advanced generative models with structured e-commerce data 
-          formats, we enable merchants to take a raw snapshot of a product and 
-          instantly receive the exact SEO title, meta descriptions, and hashtags 
-          needed to sell it. Let us handle the marketing metadata so you can get 
+          By combining advanced generative models with structured e-commerce data
+          formats, we enable merchants to take a raw snapshot of a product and
+          instantly receive the exact SEO title, meta descriptions, and hashtags
+          needed to sell it. Let us handle the marketing metadata so you can get
           back to building your brand.
         </p>
       </div>
@@ -42,20 +42,20 @@ export default function AboutPage() {
               <h3 className="text-xl font-semibold">Google Gemini Vision</h3>
             </div>
             <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              We leverage Google&apos;s flagship multimodal AI to process images with 
-              extraordinary accuracy. Gemini literally &quot;sees&quot; the textures, 
+              We leverage Google&apos;s flagship multimodal AI to process images with
+              extraordinary accuracy. Gemini literally &quot;sees&quot; the textures,
               branding, and specific materials of your products.
             </p>
           </div>
-          
+
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <ShieldCheck className="w-8 h-8 text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30 p-1.5 rounded-lg" />
               <h3 className="text-xl font-semibold">Supabase Security</h3>
             </div>
             <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              Your data privacy is our priority. We use Supabase to provide enterprise-grade 
-              Row Level Security. Your generations, API limits, and payment histories 
+              Your data privacy is our priority. We use Supabase to provide enterprise-grade
+              Row Level Security. Your generations, API limits, and payment histories
               are strictly isolated to your user ID.
             </p>
           </div>
