@@ -38,10 +38,15 @@ export async function POST(req: Request) {
       }
 
       // Initialize Supabase Admin Client
-      const supabaseAdmin = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      )
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+      if (!supabaseUrl || !supabaseServiceKey) {
+        console.error('SERVER ERROR: Missing Supabase Admin credentials (URL or SERVICE_ROLE_KEY).')
+        return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+      }
+
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
       // 1. Find user profile by email
       const { data: profile, error: fetchError } = await supabaseAdmin

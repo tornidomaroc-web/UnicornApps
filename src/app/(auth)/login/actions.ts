@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function login(formData: FormData) {
   const supabase = createClient()
+  if (!supabase) return redirect('/login?error=Server+Configuration+Error')
 
   // type-casting here for convenience
   // in real apps, you should use zod for validation
@@ -26,6 +27,7 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   const supabase = createClient()
+  if (!supabase) return redirect('/login?error=Server+Configuration+Error')
 
   const data = {
     email: formData.get('email') as string,
@@ -44,6 +46,7 @@ export async function signup(formData: FormData) {
 
 export async function logout() {
   const supabase = createClient()
+  if (!supabase) return redirect('/login?error=Server+Configuration+Error')
   await supabase.auth.signOut()
   revalidatePath('/', 'layout')
   redirect('/login')
@@ -51,6 +54,7 @@ export async function logout() {
 
 export async function signInWithGoogle() {
   const supabase = createClient()
+  if (!supabase) return redirect('/login?error=Server+Configuration+Error')
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {

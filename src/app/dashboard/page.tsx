@@ -12,6 +12,16 @@ export default async function DashboardPage() {
   try {
     const supabase = createClient()
 
+    if (!supabase) {
+      console.error('SERVER ERROR: Supabase client is null. Environment misconfigured.')
+      return (
+        <div className="container mx-auto py-20 px-4 text-center">
+          <h1 className="text-3xl font-bold text-red-500">Service Configuration Error</h1>
+          <p className="mt-4 text-zinc-500">The application is missing critical environment variables. Check Vercel settings.</p>
+        </div>
+      )
+    }
+
     const {
       data: { user },
       error: userError,

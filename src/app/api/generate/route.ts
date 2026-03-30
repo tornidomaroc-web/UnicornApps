@@ -5,6 +5,15 @@ import { NextResponse } from 'next/server'
 export async function POST(req: Request) {
   try {
     const supabase = createClient()
+
+    if (!supabase) {
+      console.error('SERVER ERROR: Supabase client is null. Environment variables missing.')
+      return NextResponse.json(
+        { error: 'Server configuration error. Database features are currently unavailable. Check Vercel settings.' },
+        { status: 500 }
+      )
+    }
+
     const {
       data: { user },
     } = await supabase.auth.getUser()
