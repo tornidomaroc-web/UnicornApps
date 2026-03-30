@@ -954,7 +954,7 @@ export default function DashboardClient({
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
-                <thead className="text-xs text-zinc-400 uppercase bg-black/60 border-b border-white/10">
+                <thead className="text-xs text-gray-100 uppercase bg-black/60 border-b border-zinc-700">
                   <tr>
                     <th className="px-6 py-4 font-medium">Image</th>
                     <th className="px-6 py-4 font-medium">Title</th>
@@ -962,11 +962,11 @@ export default function DashboardClient({
                     <th className="px-6 py-4 font-medium text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/10">
+                <tbody className="divide-y divide-zinc-700">
                   {history.map((gen) => (
                     <tr 
                       key={gen.id} 
-                      className="hover:bg-white/5 transition-colors cursor-pointer group"
+                      className="hover:bg-white/5 transition-colors cursor-pointer group border-zinc-700"
                       onClick={() => {
                         setResults(gen.content)
                         setPreview(gen.image_url)
@@ -980,10 +980,10 @@ export default function DashboardClient({
                           <img src={gen.image_url} alt="" className="object-cover max-w-full max-h-full" />
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-medium text-zinc-100 truncate max-w-[240px] group-hover:text-white">
+                      <td className="px-6 py-4 font-medium text-gray-100 truncate max-w-[240px] group-hover:text-white">
                         {gen.content.seoTitle}
                       </td>
-                      <td className="px-6 py-4 text-zinc-400">
+                      <td className="px-6 py-4 text-gray-100 group-hover:text-white">
                         {new Date(gen.created_at).toLocaleDateString(undefined, {
                           month: 'short',
                           day: 'numeric',
@@ -996,7 +996,7 @@ export default function DashboardClient({
                           size="sm"
                           onClick={(e) => { e.stopPropagation(); copyToClipboard(JSON.stringify(gen.content, null, 2), gen.id) }}
                           title="Copy Full Content"
-                          className="text-zinc-400 hover:text-zinc-100"
+                          className="text-gray-100 hover:text-white"
                         >
                           {copySuccess === gen.id ? <CheckCircle2 className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
                         </Button>
@@ -1005,7 +1005,7 @@ export default function DashboardClient({
                           size="sm"
                           onClick={(e) => { e.stopPropagation(); downloadCSV([gen], `generation_${gen.id.slice(0, 8)}.csv`) }}
                           title="Download CSV"
-                          className="text-zinc-400 hover:text-zinc-100"
+                          className="text-gray-100 hover:text-white"
                         >
                           <Download className="h-4 w-4" />
                         </Button>
@@ -1014,7 +1014,7 @@ export default function DashboardClient({
                   ))}
                   {history.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-zinc-500 italic">
+                      <td colSpan={4} className="px-6 py-12 text-center text-gray-400 italic">
                         <div className="flex flex-col items-center gap-2">
                           <UploadCloud className="w-8 h-8 opacity-20" />
                           <p>No generations found yet. Your history will appear here.</p>
