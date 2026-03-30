@@ -5,34 +5,56 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Sparkles, CreditCard } from 'lucide-react'
 
 export default async function DashboardPage() {
-  const supabase = createClient()
+  let credits = 0
+  let history: any[] = []
+  let mustRedirect = false
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const supabase = createClient()
 
-  if (!user) {
-    redirect('/login')
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+
+    if (userError || !user) {
+      mustRedirect = true
+    } else {
+      // Fetch user credit count
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('credits')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError)
+      } else {
+        credits = profile?.credits ?? 0
+      }
+
+      // Fetch recent generations
+      const { data: generations, error: genError } = await supabase
+        .from('generations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10)
+
+      if (genError) {
+        console.error('Error fetching generations:', genError)
+      } else {
+        history = generations ?? []
+      }
+    }
+  } catch (err) {
+    console.error('Dashboard Server Error:', err)
+    mustRedirect = true
   }
 
-  // Fetch user credit count
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('credits')
-    .eq('id', user.id)
-    .single()
-
-  const credits = profile?.credits ?? 0
-
-  // Fetch recent generations
-  const { data: generations } = await supabase
-    .from('generations')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(10)
-
-  const history = generations ?? []
+  if (mustRedirect) {
+    redirect('/login')
+  }
 
   return (
     <div className="container mx-auto py-10 px-4 max-w-5xl">

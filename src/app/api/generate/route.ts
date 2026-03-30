@@ -35,7 +35,16 @@ export async function POST(req: Request) {
     }
 
     // 3. Initialize Gemini DYNAMICALLY
-    const geminiApiKey = process.env.GEMINI_API_KEY!
+    const geminiApiKey = process.env.GEMINI_API_KEY
+
+    if (!geminiApiKey) {
+      console.error('SERVER ERROR: GEMINI_API_KEY is missing from environment variables.')
+      return NextResponse.json(
+        { error: 'Server configuration error. AI features are currently unavailable.' },
+        { status: 500 }
+      )
+    }
+
     const modelsResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiApiKey}`
     )
