@@ -1,0 +1,247 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import {
+  UploadCloud,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Copy,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+
+interface GeneratedContent {
+  seoTitle: string
+  metaDescription: string
+  productDescription: string
+  socialMediaTags: string[]
+}
+
+export default function DashboardClient({ initialCredits }: { initialCredits: number }) {
+  const router = useRouter()
+  const [file, setFile] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [results, setResults] = useState<GeneratedContent | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [copySuccess, setCopySuccess] = useState<string | null>(null)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0]
+    if (selectedFile) {
+      if (selectedFile.size > 4 * 1024 * 1024) {
+        setError('File size too large. Please use an image under 4MB.')
+        return
+      }
+      setFile(selectedFile)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPreview(reader.result as string)
+      }
+      reader.readAsDataURL(selectedFile)
+      setError(null)
+      setResults(null)
+    }
+  }
+
+  const handleGenerate = async () => {
+    if (!preview) return
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: preview }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate content')
+      }
+
+      setResults(data)
+      router.refresh() // Refresh to update the credit count on the server
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text)
+    setCopySuccess(id)
+    setTimeout(() => setCopySuccess(null), 2000)
+  }
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4">
+        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+          AI Product Copywriter
+        </h2>
+        <Card className="border-dashed border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+          <CardContent className="p-12 text-center">
+            {!preview ? (
+              <div
+                className="flex flex-col items-center gap-4 cursor-pointer"
+                onClick={() => document.getElementById('file-upload')?.click()}
+              >
+                <div className="p-4 bg-zinc-100 dark:bg-zinc-800 rounded-full">
+                  <UploadCloud className="w-8 h-8 text-zinc-500" />
+                </div>
+                <div>
+                  <p className="text-lg font-medium">Drag & Drop or Click to upload</p>
+                  <p className="text-sm text-zinc-500">Supported formats: JPEG, PNG (Max 4MB)</p>
+                </div>
+                <input
+                  id="file-upload"
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="relative mx-auto w-full max-w-sm aspect-square rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800">
+                  <img src={preview} alt="Product preview" className="object-contain w-full h-full" />
+                  <button
+                    onClick={() => {
+                      setFile(null)
+                      setPreview(null)
+                      setResults(null)
+                    }}
+                    className="absolute top-2 right-2 p-1 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+                  >
+                    <AlertCircle className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex justify-center gap-4">
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={loading || initialCredits <= 0}
+                    className="w-full max-w-xs"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : initialCredits <= 0 ? (
+                      'No Credits Available'
+                    ) : (
+                      'Generate Copy (1 Credit)'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg flex items-center gap-2">
+          <AlertCircle className="w-4 h-4" />
+          {error}
+        </div>
+      )}
+
+      {results && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <Card className="col-span-full">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Generated E-commerce Assets</CardTitle>
+                <div className="flex items-center gap-1 text-green-600 text-sm font-medium">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Completed
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">SEO Title</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyToClipboard(results.seoTitle, 'title')}
+              >
+                {copySuccess === 'title' ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <p className="text-base text-zinc-900 dark:text-zinc-50">{results.seoTitle}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Meta Description</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyToClipboard(results.metaDescription, 'meta')}
+              >
+                {copySuccess === 'meta' ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <p className="text-base text-zinc-900 dark:text-zinc-50">{results.metaDescription}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="col-span-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Product Description</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyToClipboard(results.productDescription, 'desc')}
+              >
+                {copySuccess === 'desc' ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <p className="text-base text-zinc-900 dark:text-zinc-50 leading-relaxed">
+                {results.productDescription}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="col-span-full">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">Social Media Tags</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              {results.socialMediaTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded text-sm text-zinc-600 dark:text-zinc-400"
+                >
+                  {tag}
+                </span>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  )
+}

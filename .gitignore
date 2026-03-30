@@ -1,0 +1,5 @@
+/.env.local
+/.next
+/.npx-cache
+/build_log.txt
+/node_modules
