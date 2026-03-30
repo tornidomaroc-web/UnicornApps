@@ -102,7 +102,14 @@ export async function POST(req: Request) {
   "dynamicTheme": {
     "dominantColorHex": "String (Hex code of the most defining, vibrant color in the image. Must look good in a Deep Dark Theme)",
     "accentColorHex": "String (Hex code of a high-contrast accent color from the image)"
-  }
+  },
+  "hotspots": [
+    {
+      "x": "Number (0-100 percentage, horizontal coordinate of key visual feature)",
+      "y": "Number (0-100 percentage, vertical coordinate of key visual feature)",
+      "label": "String (Short descriptor, e.g., 'Premium Texture')"
+    }
+  ]
 }`
 
     const result = await model.generateContent([prompt, imagePart])

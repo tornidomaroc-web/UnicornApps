@@ -13,7 +13,7 @@
 Dashboard Server Error: n [Error]: Dynamic server usage: Route /dashboard couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at u (D:\RAGHAD JAD\UnicornApps\.next\server\chunks\317.js:1:42200)
     at f (D:\RAGHAD JAD\UnicornApps\.next\server\chunks\355.js:23:4112)
-    at a (D:\RAGHAD JAD\UnicornApps\.next\server\app\_not-found\page.js:1:9545)
+    at n (D:\RAGHAD JAD\UnicornApps\.next\server\app\about\page.js:21:8916)
     at p (D:\RAGHAD JAD\UnicornApps\.next\server\app\dashboard\page.js:24:220)
     at eh (D:\RAGHAD JAD\UnicornApps\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:134786)
     at e (D:\RAGHAD JAD\UnicornApps\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:137671)
@@ -27,7 +27,7 @@ Dashboard Server Error: n [Error]: Dynamic server usage: Route /dashboard couldn
 Dashboard Server Error: n [Error]: Dynamic server usage: Route /dashboard couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
     at u (D:\RAGHAD JAD\UnicornApps\.next\server\chunks\317.js:1:42200)
     at f (D:\RAGHAD JAD\UnicornApps\.next\server\chunks\355.js:23:4112)
-    at a (D:\RAGHAD JAD\UnicornApps\.next\server\app\_not-found\page.js:1:9545)
+    at n (D:\RAGHAD JAD\UnicornApps\.next\server\app\about\page.js:21:8916)
     at p (D:\RAGHAD JAD\UnicornApps\.next\server\app\dashboard\page.js:24:220)
     at eh (D:\RAGHAD JAD\UnicornApps\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:134786)
     at e (D:\RAGHAD JAD\UnicornApps\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:137671)
@@ -53,7 +53,7 @@ Route (app)                              Size     First Load JS
 ├ ƒ /api/webhook                         0 B                0 B
 ├ ƒ /api/webhooks/lemonsqueezy           0 B                0 B
 ├ ƒ /auth/callback                       0 B                0 B
-├ ƒ /dashboard                           8.73 kB         144 kB
+├ ƒ /dashboard                           9.17 kB         145 kB
 ├ ƒ /features                            176 B          94.1 kB
 ├ ƒ /login                               137 B          87.2 kB
 └ ƒ /pricing                             2.76 kB         145 kB

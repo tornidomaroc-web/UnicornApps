@@ -46,6 +46,11 @@ interface GeneratedContent {
     dominantColorHex: string
     accentColorHex: string
   }
+  hotspots?: {
+    x: number
+    y: number
+    label: string
+  }[]
 }
 
 interface Generation {
@@ -251,14 +256,51 @@ export default function DashboardClient({
                 <div className="space-y-6">
                   <div className="relative mx-auto w-full max-w-sm aspect-square rounded-lg overflow-hidden border border-white/10 shadow-2xl bg-black/50">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={preview} alt="Product preview" className="object-contain w-full h-full transform transition-transform group-hover:scale-105 duration-700" />
+                    <img src={preview} alt="Product preview" className="object-cover w-full h-full transform transition-transform group-hover:scale-105 duration-700 relative z-10" />
+                    
+                    {/* The AI Pulse (Scanning Laser & Brightness Sweep) */}
+                    {loading && (
+                      <div className="absolute inset-0 z-20 pointer-events-none rounded-lg overflow-hidden">
+                         <div className="absolute inset-0 bg-black/40 backdrop-brightness-150 transition-all duration-500" />
+                         <motion.div
+                           className="absolute left-0 right-0 h-0.5"
+                           style={{ backgroundColor: 'var(--theme-primary)', boxShadow: '0 0 20px 2px var(--theme-primary)' }}
+                           animate={{ top: ['0%', '100%', '0%'] }}
+                           transition={{ repeat: Infinity, duration: 3, ease: 'linear' }}
+                         />
+                      </div>
+                    )}
+
+                    {/* Interactive Hotspots */}
+                    {!loading && results?.hotspots?.map((hotspot, idx) => (
+                      <div
+                        key={idx}
+                        className="absolute z-20 group/hotspot cursor-pointer"
+                        style={{ top: `${hotspot.y}%`, left: `${hotspot.x}%`, transform: 'translate(-50%, -50%)' }}
+                      >
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ delay: 0.8 + idx * 0.2, type: 'spring' }}
+                          className="w-4 h-4 rounded-full border-2 border-white shadow-[0_0_15px_var(--theme-primary)] relative"
+                          style={{ backgroundColor: 'var(--theme-primary)' }}
+                        >
+                          <span className="absolute inset-0 rounded-full animate-ping opacity-75" style={{ backgroundColor: 'var(--theme-primary)' }} />
+                        </motion.div>
+                        <div className="absolute top-1/2 left-6 -translate-y-1/2 opacity-0 group-hover/hotspot:opacity-100 transition-opacity pointer-events-none whitespace-nowrap bg-black/60 backdrop-blur-md text-zinc-100 text-xs px-3 py-1.5 rounded-md border border-white/10 shadow-xl">
+                          {hotspot.label}
+                        </div>
+                      </div>
+                    ))}
+
                     <button
                       onClick={() => {
                         setFile(null)
                         setPreview(null)
                         setResults(null)
                       }}
-                      className="absolute top-2 right-2 p-1 bg-black/60 backdrop-blur-md text-zinc-300 hover:text-white rounded-full transition-colors z-10 border border-white/10 hover:border-white/30"
+                      disabled={loading}
+                      className="absolute top-2 right-2 p-1 bg-black/60 backdrop-blur-md text-zinc-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition-colors z-30 border border-white/10 hover:border-white/30"
                     >
                       <AlertCircle className="w-4 h-4" />
                     </button>
@@ -298,34 +340,53 @@ export default function DashboardClient({
 
       <AnimatePresence mode="wait">
         {results && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: {
+                opacity: 1,
+                y: 0,
+                transition: { staggerChildren: 0.15 }
+              }
+            }}
             className="flex flex-col gap-6"
           >
-            <Card className="col-span-full bg-black/40 backdrop-blur-xl border border-white/10 shadow-lg">
-              <CardHeader>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <CardTitle className="flex items-center gap-2 text-zinc-100">
-                    <Sparkles className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--theme-primary)' }} />
-                    <span 
-                       className="bg-clip-text text-transparent bg-gradient-to-r"
-                       style={{ backgroundImage: 'linear-gradient(to right, var(--theme-primary), var(--theme-accent))' }}
-                    >
-                      Matrix Activated
-                    </span>
-                  </CardTitle>
-                  <div className="flex items-center gap-1 text-sm font-medium" style={{ color: 'var(--theme-accent)' }}>
-                    <CheckCircle2 className="w-4 h-4" />
-                    Target Established
+            <motion.div variants={{
+              hidden: { filter: "blur(12px)", opacity: 0, scale: 0.98 },
+              visible: { filter: "blur(0px)", opacity: 1, scale: 1 }
+            }}>
+              <Card className="col-span-full bg-black/40 backdrop-blur-xl border border-white/10 shadow-lg">
+                <CardHeader>
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <CardTitle className="flex items-center gap-2 text-zinc-100">
+                      <Sparkles className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--theme-primary)' }} />
+                      <span 
+                         className="bg-clip-text text-transparent bg-gradient-to-r"
+                         style={{ backgroundImage: 'linear-gradient(to right, var(--theme-primary), var(--theme-accent))' }}
+                      >
+                        Matrix Activated
+                      </span>
+                    </CardTitle>
+                    <div className="flex items-center gap-1 text-sm font-medium" style={{ color: 'var(--theme-accent)' }}>
+                      <CheckCircle2 className="w-4 h-4" />
+                      Target Established
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-            </Card>
+                </CardHeader>
+              </Card>
+            </motion.div>
 
             {/* Tabs Navigation */}
-            <div className="flex gap-2 p-1 bg-black/40 backdrop-blur-xl border border-white/10 rounded-lg overflow-x-auto w-full md:w-fit custom-scrollbar shadow-lg">
+            <motion.div 
+              variants={{
+                hidden: { filter: "blur(12px)", opacity: 0, scale: 0.98 },
+                visible: { filter: "blur(0px)", opacity: 1, scale: 1 }
+              }}
+              className="flex gap-2 p-1 bg-black/40 backdrop-blur-xl border border-white/10 rounded-lg overflow-x-auto w-full md:w-fit custom-scrollbar shadow-lg"
+            >
               {['seo', 'shopify', 'amazon', 'social', 'data'].map((tabId) => {
                  const labels: Record<string, string> = {
                    seo: 'SEO & Basic',
@@ -346,16 +407,21 @@ export default function DashboardClient({
                    </button>
                  )
               })}
-            </div>
+            </motion.div>
 
             <div className="relative">
               <AnimatePresence mode="wait">
                 {activeTab === 'seo' && (
                   <motion.div
                     key="seo"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    variants={{
+                      hidden: { filter: "blur(12px)", opacity: 0, x: 10 },
+                      visible: { filter: "blur(0px)", opacity: 1, x: 0 }
+                    }}
+                    transition={{ duration: 0.3 }}
                     className="grid grid-cols-1 md:grid-cols-2 gap-6"
                   >
                     <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
@@ -416,9 +482,14 @@ export default function DashboardClient({
                 {activeTab === 'shopify' && (
                   <motion.div
                     key="shopify"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    variants={{
+                      hidden: { filter: "blur(12px)", opacity: 0, x: 10 },
+                      visible: { filter: "blur(0px)", opacity: 1, x: 0 }
+                    }}
+                    transition={{ duration: 0.3 }}
                     className="grid grid-cols-1 gap-6"
                   >
                     <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)] overflow-hidden">
@@ -447,9 +518,14 @@ export default function DashboardClient({
                 {activeTab === 'amazon' && (
                   <motion.div
                     key="amazon"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    variants={{
+                      hidden: { filter: "blur(12px)", opacity: 0, x: 10 },
+                      visible: { filter: "blur(0px)", opacity: 1, x: 0 }
+                    }}
+                    transition={{ duration: 0.3 }}
                     className="grid grid-cols-1 gap-6"
                   >
                     <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
@@ -485,9 +561,14 @@ export default function DashboardClient({
                 {activeTab === 'social' && (
                   <motion.div
                     key="social"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    variants={{
+                      hidden: { filter: "blur(12px)", opacity: 0, x: 10 },
+                      visible: { filter: "blur(0px)", opacity: 1, x: 0 }
+                    }}
+                    transition={{ duration: 0.3 }}
                     className="grid grid-cols-1 md:grid-cols-2 gap-6"
                   >
                     <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
@@ -559,9 +640,14 @@ export default function DashboardClient({
                 {activeTab === 'data' && (
                   <motion.div
                     key="data"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    variants={{
+                      hidden: { filter: "blur(12px)", opacity: 0, x: 10 },
+                      visible: { filter: "blur(0px)", opacity: 1, x: 0 }
+                    }}
+                    transition={{ duration: 0.3 }}
                     className="grid grid-cols-1 gap-6"
                   >
                      <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
