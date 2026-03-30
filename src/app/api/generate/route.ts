@@ -98,7 +98,11 @@ export async function POST(req: Request) {
     "hook": "Magnetic first 3-second hook",
     "concept": "Visual storyboard for a 15s Reel/TikTok"
   },
-  "socialMediaTags": ["Array of 5 hashtags"]
+  "socialMediaTags": ["Array of 5 hashtags"],
+  "dynamicTheme": {
+    "dominantColorHex": "String (Hex code of the most defining, vibrant color in the image. Must look good in a Deep Dark Theme)",
+    "accentColorHex": "String (Hex code of a high-contrast accent color from the image)"
+  }
 }`
 
     const result = await model.generateContent([prompt, imagePart])

@@ -53,7 +53,7 @@ Route (app)                              Size     First Load JS
 ├ ƒ /api/webhook                         0 B                0 B
 ├ ƒ /api/webhooks/lemonsqueezy           0 B                0 B
 ├ ƒ /auth/callback                       0 B                0 B
-├ ƒ /dashboard                           8.37 kB         144 kB
+├ ƒ /dashboard                           8.73 kB         144 kB
 ├ ƒ /features                            176 B          94.1 kB
 ├ ƒ /login                               137 B          87.2 kB
 └ ƒ /pricing                             2.76 kB         145 kB
