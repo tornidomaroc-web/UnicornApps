@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { 
@@ -13,9 +14,10 @@ import {
   MessagesSquare, 
   BadgeCheck,
   Globe,
-  Play
+  Play,
+  X
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { 
   Card, 
   CardContent, 
@@ -24,7 +26,9 @@ import {
 } from "@/components/ui/card";
 
 export default function Home() {
-  const containerVariants = {
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -35,7 +39,7 @@ export default function Home() {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,
@@ -95,7 +99,12 @@ export default function Home() {
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Button variant="ghost" size="lg" className="h-16 px-10 text-lg font-black uppercase tracking-widest rounded-2xl text-white hover:bg-white/5 border border-white/10 group">
+            <Button 
+              variant="ghost" 
+              size="lg" 
+              className="h-16 px-10 text-lg font-black uppercase tracking-widest rounded-2xl text-white hover:bg-white/5 border border-white/10 group"
+              onClick={() => setIsDemoModalOpen(true)}
+            >
               <Play className="mr-2 w-5 h-5 fill-white" />
               Watch Demo
             </Button>
@@ -361,6 +370,47 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* VIDEO MODAL POPUP */}
+      <AnimatePresence>
+        {isDemoModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-xl p-4 sm:p-8"
+            onClick={() => setIsDemoModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-[1200px] aspect-video bg-black rounded-3xl overflow-hidden shadow-[0_0_100px_rgba(124,58,237,0.3)] border border-white/10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="absolute top-4 right-4 z-10 w-10 h-10 bg-black/60 hover:bg-violet-600 text-white border border-white/10 rounded-full flex items-center justify-center transition-all active:scale-95 group"
+                onClick={() => setIsDemoModalOpen(false)}
+              >
+                <X className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              </button>
+
+              <iframe
+                src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+                title="UnicornApps Product Demo"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full border-0"
+              />
+            </motion.div>
+
+            {/* Ambient Background Hint */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-violet-600/20 rounded-full blur-[150px]" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
