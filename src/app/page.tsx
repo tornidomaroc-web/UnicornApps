@@ -345,8 +345,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">
           <p>© {new Date().getFullYear()} UnicornApps Global. {t('footer.rights')}.</p>
           <div className="flex gap-8">
-            <a href="#" className="hover:text-white transition-colors">{t('footer.privacy')}</a>
-            <a href="#" className="hover:text-white transition-colors">{t('footer.terms')}</a>
+            <Link href="/privacy" className="hover:text-white transition-colors">{t('footer.privacy')}</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">{t('footer.terms')}</Link>
           </div>
         </div>
       </footer>

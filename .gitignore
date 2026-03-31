@@ -3,3 +3,5 @@
 /.npx-cache
 /build_log.txt
 /node_modules
+/ios
+/android

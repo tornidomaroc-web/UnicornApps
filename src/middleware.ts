@@ -2,6 +2,8 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  if (request.headers.get('x-capacitor') === 'true') return NextResponse.next()
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,

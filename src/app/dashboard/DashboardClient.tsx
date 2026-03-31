@@ -44,6 +44,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { useLang } from '@/lib/i18n/LanguageContext'
+import { isNative, takePicture } from '@/lib/capacitor'
 import {
   Card,
   CardContent,
@@ -137,6 +138,21 @@ export default function DashboardClient({
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const openCamera = async () => {
+    if (isNative()) {
+      try {
+        const photo = await takePicture();
+        if (photo) {
+          setPreview(photo);
+          setFile(null);
+          setError(null);
+          setResults(null);
+        }
+      } catch (err) {
+        setError(t('dash.cameraError'));
+      }
+      return;
+    }
+
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'environment' } 
