@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
@@ -35,56 +34,93 @@ export async function POST(req: Request) {
       )
     }
 
-    const genAI = new GoogleGenerativeAI(geminiApiKey)
-    // Using gemini-1.5-flash for high-speed refinement
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+    // ARCHITECTURE: Direct REST API Bypass to Gemini 2.0 Flash
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${geminiApiKey}`
 
     const prompt = `You are an elite E-commerce Growth Architect. You are refining existing product copy based on a user instruction.
     
-CURRENT CONTENT:
-${JSON.stringify(currentContent, null, 2)}
-
-USER INSTRUCTION:
-"${instruction}"
-
-Return ONLY a valid JSON object with the EXACT SAME schema as the input. Update the fields based on the instruction while maintaining professional e-commerce standards.
-Schema to follow:
-{
-  "seoTitle": "String",
-  "metaDescription": "String",
-  "productDescription": "String",
-  "shopifyHtml": "HTML string",
-  "amazonBullets": ["Array of 5 strings"],
-  "structuredData": {
-    "material": "String",
-    "dominantColor": "String",
-    "targetAudience": "String",
-    "careInstructions": "String"
-  },
-  "viralScript": {
-    "hook": "String",
-    "concept": "String"
-  },
-  "socialMediaTags": ["Array of 5 strings"],
-  "dynamicTheme": {
-    "dominantColorHex": "String",
-    "accentColorHex": "String"
-  },
-  "hotspots": [
+    CURRENT CONTENT:
+    ${JSON.stringify(currentContent, null, 2)}
+    
+    USER INSTRUCTION:
+    "${instruction}"
+    
+    Return ONLY a valid JSON object with the EXACT SAME schema as the input. Update the fields based on the instruction while maintaining professional e-commerce standards.
+    Schema to follow:
     {
-      "x": "Number",
-      "y": "Number",
-      "label": "String"
+      "seoTitle": "String",
+      "metaDescription": "String",
+      "productDescription": "String",
+      "shopifyHtml": "HTML string",
+      "amazonBullets": ["Array of 5 strings"],
+      "structuredData": {
+        "material": "String",
+        "dominantColor": "String",
+        "targetAudience": "String",
+        "careInstructions": "String"
+      },
+      "viralScript": {
+        "hook": "String",
+        "concept": "String"
+      },
+      "socialMediaTags": ["Array of 5 strings"],
+      "dynamicTheme": {
+        "dominantColorHex": "String",
+        "accentColorHex": "String"
+      },
+      "hotspots": [
+        {
+          "x": "Number",
+          "y": "Number",
+          "label": "String"
+        }
+      ]
     }
-  ]
-}
+    
+    Ensure the response is ONLY the JSON object, no markdown or backticks.`
 
-Ensure the response is ONLY the JSON object, no markdown or backticks.`
+    // Constructing the REST Payload identical to working generate route structure
+    const payload = {
+      contents: [
+        {
+          parts: [
+            {
+              text: prompt
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        topK: 1,
+        topP: 1,
+        maxOutputTokens: 2048,
+      }
+    }
 
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
+    const apiResponse = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    })
 
+    const data = await apiResponse.json()
+
+    if (!apiResponse.ok) {
+      console.error('Gemini 2.0 REST Error:', data)
+      throw new Error(data.error?.message || 'Failed to communicate with Gemini 2.0 API')
+    }
+
+    // Extracting text from REST response schema
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+
+    if (!text) {
+      throw new Error('AI returned an empty response')
+    }
+
+    // JSON PROTECTION: Cleaning markdown from response
     const cleanedText = text.replace(/```json|```/gi, '').trim()
     let refinedContent;
     try {
@@ -97,7 +133,6 @@ Ensure the response is ONLY the JSON object, no markdown or backticks.`
       )
     }
 
-    // Note: No credit deduction as per Phase 3 rules.
     return NextResponse.json(refinedContent)
   } catch (error: any) {
     console.error('Refinement error:', error)

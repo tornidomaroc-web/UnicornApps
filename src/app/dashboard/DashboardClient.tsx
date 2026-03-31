@@ -354,7 +354,7 @@ export default function DashboardClient({
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
         >
-          <h2 className="text-xl font-semibold text-zinc-50">
+          <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-cyan-400">
             AI Product Copywriter
           </h2>
           
@@ -409,7 +409,7 @@ export default function DashboardClient({
                   </div>
                   <div>
                     <p className="text-lg font-medium">Drag & Drop or Click to upload</p>
-                    <p className="text-sm text-zinc-400">Supported formats: JPEG, PNG (Max 4MB)</p>
+                    <p className="text-sm text-zinc-100/80">Supported formats: JPEG, PNG (Max 4MB)</p>
                   </div>
                   <input
                     id="file-upload"
@@ -428,10 +428,10 @@ export default function DashboardClient({
                     {/* The AI Pulse (Scanning Laser & Brightness Sweep) */}
                     {loading && (
                       <div className="absolute inset-0 z-20 pointer-events-none rounded-lg overflow-hidden">
-                         <div className="absolute inset-0 bg-black/40 backdrop-brightness-150 transition-all duration-500" />
+                         <div className="absolute inset-0 bg-white/5 mix-blend-overlay transition-all duration-500" />
                          <motion.div
                            className="absolute left-0 right-0 h-0.5"
-                           style={{ backgroundColor: 'var(--theme-primary)', boxShadow: '0 0 20px 2px var(--theme-primary)' }}
+                           style={{ backgroundColor: 'var(--theme-primary)', boxShadow: '0 0 20px 2px var(--theme-primary)', mixBlendMode: 'screen' }}
                            animate={{ top: ['0%', '100%', '0%'] }}
                            transition={{ repeat: Infinity, duration: 3, ease: 'linear' }}
                          />
@@ -530,10 +530,7 @@ export default function DashboardClient({
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <CardTitle className="flex items-center gap-2 text-zinc-100">
                       <Sparkles className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--theme-primary)' }} />
-                      <span 
-                         className="bg-clip-text text-transparent bg-gradient-to-r"
-                         style={{ backgroundImage: 'linear-gradient(to right, var(--theme-primary), var(--theme-accent))' }}
-                      >
+                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-cyan-400">
                         Matrix Activated
                       </span>
                     </CardTitle>
@@ -594,7 +591,7 @@ export default function DashboardClient({
                              <button 
                                key={tabId}
                                onClick={() => setActiveTab(tabId as typeof activeTab)} 
-                               className={`whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-all duration-300 ${isActive ? 'bg-white/10 shadow-sm text-zinc-50' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'}`}
+                               className={`whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-all duration-300 ${isActive ? 'bg-white/10 shadow-sm text-zinc-50' : 'text-zinc-100 hover:text-white hover:bg-white/5'}`}
                                style={isActive ? { borderColor: 'var(--theme-primary)', borderWidth: '1px' } : { borderWidth: '1px', borderColor: 'transparent' }}
                              >
                                {labels[tabId]}
@@ -609,12 +606,12 @@ export default function DashboardClient({
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                              <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                 <CardTitle className="text-sm font-medium text-zinc-400">SEO Title</CardTitle>
+                                 <CardTitle className="text-sm font-medium text-zinc-100">SEO Title</CardTitle>
                                  <Button
                                    variant="ghost"
                                    size="sm"
                                    onClick={() => copyToClipboard(results.seoTitle, 'title')}
-                                   className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-300 hover:text-white"
+                                   className="transition-opacity text-white/60 hover:text-white"
                                  >
                                    {copySuccess === 'title' ? <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--theme-accent)' }} /> : <Copy className="h-4 w-4" />}
                                  </Button>
@@ -626,12 +623,12 @@ export default function DashboardClient({
 
                              <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                 <CardTitle className="text-sm font-medium text-zinc-400">Meta Description</CardTitle>
+                                 <CardTitle className="text-sm font-medium text-zinc-100">Meta Description</CardTitle>
                                  <Button
                                    variant="ghost"
                                    size="sm"
                                    onClick={() => copyToClipboard(results.metaDescription, 'meta')}
-                                   className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-300 hover:text-white"
+                                   className="transition-opacity text-white/60 hover:text-white"
                                  >
                                    {copySuccess === 'meta' ? <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--theme-accent)' }} /> : <Copy className="h-4 w-4" />}
                                  </Button>
@@ -643,12 +640,12 @@ export default function DashboardClient({
 
                              <Card className="col-span-full group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                 <CardTitle className="text-sm font-medium text-zinc-400">Product Description</CardTitle>
+                                 <CardTitle className="text-sm font-medium text-zinc-100">Product Description</CardTitle>
                                  <Button
                                    variant="ghost"
                                    size="sm"
                                    onClick={() => copyToClipboard(results.productDescription, 'desc')}
-                                   className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-300 hover:text-white"
+                                   className="transition-opacity text-white/60 hover:text-white"
                                  >
                                    {copySuccess === 'desc' ? <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--theme-accent)' }} /> : <Copy className="h-4 w-4" />}
                                  </Button>
@@ -665,7 +662,7 @@ export default function DashboardClient({
                          {activeTab === 'shopify' && (
                            <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)] overflow-hidden">
                              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-black/20 border-b border-white/5 rounded-t-xl">
-                               <CardTitle className="text-sm font-medium text-zinc-400">Shopify HTML Formatted</CardTitle>
+                               <CardTitle className="text-sm font-medium text-zinc-100">Shopify HTML Formatted</CardTitle>
                                <Button
                                  variant="ghost"
                                  size="sm"
@@ -688,7 +685,7 @@ export default function DashboardClient({
                          {activeTab === 'amazon' && (
                            <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
                              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                               <CardTitle className="text-sm font-medium text-zinc-400">A9-Optimized Bullets</CardTitle>
+                               <CardTitle className="text-sm font-medium text-zinc-100">A9-Optimized Bullets</CardTitle>
                                <Button
                                  variant="ghost"
                                  size="sm"
@@ -719,12 +716,12 @@ export default function DashboardClient({
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                              <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                 <CardTitle className="text-sm font-medium text-zinc-400">TikTok/Reels Hook</CardTitle>
+                                 <CardTitle className="text-sm font-medium text-zinc-100">TikTok/Reels Hook</CardTitle>
                                  <Button
                                    variant="ghost"
                                    size="sm"
                                    onClick={() => copyToClipboard(results.viralScript?.hook || '', 'hook')}
-                                   className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-300 hover:text-white"
+                                   className="transition-opacity text-white/60 hover:text-white"
                                  >
                                    {copySuccess === 'hook' ? <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--theme-accent)' }} /> : <Copy className="h-4 w-4" />}
                                  </Button>
@@ -743,12 +740,12 @@ export default function DashboardClient({
 
                              <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                 <CardTitle className="text-sm font-medium text-zinc-400">Visual Concept</CardTitle>
+                                 <CardTitle className="text-sm font-medium text-zinc-100">Visual Concept</CardTitle>
                                  <Button
                                    variant="ghost"
                                    size="sm"
                                    onClick={() => copyToClipboard(results.viralScript?.concept || '', 'concept')}
-                                   className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-300 hover:text-white"
+                                   className="transition-opacity text-white/60 hover:text-white"
                                  >
                                    {copySuccess === 'concept' ? <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--theme-accent)' }} /> : <Copy className="h-4 w-4" />}
                                  </Button>
@@ -768,8 +765,8 @@ export default function DashboardClient({
                                     initial={{ scale: 0.9, opacity: 0 }}
                                     animate={{ scale: 1, opacity: 1 }}
                                     key={tag}
-                                    className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-sm font-medium transition-colors hover:bg-white/10"
-                                    style={{ color: 'var(--theme-accent)' }}
+                                    className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-sm font-medium transition-colors hover:bg-white/10 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.2)]"
+                                   
                                   >
                                     {tag}
                                   </motion.span>
@@ -781,7 +778,7 @@ export default function DashboardClient({
                          {activeTab === 'data' && (
                            <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
                              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                               <CardTitle className="text-sm font-medium text-zinc-400">Structured Data</CardTitle>
+                               <CardTitle className="text-sm font-medium text-zinc-100">Structured Data</CardTitle>
                                <Button
                                  variant="ghost"
                                  size="sm"
@@ -795,20 +792,20 @@ export default function DashboardClient({
                                {results.structuredData ? (
                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
                                     <div>
-                                      <p className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Material</p>
-                                      <p className="text-zinc-50 font-medium">{results.structuredData.material}</p>
+                                      <p className="text-xs text-zinc-100 uppercase tracking-wider font-semibold">Material</p>
+                                      <p className="text-white font-medium">{results.structuredData.material}</p>
                                     </div>
                                     <div>
-                                      <p className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Dominant Color</p>
-                                      <p className="text-zinc-50 font-medium">{results.structuredData.dominantColor}</p>
+                                      <p className="text-xs text-zinc-100 uppercase tracking-wider font-semibold">Dominant Color</p>
+                                      <p className="text-white font-medium">{results.structuredData.dominantColor}</p>
                                     </div>
                                     <div>
-                                      <p className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Target Audience</p>
-                                      <p className="text-zinc-50 font-medium">{results.structuredData.targetAudience}</p>
+                                      <p className="text-xs text-zinc-100 uppercase tracking-wider font-semibold">Target Audience</p>
+                                      <p className="text-white font-medium">{results.structuredData.targetAudience}</p>
                                     </div>
                                     <div>
-                                      <p className="text-xs text-zinc-400 uppercase tracking-wider font-semibold">Care Instructions</p>
-                                      <p className="text-zinc-50 font-medium">{results.structuredData.careInstructions}</p>
+                                      <p className="text-xs text-zinc-100 uppercase tracking-wider font-semibold">Care Instructions</p>
+                                      <p className="text-white font-medium">{results.structuredData.careInstructions}</p>
                                     </div>
                                  </div>
                                ) : (
@@ -933,7 +930,7 @@ export default function DashboardClient({
       {/* Recent Generations History */}
       <div className="mt-12 space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-zinc-50 flex items-center gap-2">
+          <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-cyan-400 flex items-center gap-2">
             <History className="w-5 h-5" style={{ color: 'var(--theme-primary)' }} />
             Recent Generations
           </h2>
@@ -942,7 +939,7 @@ export default function DashboardClient({
               variant="outline"
               size="sm"
               onClick={() => downloadCSV(history, 'all_generations.csv')}
-              className="border-white/10 bg-white/5 hover:bg-white/10 text-zinc-100"
+              className="border-white/10 bg-white/5 hover:bg-white/10 text-white"
             >
               <FileDown className="w-4 h-4 mr-2" />
               Export All (CSV)
@@ -980,10 +977,10 @@ export default function DashboardClient({
                           <img src={gen.image_url} alt="" className="object-cover max-w-full max-h-full" />
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-medium text-zinc-100 truncate max-w-[240px] group-hover:text-white">
+                      <td className="px-6 py-4 font-medium text-cyan-100 truncate max-w-[240px] group-hover:text-white">
                         {gen.content.seoTitle}
                       </td>
-                      <td className="px-6 py-4 text-zinc-400">
+                      <td className="px-6 py-4 text-cyan-100">
                         {new Date(gen.created_at).toLocaleDateString(undefined, {
                           month: 'short',
                           day: 'numeric',
@@ -996,7 +993,7 @@ export default function DashboardClient({
                           size="sm"
                           onClick={(e) => { e.stopPropagation(); copyToClipboard(JSON.stringify(gen.content, null, 2), gen.id) }}
                           title="Copy Full Content"
-                          className="text-zinc-400 hover:text-zinc-100"
+                          className="text-zinc-100 hover:text-white"
                         >
                           {copySuccess === gen.id ? <CheckCircle2 className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
                         </Button>
@@ -1005,7 +1002,7 @@ export default function DashboardClient({
                           size="sm"
                           onClick={(e) => { e.stopPropagation(); downloadCSV([gen], `generation_${gen.id.slice(0, 8)}.csv`) }}
                           title="Download CSV"
-                          className="text-zinc-400 hover:text-zinc-100"
+                          className="text-zinc-100 hover:text-white"
                         >
                           <Download className="h-4 w-4" />
                         </Button>
