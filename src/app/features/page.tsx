@@ -1,40 +1,39 @@
+"use client"
+
 import { Button } from "@/components/ui/button";
 import { Sparkles, BarChart3, History, Shield, Zap, Globe, Layout, Monitor, FileDown, MessagesSquare } from "lucide-react";
 import Link from "next/link";
-import { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: "Features — AI-Powered Product Engine",
-  description: "Explore the advanced AI capabilities of UnicornApps, from visual analysis to global SEO optimization.",
-};
+import { useLang } from "@/lib/i18n/LanguageContext";
 
 export default function FeaturesPage() {
+  const { t } = useLang();
+  
   const featureGroups = [
     {
-      title: "Visual Intelligence",
+      title: t('features.group1.title'),
       icon: <Sparkles className="w-8 h-8 text-violet-400" />,
       features: [
-        { name: "Gemini 3.1 Vision", desc: "Our multimodal engine identifies materials, textures, and branding with 99.8% precision." },
-        { name: "Color Extraction", desc: "Automatically matches dominant and accent hex codes for precise listing metadata." },
-        { name: "Asymmetric Hotspots", desc: "Interactive identification of product features mapped directly onto your photography." }
+        { name: t('features.f1.name'), desc: t('features.f1.desc') },
+        { name: t('features.f2.name'), desc: t('features.f2.desc') },
+        { name: t('features.f3.name'), desc: t('features.f3.desc') }
       ]
     },
     {
-      title: "Conversion Engine",
+      title: t('features.group2.title'),
       icon: <Zap className="w-8 h-8 text-amber-400" />,
       features: [
-        { name: "A9 SEO Optimization", desc: "Content structuralized specifically for Amazon’s ranking algorithms and A+ content styles." },
-        { name: "Social Viral Hooks", desc: "Generates high-engagement hooks for TikTok Shop, Reels, and Pinterest." },
-        { name: "Global Meta Logic", desc: "Abstract SEO titles and descriptions that rank across all search indices." }
+        { name: t('features.f4.name'), desc: t('features.f4.desc') },
+        { name: t('features.f5.name'), desc: t('features.f5.desc') },
+        { name: t('features.f6.name'), desc: t('features.f6.desc') }
       ]
     },
     {
-      title: "Merchant Workflow",
+      title: t('features.group3.title'),
       icon: <Layout className="w-8 h-8 text-indigo-400" />,
       features: [
-        { name: "Stealth Refine Console", desc: "Chat directly with the AI to refine tone, shorten copy, or target specific audiences." },
-        { name: "Bulk CSV Exports", desc: "Batch export generations for mass uploads to Shopify, WooCommerce, or eBay." },
-        { name: "Matrix Archives", desc: "Secure visual history of every generation with instant copy-to-clipboard functionality." }
+        { name: t('features.f7.name'), desc: t('features.f7.desc') },
+        { name: t('features.f8.name'), desc: t('features.f8.desc') },
+        { name: t('features.f9.name'), desc: t('features.f9.desc') }
       ]
     }
   ];
@@ -54,15 +53,17 @@ export default function FeaturesPage() {
         {/* HERO */}
         <div className="text-center mb-24">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-950/30 border border-violet-500/30 text-violet-300 text-[10px] font-black uppercase tracking-widest mb-6 backdrop-blur-md">
-            Product Capabilities
+            {t('features.badge')}
           </div>
           <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-8 leading-[0.9]">
-            Every Tool a <br />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-violet-600 to-amber-200 italic uppercase">Global Seller</span>
-            <br /> Needs
+            {t('features.title1')} <br />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-violet-600 to-amber-200 italic uppercase">
+              {t('features.title2')}
+            </span>
+            <br /> {t('features.title3')}
           </h1>
           <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium">
-            From visual decoding to bulk fulfillment, UnicornApps accelerates your e-commerce production speed by up to 10x.
+            {t('features.sub')}
           </p>
         </div>
 
@@ -92,20 +93,20 @@ export default function FeaturesPage() {
         {/* FINAL CTA */}
         <div className="mt-40 text-center relative py-20 px-8 rounded-[4rem] bg-gradient-to-t from-violet-600/20 via-black to-black border-t border-violet-500/30">
           <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter mb-8 italic leading-none">
-            Scale Your Engine <br /> Today
+            {t('features.cta.title').split('<br />')[0]} <br /> {t('features.cta.title').split('<br />')[1]}
           </h2>
           <p className="text-slate-400 font-medium max-w-sm mx-auto mb-12">
-            Start your free trial today and experience the future of product asset production.
+            {t('features.cta.sub')}
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-6">
             <Link href="/login">
               <Button size="lg" className="h-16 px-12 text-xs font-black uppercase tracking-widest rounded-2xl bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_30px_rgba(124,58,237,0.4)]">
-                Get Started
+                {t('features.cta.btn1')}
               </Button>
             </Link>
             <Link href="/pricing">
               <Button variant="ghost" size="lg" className="h-16 px-12 text-xs font-black uppercase tracking-widest rounded-2xl text-white hover:bg-white/5 border border-white/10">
-                View Pricing
+                {t('features.cta.btn2')}
               </Button>
             </Link>
           </div>

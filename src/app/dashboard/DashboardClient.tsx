@@ -43,6 +43,7 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
+import { useLang } from '@/lib/i18n/LanguageContext'
 import {
   Card,
   CardContent,
@@ -103,6 +104,7 @@ export default function DashboardClient({
   initialHistory: Generation[]
 }) {
   const router = useRouter()
+  const { t } = useLang()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -118,7 +120,7 @@ export default function DashboardClient({
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
     { 
       role: 'ai', 
-      message: 'Matrix initialized. Upload a product image to begin analysis.', 
+      message: t('dash.matrixInit'), 
       timestamp: new Date() 
     }
   ])
@@ -147,7 +149,7 @@ export default function DashboardClient({
         }
       }, 100)
     } catch (err) {
-      setError('Camera access denied. Please allow camera permissions.')
+      setError(t('dash.cameraError'))
     }
   }
 
@@ -202,7 +204,7 @@ export default function DashboardClient({
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
       if (selectedFile.size > 4 * 1024 * 1024) {
-        setError('File size too large. Please use an image under 4MB.')
+        setError(t('dash.filesizeError'))
         return
       }
       setFile(selectedFile)
@@ -246,7 +248,7 @@ export default function DashboardClient({
       
       setChatHistory(prev => [...prev, {
         role: 'ai',
-        message: `Analysis complete for ${selectedPlatform}. Matrix synchronized.`,
+        message: t('dash.analysisComplete').replace('{platform}', selectedPlatform.toUpperCase()),
         timestamp: new Date()
       }])
     } catch (err: any) {
@@ -293,14 +295,14 @@ export default function DashboardClient({
       // Add AI response to chat history
       setChatHistory(prev => [...prev, {
         role: 'ai',
-        message: 'Content refined successfully. The Matrix has been updated.',
+        message: t('dash.refineSuccess'),
         timestamp: new Date()
       }])
     } catch (err: any) {
       setError(err.message)
       setChatHistory(prev => [...prev, {
         role: 'ai',
-        message: `Error: ${err.message}. Please try a different instruction.`,
+        message: t('dash.error').replace('{error}', err.message),
         timestamp: new Date()
       }])
     } finally {
@@ -335,7 +337,7 @@ export default function DashboardClient({
             {results?.seoTitle}
           </h1>
           <div className="flex items-center gap-1 text-[#007185] text-sm hover:underline cursor-pointer">
-            Visit the Store
+            {t('dash.visitStore')}
           </div>
           <div className="flex items-center gap-2">
             <div className="flex text-[#FFA41C]">
@@ -350,7 +352,7 @@ export default function DashboardClient({
             <p className="text-sm text-zinc-500">FREE Returns</p>
           </div>
           <div className="space-y-2">
-            <h3 className="font-bold text-sm">About this item</h3>
+            <h3 className="font-bold text-sm">{t('dash.aboutItem')}</h3>
             <ul className="list-disc pl-5 space-y-1 text-sm text-zinc-800">
               {results?.amazonBullets?.map((bullet, i) => (
                 <li key={i}>{bullet}</li>
@@ -359,10 +361,10 @@ export default function DashboardClient({
           </div>
           <div className="space-y-2 pt-4">
             <Button className="w-full bg-[#FFD814] hover:bg-[#F7CA00] text-black border-none rounded-full shadow-sm py-6">
-              Add to Cart
+              {t('dash.addToCart')}
             </Button>
             <Button className="w-full bg-[#FFA41C] hover:bg-[#FA8900] text-black border-none rounded-full shadow-sm py-6">
-              Buy Now
+              {t('dash.buyNow')}
             </Button>
           </div>
         </div>
@@ -394,7 +396,7 @@ export default function DashboardClient({
           </motion.div>
           <div className="space-y-8">
             <div className="space-y-2">
-              <span className="text-violet-600 font-semibold tracking-widest text-xs uppercase">New Arrival</span>
+              <span className="text-violet-600 font-semibold tracking-widest text-xs uppercase">{t('dash.newArrival')}</span>
               <h1 className="text-4xl font-bold tracking-tight text-zinc-900">{results?.seoTitle}</h1>
               <p className="text-2xl text-zinc-500 font-light">$99.00 USD</p>
             </div>
@@ -428,7 +430,7 @@ export default function DashboardClient({
               </Button>
               <div className="flex items-center justify-center gap-2 text-xs text-zinc-400 font-medium pt-2">
                 <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                Fast worldwide shipping
+                {t('dash.fastShipping')}
               </div>
             </div>
           </div>
@@ -514,13 +516,13 @@ export default function DashboardClient({
                       {displayCredits}
                     </span>
                     <span className="text-xs font-black uppercase tracking-widest text-slate-400">
-                      Credits
+                      {t('dash.creditsWord')}
                     </span>
                  </div>
                 <div className="h-4 w-px bg-white/10" />
                 <div className="flex items-center gap-2">
-                   <a href={`https://jadtrader.lemonsqueezy.com/checkout/buy/173d1849-c625-4fe5-952e-0372e6e337de?checkout[custom][user_id]=${userId}`} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors">Starter $9</a>
-                   <a href={`https://jadtrader.lemonsqueezy.com/checkout/buy/46ed7c0f-c7ad-4b0b-90f2-11cf50168bf2?checkout[custom][user_id]=${userId}`} className="bg-violet-600/10 border border-violet-500/30 text-violet-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg hover:bg-violet-600 hover:text-white transition-all">Pro $29 ↗</a>
+                   <a href={`https://jadtrader.lemonsqueezy.com/checkout/buy/173d1849-c625-4fe5-952e-0372e6e337de?checkout[custom][user_id]=${userId}`} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors">{t('dash.starterOnly')}</a>
+                   <a href={`https://jadtrader.lemonsqueezy.com/checkout/buy/46ed7c0f-c7ad-4b0b-90f2-11cf50168bf2?checkout[custom][user_id]=${userId}`} className="bg-violet-600/10 border border-violet-500/30 text-violet-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg hover:bg-violet-600 hover:text-white transition-all">{t('dash.proOnly')}</a>
                 </div>
              </div>
              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:border-white/30" onClick={() => router.refresh()}>
@@ -557,8 +559,8 @@ export default function DashboardClient({
                       className="flex flex-col items-center justify-center gap-12 py-12"
                     >
                        <div className="text-center space-y-3">
-                          <h2 className="text-3xl font-black text-white tracking-tighter uppercase">AI Product Engine</h2>
-                          <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Select Matrix Input Source</p>
+                          <h2 className="text-3xl font-black text-white tracking-tighter uppercase">{t('dash.title')}</h2>
+                          <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">{t('dash.inputSource')}</p>
                        </div>
 
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl px-4">
@@ -572,8 +574,8 @@ export default function DashboardClient({
                                 <UploadCloud className="w-8 h-8 text-violet-400" />
                              </div>
                              <div className="text-center relative">
-                                <h3 className="text-lg font-black text-white uppercase tracking-tight">Upload Photo</h3>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">JPG, PNG, WEBP</p>
+                                <h3 className="text-lg font-black text-white uppercase tracking-tight">{t('dash.uploadBtn')}</h3>
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{t('dash.uploadFormat')}</p>
                              </div>
                           </button>
 
@@ -587,8 +589,8 @@ export default function DashboardClient({
                                 <Camera className="w-8 h-8 text-violet-400" />
                              </div>
                              <div className="text-center relative">
-                                <h3 className="text-lg font-black text-white uppercase tracking-tight">Take Photo</h3>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Use your camera</p>
+                                <h3 className="text-lg font-black text-white uppercase tracking-tight">{t('dash.cameraBtn')}</h3>
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{t('dash.cameraSub')}</p>
                              </div>
                           </button>
                        </div>
@@ -648,13 +650,13 @@ export default function DashboardClient({
                       {/* Right: Requirements & Action */}
                       <div className="space-y-8 h-full flex flex-col justify-between">
                          <div className="space-y-6">
-                            <h3 className="text-xl font-black text-white uppercase tracking-tighter">Ready to Analyze</h3>
+                            <h3 className="text-xl font-black text-white uppercase tracking-tighter">{t('dash.readyTitle')}</h3>
                             <div className="space-y-4">
                                {[
                                  { label: 'Image loaded', sub: 'Matrix format secured', status: 'done' },
                                  { label: 'Gemini 3.1 Vision ready', sub: 'Multi-modal engine active', status: 'done' },
-                                 { label: `Platform: ${selectedPlatform.toUpperCase()}`, sub: 'Target logic established', status: 'platform' },
-                                 { label: loading ? 'Hyper-Analysis in progress...' : 'Analysis pending...', sub: loading ? 'Decoding visual vectors' : 'Awaiting ignition', status: loading ? 'loading' : 'pending' }
+                                 { label: `${t('dash.platform')}: ${selectedPlatform.toUpperCase()}`, sub: 'Target logic established', status: 'platform' },
+                                 { label: loading ? t('dash.analyzing') : 'Analysis pending...', sub: loading ? 'Decoding visual vectors' : 'Awaiting ignition', status: loading ? 'loading' : 'pending' }
                                ].map((item, i) => (
                                  <div key={i} className={`flex items-start gap-4 p-4 rounded-2xl border transition-all ${item.status === 'done' ? 'bg-emerald-500/5 border-emerald-500/20' : item.status === 'platform' ? 'bg-violet-500/5 border-violet-500/20' : 'bg-white/5 border-white/10'}`}>
                                     <div className="mt-1">
@@ -671,7 +673,7 @@ export default function DashboardClient({
 
                          {/* 3. PLATFORM SELECTOR */}
                          <div className="space-y-4">
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Target Platform</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">{t('dash.platform')}</span>
                             <div className="grid grid-cols-2 gap-2">
                                {platforms.map(p => (
                                  <button
@@ -717,7 +719,7 @@ export default function DashboardClient({
                             {loading ? (
                               <div className="relative z-10 flex flex-col items-center">
                                  <span className="text-xs font-black uppercase tracking-[0.3em] text-violet-400 animate-pulse">
-                                   ⟳ Gemini is analyzing your product...
+                                   {t('dash.analyzing')}
                                  </span>
                                  <div className="mt-2 w-48 h-1 bg-white/5 rounded-full overflow-hidden">
                                     <motion.div className="h-full bg-violet-500" animate={{ x: ['-100%', '100%'] }} transition={{ repeat: Infinity, duration: 1.5 }} />
@@ -726,16 +728,16 @@ export default function DashboardClient({
                             ) : initialCredits <= 0 ? (
                               <div className="flex items-center gap-3 font-black uppercase tracking-widest text-[11px]">
                                  <AlertCircle className="w-5 h-5" />
-                                 <span>No Credits — Upgrade to Continue</span>
+                                 <span>{t('dash.noCredits')}</span>
                               </div>
                             ) : (
                               <>
                                  <span className="relative z-10 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
                                    <Sparkles className="w-5 h-5 animate-pulse" />
-                                   Ignite Matrix — Generate Content
+                                   {t('dash.generate').split(' — ')[0]}
                                  </span>
                                  <span className="relative z-10 text-[9px] font-bold uppercase tracking-widest text-white/60">
-                                   (Consumes 1 Credit)
+                                   {t('dash.consuming')}
                                  </span>
                                  <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-white/10 to-black/0 translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-1000" />
                               </>
@@ -755,12 +757,12 @@ export default function DashboardClient({
                 {/* Visual View Mode Selector */}
                 <div className="flex justify-between items-center bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-2">
                    <div className="flex gap-1">
-                      <button onClick={() => setViewMode('raw')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'raw' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>Matrix Raw</button>
-                      <button onClick={() => setViewMode('preview')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'preview' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>Live Preview</button>
+                      <button onClick={() => setViewMode('raw')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'raw' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>{t('dash.matrixRaw')}</button>
+                      <button onClick={() => setViewMode('preview')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'preview' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>{t('dash.livePreview')}</button>
                    </div>
                    <div className="flex items-center gap-2 px-4 text-[10px] font-black uppercase tracking-widest text-emerald-400">
                       <CheckCircle2 className="w-4 h-4" />
-                      Analysis Stable
+                      {t('dash.analysisStable')}
                    </div>
                 </div>
 
@@ -813,7 +815,7 @@ export default function DashboardClient({
                           {activeTab === 'seo' && (
                              <Card className="bg-white/[0.03] border-white/10 rounded-3xl overflow-hidden">
                                 <CardHeader className="border-b border-white/5 py-8 px-10">
-                                   <CardTitle className="text-white font-black text-2xl uppercase tracking-tighter">SEO & Global Identity</CardTitle>
+                                   <CardTitle className="text-white font-black text-2xl uppercase tracking-tighter">{t('dash.seoTitleKey')}</CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-10 space-y-10">
                                    <div className="space-y-4">
@@ -827,9 +829,9 @@ export default function DashboardClient({
                                    </div>
                                    <div className="space-y-4">
                                       <div className="flex justify-between items-center">
-                                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Global Meta Logic</span>
+                                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('dash.globalMeta')}</span>
                                          <Button variant="ghost" size="sm" onClick={() => copyToClipboard(results.metaDescription, 'm')} className="h-8 px-3 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 text-[10px] font-black uppercase">
-                                            {copySuccess === 'm' ? 'Copied' : 'Copy Logic'}
+                                            {copySuccess === 'm' ? 'Copied' : t('dash.copyLogic')}
                                          </Button>
                                       </div>
                                       <p className="text-slate-400 leading-relaxed font-medium">{results.metaDescription}</p>
@@ -842,25 +844,25 @@ export default function DashboardClient({
                             <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-10 space-y-8">
                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                                   <div className="space-y-1">
-                                     <h3 className="text-xl font-black text-white uppercase tracking-tighter">Shopify Integration</h3>
-                                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Liquid-Ready Matrix Data</p>
+                                     <h3 className="text-xl font-black text-white uppercase tracking-tighter">{t('dash.shopifyIntegration')}</h3>
+                                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('dash.liquidData')}</p>
                                   </div>
                                   <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
                                      <button 
                                        onClick={() => setShopifyViewMode('preview')}
                                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${shopifyViewMode === 'preview' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-slate-500 hover:text-white'}`}
                                      >
-                                        Preview
+                                        {t('dash.preview')}
                                      </button>
                                      <button 
                                        onClick={() => setShopifyViewMode('code')}
                                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${shopifyViewMode === 'code' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-slate-500 hover:text-white'}`}
                                      >
-                                        HTML Code
+                                        {t('dash.htmlCode')}
                                      </button>
                                   </div>
                                   <Button onClick={() => copyToClipboard(results.shopifyHtml || '', 'sh')} className="bg-white/5 border border-white/10 hover:border-white/20 text-white text-[10px] font-black uppercase rounded-xl px-6 h-10">
-                                     {copySuccess === 'sh' ? 'Copied' : <><Copy className="w-3.5 h-3.5 mr-2" /> Copy Code</>}
+                                     {copySuccess === 'sh' ? 'Copied' : <><Copy className="w-3.5 h-3.5 mr-2" /> {t('dash.copyCode')}</>}
                                   </Button>
                                </div>
 
@@ -910,16 +912,16 @@ export default function DashboardClient({
                           {activeTab === 'social' && (
                             <div className="grid gap-6">
                                <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-10 space-y-6">
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">TikTok / Reels Hook</span>
+                                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('dash.tiktokHook')}</span>
                                   <p className="text-2xl font-black text-white tracking-tight leading-none italic uppercase">&quot;{results.viralScript?.hook}&quot;</p>
                                </Card>
                                <div className="grid md:grid-cols-2 gap-6">
                                   <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-8 space-y-4">
-                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Visual Concept</span>
+                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('dash.visualConcept')}</span>
                                      <p className="text-slate-400 font-medium leading-relaxed">{results.viralScript?.concept}</p>
                                   </Card>
                                   <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-8 space-y-4">
-                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Growth Hashtags</span>
+                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('dash.growthHashtags')}</span>
                                      <div className="flex flex-wrap gap-2">
                                         {results.socialMediaTags?.map(t => (
                                           <span key={t} className="px-3 py-1 bg-violet-600/10 border border-violet-500/20 rounded-lg text-xs font-bold text-violet-400">{t}</span>
@@ -933,10 +935,10 @@ export default function DashboardClient({
                           {activeTab === 'data' && (
                              <div className="grid md:grid-cols-2 gap-6">
                                 {[
-                                  { l: 'Material Composition', v: results.structuredData?.material },
-                                  { l: 'Dominant Aesthetics', v: results.structuredData?.dominantColor },
-                                  { l: 'Target Audience Profile', v: results.structuredData?.targetAudience },
-                                  { l: 'Longevity Care', v: results.structuredData?.careInstructions }
+                                  { l: t('dash.material'), v: results.structuredData?.material },
+                                  { l: t('dash.aesthetics'), v: results.structuredData?.dominantColor },
+                                  { l: t('dash.audience'), v: results.structuredData?.targetAudience },
+                                  { l: t('dash.care'), v: results.structuredData?.careInstructions }
                                 ].map((d, i) => (
                                   <Card key={i} className="bg-white/[0.03] border-white/10 rounded-3xl p-8 flex flex-col justify-between">
                                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">{d.l}</span>
@@ -956,9 +958,9 @@ export default function DashboardClient({
                   <div className="flex items-center justify-between px-2">
                      <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white flex items-center gap-2">
                         <MessagesSquare className="w-4 h-4 text-violet-500" />
-                        Stealth Console
+                        {t('dash.stealthConsole')}
                      </h3>
-                     <span className="text-[8px] font-black uppercase tracking-widest text-slate-600 animate-pulse">Matrix Sync active</span>
+                     <span className="text-[8px] font-black uppercase tracking-widest text-slate-600 animate-pulse">{t('dash.matrixSync')}</span>
                   </div>
 
                   <Card className="bg-black/60 border border-white/5 rounded-[2rem] flex flex-col h-[650px] overflow-hidden shadow-2xl">
@@ -974,7 +976,7 @@ export default function DashboardClient({
                                 {msg.message}
                              </div>
                              <span className="text-[8px] font-black text-slate-600 uppercase mt-2 px-1 tracking-widest">
-                                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {msg.role === 'user' ? 'Vector Sent' : 'Matrix Refined'}
+                                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {msg.role === 'user' ? t('dash.vectorSent') : t('dash.matrixRefined')}
                              </span>
                           </div>
                         ))}
@@ -985,10 +987,10 @@ export default function DashboardClient({
                      <div className="p-6 bg-white/[0.02] border-t border-white/5 space-y-6">
                         <div className="flex flex-wrap gap-2">
                            {[
-                             { l: 'Professional', v: 'Make it more professional' },
-                             { l: 'Shorten', v: 'Make it much shorter' },
-                             { l: 'Luxury', v: 'Add a luxury premium tone' },
-                             { l: 'Gulf Market', v: 'Optimize for the GCC/Gulf market luxury audience' }
+                             { l: t('dash.refine.prof'), v: t('dash.refine.prof.v') },
+                             { l: t('dash.refine.short'), v: t('dash.refine.short.v') },
+                             { l: t('dash.refine.luxury'), v: t('dash.refine.luxury.v') },
+                             { l: t('dash.refine.gulf'), v: t('dash.refine.gulf.v') }
                            ].map(c => (
                              <button
                                key={c.l}
@@ -1006,7 +1008,7 @@ export default function DashboardClient({
                              value={refineInput}
                              onChange={(e) => setRefineInput(e.target.value)}
                              onKeyDown={(e) => e.key === 'Enter' && handleRefine()}
-                             placeholder={isRefining ? 'The Matrix is processing...' : 'Enter refinement vector...'}
+                             placeholder={isRefining ? t('dash.processing') : t('dash.enterVector')}
                              disabled={isRefining}
                              className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-5 pr-14 text-xs font-medium text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50 transition-all disabled:opacity-50"
                            />
@@ -1032,8 +1034,8 @@ export default function DashboardClient({
                     <History className="w-6 h-6 text-violet-400" />
                  </div>
                  <div className="space-y-1">
-                    <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Matrix Archives</h2>
-                    <p className="text-xs font-medium text-slate-500 tracking-widest uppercase">Decoded Production History</p>
+                    <h2 className="text-3xl font-black text-white tracking-tighter uppercase">{t('dash.history')}</h2>
+                    <p className="text-xs font-medium text-slate-500 tracking-widest uppercase">{t('dash.productionHistory')}</p>
                  </div>
               </div>
               <div className="flex gap-2">
@@ -1042,7 +1044,7 @@ export default function DashboardClient({
                    className="h-12 px-6 bg-white/5 border border-white/10 hover:border-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c8cfe0] flex items-center gap-2 transition-all"
                  >
                     <FileDown className="w-4 h-4" />
-                    Export Global CSV
+                    {t('dash.exportCsv')}
                  </Button>
               </div>
            </div>
@@ -1052,11 +1054,11 @@ export default function DashboardClient({
                  <table className="w-full text-left border-collapse">
                     <thead className="bg-white/5 border-b border-white/5">
                        <tr>
-                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Asset</th>
-                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Platform</th>
-                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Matrix Signature</th>
-                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Timestamp</th>
-                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 text-right">Action</th>
+                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.asset')}</th>
+                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.platformName')}</th>
+                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.matrixSignature')}</th>
+                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.timestamp')}</th>
+                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 text-right">{t('dash.action')}</th>
                        </tr>
                     </thead>
                     <tbody>
@@ -1083,7 +1085,7 @@ export default function DashboardClient({
                             <td className="px-8 py-4">
                                <div className="max-w-[300px]">
                                   <p className="text-white font-bold truncate group-hover:text-violet-400 transition-colors uppercase tracking-tight">{item.content.seoTitle}</p>
-                                  <p className="text-[10px] font-medium text-slate-600 mt-1 uppercase tracking-widest">ID: {item.id.slice(0, 8)}</p>
+                                  <p className="text-[10px] font-medium text-slate-600 mt-1 uppercase tracking-widest">{t('dash.id')}: {item.id.slice(0, 8)}</p>
                                </div>
                             </td>
                             <td className="px-8 py-4">
@@ -1106,8 +1108,8 @@ export default function DashboardClient({
                                      <Database className="w-10 h-10 text-slate-700" />
                                   </div>
                                   <div className="space-y-2">
-                                     <p className="text-xl font-bold text-slate-500 uppercase tracking-tighter">Your Matrix Archives will appear here</p>
-                                     <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">No production signatures detected</p>
+                                     <p className="text-xl font-bold text-slate-500 uppercase tracking-tighter">{t('dash.noHistory')}</p>
+                                     <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">{t('dash.noSignatures')}</p>
                                   </div>
                                </div>
                             </td>
@@ -1129,8 +1131,8 @@ export default function DashboardClient({
               className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center"
             >
               <div className="absolute top-8 left-0 right-0 z-10 text-center">
-                <p className="text-xs font-black uppercase tracking-[0.3em] text-white/40 mb-2">Matrix Vision Active</p>
-                <h3 className="text-xl font-black text-white uppercase tracking-tighter">Point camera at your product</h3>
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-white/40 mb-2">{t('dash.cameraVision')}</p>
+                <h3 className="text-xl font-black text-white uppercase tracking-tighter">{t('dash.cameraPoint')}</h3>
               </div>
 
               <video 

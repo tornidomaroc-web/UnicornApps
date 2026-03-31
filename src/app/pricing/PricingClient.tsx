@@ -12,56 +12,58 @@ import {
 } from "@/components/ui/card";
 import { Check, Sparkles, Zap, Shield, Globe } from "lucide-react";
 import { motion } from "framer-motion";
+import { useLang } from "@/lib/i18n/LanguageContext";
 
 export default function PricingClient() {
+  const { t } = useLang();
   const tiers = [
     {
-      name: "Free Trial",
+      name: t('pricing.free'),
       price: "$0",
       period: "",
-      description: "Perfect for testing the AI capabilities on a few products.",
+      description: t('pricing.free.desc'),
       features: [
-        "3 AI Generations",
-        "Standard Vision Analysis",
-        "Basic SEO Titles",
-        "Web-only access",
+        t('pricing.f.gen3'),
+        t('pricing.f.vision.std'),
+        t('pricing.f.seo.basic'),
+        t('pricing.f.web'),
       ],
-      cta: "Start Free",
+      cta: t('pricing.cta.free'),
       featured: false,
       href: "/login",
       icon: <Shield className="w-6 h-6 text-slate-400" />
     },
     {
-      name: "Starter Plan",
+      name: t('pricing.starter'),
       price: "$9",
-      period: "/month",
-      description: "Ideal for small shops and independent sellers starting out.",
+      period: t('period.month'),
+      description: t('pricing.starter.desc'),
       features: [
-        "50 AI Generations",
-        "Gemini 3.1 Core Analysis",
-        "CSV Export Engine",
-        "Standard Processing Queue",
-        "Full Generation History",
+        t('pricing.f.gen50'),
+        t('pricing.f.vision.core'),
+        t('pricing.f.csv'),
+        t('pricing.f.queue.std'),
+        t('pricing.f.history'),
       ],
-      cta: "Get Started",
+      cta: t('pricing.cta.starter'),
       featured: false,
       href: "/login",
       icon: <Zap className="w-6 h-6 text-amber-400" />
     },
     {
-      name: "Global Pro",
+      name: t('pricing.pro'),
       price: "$29",
-      period: "/month",
-      description: "Best for growing e-commerce brands selling globally.",
+      period: t('period.month'),
+      description: t('pricing.pro.desc'),
       features: [
-        "500 AI Generations",
-        "Priority Vision Queue",
-        "Bulk CSV Export",
-        "Elite Social Media Tags",
-        "Real-time Refinement Console",
-        "Priority 24/7 Support",
+        t('pricing.f.gen500'),
+        t('pricing.f.vision.priority'),
+        t('pricing.f.csv.bulk'),
+        t('pricing.f.social'),
+        t('pricing.f.refine'),
+        t('pricing.f.support'),
       ],
-      cta: "Go Pro Now",
+      cta: t('pricing.cta.pro'),
       featured: true,
       href: "/login",
       icon: <Sparkles className="w-6 h-6 text-violet-400" />
@@ -90,7 +92,7 @@ export default function PricingClient() {
 
   return (
     <main className="min-h-screen bg-[#070710] text-[#c8cfe0] pt-32 pb-20 px-4 relative overflow-hidden">
-      {/* BACKGROUND EFFECTS */}
+      {/* 1. BACKGROUND EFFECTS */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-violet-600/10 rounded-full blur-[120px] animate-float-orb" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px] animate-float-orb-slow" />
@@ -107,14 +109,16 @@ export default function PricingClient() {
           className="text-center mb-24"
         >
           <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-950/30 border border-violet-500/30 text-violet-300 text-[10px] font-black uppercase tracking-widest mb-6">
-            Pricing & Plans
+            {t('pricing.badge')}
           </motion.div>
           <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-8 leading-[0.9]">
-            Simple Scaling for <br />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-violet-600 to-amber-200 uppercase italic">Global Stores</span>
+            {t('pricing.title').split('<br />')[0]} <br />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-violet-600 to-amber-200 uppercase italic">
+              {t('hero.title2')}
+            </span>
           </motion.h1>
           <motion.p variants={itemVariants} className="text-xl text-slate-400 max-w-2xl mx-auto font-medium">
-            Start for free, upgrade when you need more power. No hidden fees or complex usage limits.
+            {t('pricing.sub')}
           </motion.p>
         </motion.div>
 
@@ -136,7 +140,7 @@ export default function PricingClient() {
                 {tier.featured && (
                   <div className="absolute top-0 right-0">
                     <span className="bg-violet-600 text-white text-[10px] font-black uppercase tracking-[0.2em] py-2 px-6 rounded-bl-2xl shadow-lg flex items-center gap-2">
-                       Most Popular
+                       {t('pricing.popular')}
                     </span>
                   </div>
                 )}
@@ -201,14 +205,14 @@ export default function PricingClient() {
                 <Globe className="text-amber-500 w-6 h-6" />
               </div>
               <div>
-                <h4 className="text-white font-bold">Enterprise Needs?</h4>
-                <p className="text-sm text-slate-500 font-medium">Custom API access and bulk licensing.</p>
+                <h4 className="text-white font-bold">{t('pricing.enterprise.title')}</h4>
+                <p className="text-sm text-slate-500 font-medium">{t('pricing.enterprise.sub')}</p>
               </div>
             </div>
             <div className="h-px md:h-12 w-full md:w-px bg-white/10" />
             <Link href="mailto:support@unicornapps.com">
               <Button variant="ghost" className="text-xs font-black uppercase tracking-[0.2em] text-violet-400 hover:text-violet-300 hover:bg-white/5 px-8">
-                Contact Sales Today →
+                {t('pricing.enterprise.cta')} →
               </Button>
             </Link>
           </div>
