@@ -123,6 +123,7 @@ export default function DashboardClient({
   const [refineInput, setRefineInput] = useState('')
   const [isRefining, setIsRefining] = useState(false)
   const [viewMode, setViewMode] = useState<'raw' | 'preview'>('raw')
+  const [shopifyViewMode, setShopifyViewMode] = useState<'preview' | 'code'>('preview')
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   // Animated Credit Counter
@@ -768,13 +769,56 @@ export default function DashboardClient({
                           {/* Shopify Redesign */}
                           {activeTab === 'shopify' && (
                             <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-10 space-y-8">
-                               <div className="flex justify-between items-center">
-                                  <h3 className="text-xl font-black text-white uppercase tracking-tighter">Liquid Ready HTML</h3>
-                                  <Button onClick={() => copyToClipboard(results.shopifyHtml || '', 'sh')} className="bg-violet-600 hover:bg-violet-500 text-white text-[10px] font-black uppercase rounded-xl">Copy Code</Button>
+                               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                  <div className="space-y-1">
+                                     <h3 className="text-xl font-black text-white uppercase tracking-tighter">Shopify Integration</h3>
+                                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Liquid-Ready Matrix Data</p>
+                                  </div>
+                                  <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
+                                     <button 
+                                       onClick={() => setShopifyViewMode('preview')}
+                                       className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${shopifyViewMode === 'preview' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-slate-500 hover:text-white'}`}
+                                     >
+                                        Preview
+                                     </button>
+                                     <button 
+                                       onClick={() => setShopifyViewMode('code')}
+                                       className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${shopifyViewMode === 'code' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-slate-500 hover:text-white'}`}
+                                     >
+                                        HTML Code
+                                     </button>
+                                  </div>
+                                  <Button onClick={() => copyToClipboard(results.shopifyHtml || '', 'sh')} className="bg-white/5 border border-white/10 hover:border-white/20 text-white text-[10px] font-black uppercase rounded-xl px-6 h-10">
+                                     {copySuccess === 'sh' ? 'Copied' : <><Copy className="w-3.5 h-3.5 mr-2" /> Copy Code</>}
+                                  </Button>
                                </div>
-                               <div className="bg-black/60 rounded-2xl p-6 border border-white/5 font-mono text-sm text-violet-300 h-[400px] overflow-auto custom-scrollbar">
-                                  <pre>{results.shopifyHtml}</pre>
-                               </div>
+
+                               <AnimatePresence mode="wait">
+                                  {shopifyViewMode === 'preview' ? (
+                                    <motion.div 
+                                      key="preview"
+                                      initial={{ opacity: 0, scale: 0.98 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 1.02 }}
+                                      className="bg-black/60 rounded-[2rem] p-10 border border-white/5 h-[500px] overflow-auto custom-scrollbar"
+                                    >
+                                       <div className="prose prose-invert max-w-none prose-p:text-slate-300 prose-headings:text-white prose-strong:text-violet-400 prose-ul:text-slate-400 prose-li:marker:text-violet-500">
+                                          <div dangerouslySetInnerHTML={{ __html: results.shopifyHtml || '' }} />
+                                       </div>
+                                    </motion.div>
+                                  ) : (
+                                    <motion.div 
+                                      key="code"
+                                      initial={{ opacity: 0, scale: 0.98 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 1.02 }}
+                                      className="bg-black/80 rounded-[2rem] p-8 border border-white/5 font-mono text-xs text-violet-300/80 h-[500px] overflow-auto custom-scrollbar relative"
+                                    >
+                                       <pre className="whitespace-pre-wrap">{results.shopifyHtml}</pre>
+                                       <div className="absolute top-4 right-4 text-[8px] font-black uppercase tracking-[0.2em] text-slate-700 pointer-events-none">Liquid Template Signature</div>
+                                    </motion.div>
+                                  )}
+                               </AnimatePresence>
                             </Card>
                           )}
                           {/* Amazon Redesign */}
