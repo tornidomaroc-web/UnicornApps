@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       )
     }
 
-    // ARCHITECTURE: Direct REST API Bypass to Gemini 2.0 Flash
+    // ARCHITECTURE: Direct REST API Bypass to Gemini 3.1 Flash-Lite
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${geminiApiKey}`
 
     const prompt = `You are an elite E-commerce Growth Architect. You are refining existing product copy based on a user instruction.
