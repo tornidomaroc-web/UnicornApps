@@ -2,6 +2,12 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Settings, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
 
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "About — Built for Global Commerce",
+};
+
 export default function AboutPage() {
   return (
     <div className="container mx-auto py-20 px-4 max-w-4xl text-zinc-900 dark:text-zinc-50">

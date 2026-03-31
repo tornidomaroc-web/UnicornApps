@@ -17,39 +17,40 @@ export default function LoginPage({
   searchParams: { error?: string; message?: string }
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-12 dark:bg-zinc-950">
-      <Card className="w-full max-w-md shadow-lg border-zinc-200 dark:border-zinc-800">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Sign in
+    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-12 relative overflow-hidden">
+      <div className="matrix-glow-shell" />
+      <Card className="w-full max-w-md bg-white/5 backdrop-blur-3xl border-white/10 shadow-[0_0_50px_-20px_rgba(139,92,246,0.3)] overflow-hidden">
+        <CardHeader className="space-y-2 pb-8">
+          <CardTitle className="text-4xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400">
+            Sign In
           </CardTitle>
-          <CardDescription className="text-zinc-500 dark:text-zinc-400">
-            Enter your email and password to access your account.
+          <CardDescription className="text-slate-400 font-medium tracking-tight">
+            Enter the Matrix to access your AI assets.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form action={login} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-500 mb-1.5 block">Email Identity</Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="identity@matrix.com"
                 required
-                className="bg-white dark:bg-zinc-900"
+                className="bg-black/40 border-white/10 text-white placeholder:text-slate-700 focus:border-violet-500/50 focus:ring-violet-500/20 transition-all h-12"
               />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between mb-1.5">
+                <Label htmlFor="password" className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-500">Security Key</Label>
               </div>
               <Input
                 id="password"
                 name="password"
                 type="password"
                 required
-                className="bg-white dark:bg-zinc-900"
+                className="bg-black/40 border-white/10 text-white placeholder:text-slate-700 focus:border-violet-500/50 focus:ring-violet-500/20 transition-all h-12"
               />
             </div>
             {searchParams.error && (
@@ -62,34 +63,42 @@ export default function LoginPage({
                 {searchParams.message}
               </div>
             )}
-            <Button type="submit" className="w-full" formAction={login}>
-              Sign In
+            <Button 
+              type="submit" 
+              className="w-full h-12 bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(139,92,246,0.3)] animate-pulse-subtle transition-all active:scale-[0.98]" 
+              formAction={login}
+            >
+              Authorize Access
             </Button>
             <Button
               type="submit"
               variant="outline"
-              className="w-full"
+              className="w-full h-12 border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 font-black uppercase tracking-[0.2em] transition-all"
               formAction={signup}
             >
-              Sign Up
+              Initialize Profile
             </Button>
           </form>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+              <span className="w-full border-t border-white/10" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-zinc-50 px-2 text-zinc-500 dark:bg-zinc-950 dark:text-zinc-400">
-                Or continue with
+            <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest">
+              <span className="bg-transparent px-4 text-slate-600">
+                Direct Sync Integration
               </span>
             </div>
           </div>
 
           <form action={signInWithGoogle}>
-            <Button variant="outline" type="submit" className="w-full bg-white dark:bg-zinc-900">
+            <Button 
+              variant="outline" 
+              type="submit" 
+              className="w-full h-12 border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 font-black uppercase tracking-[0.2em]"
+            >
               <svg
-                className="mr-2 h-4 w-4"
+                className="mr-3 h-4 w-4"
                 aria-hidden="true"
                 focusable="false"
                 data-prefix="fab"
@@ -103,19 +112,19 @@ export default function LoginPage({
                   d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
                 ></path>
               </svg>
-              Google
+              Google Cloud Auth
             </Button>
           </form>
         </CardContent>
-        <CardFooter>
-          <p className="px-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
-            By clicking continue, you agree to our{" "}
-            <a href="#" className="underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-50">
-              Terms of Service
+        <CardFooter className="pb-8">
+          <p className="px-8 text-center text-[10px] font-black uppercase tracking-widest text-slate-600">
+            Secure Encryption Active. By authorizing, you accept our{" "}
+            <a href="#" className="underline underline-offset-4 hover:text-white transition-colors">
+              Protocol
             </a>{" "}
             and{" "}
-            <a href="#" className="underline underline-offset-4 hover:text-zinc-900 dark:hover:text-zinc-50">
-              Privacy Policy
+            <a href="#" className="underline underline-offset-4 hover:text-white transition-colors">
+              Vault Policy
             </a>
             .
           </p>
@@ -124,3 +133,4 @@ export default function LoginPage({
     </div>
   )
 }
+

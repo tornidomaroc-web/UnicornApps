@@ -6,8 +6,21 @@ import Navbar from "@/components/Navbar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "UnicornApps - AI E-commerce Content Generator",
-  description: "Convert your product images into SEO-optimized marketing content using AI.",
+  title: {
+    default: 'UnicornApps — AI Product Content Engine',
+    template: '%s | UnicornApps'
+  },
+  description: 'Transform product images into Amazon titles, Shopify descriptions, and viral social content in 3 seconds. Powered by Gemini 3.1 Vision.',
+  keywords: ['AI product description', 'Amazon SEO', 'Shopify description generator', 'product content AI', 'ecommerce automation'],
+  openGraph: {
+    title: 'UnicornApps — AI Product Content Engine',
+    description: 'Upload any product photo. Get Amazon, Shopify & social content instantly.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'UnicornApps — AI Product Content Engine',
+  }
 };
 
 export default function RootLayout({
@@ -19,6 +32,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <div className="flex min-h-screen flex-col relative">
+          <div className="matrix-glow-shell" />
           <Navbar />
           <main className="flex-1 mt-16">{children}</main>
         </div>

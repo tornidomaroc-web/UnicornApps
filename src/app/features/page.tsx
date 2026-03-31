@@ -8,6 +8,12 @@ import {
 import { Sparkles, BarChart3, History } from "lucide-react";
 import Link from "next/link";
 
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "Features — AI-Powered Product Engine",
+};
+
 export default function FeaturesPage() {
   const features = [
     {

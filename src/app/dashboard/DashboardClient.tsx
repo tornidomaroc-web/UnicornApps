@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   UploadCloud,
@@ -26,6 +26,18 @@ import {
   Smile,
   Target,
   ArrowRight,
+  Play,
+  Globe,
+  BadgeCheck,
+  Search,
+  Hash,
+  Database,
+  Smartphone,
+  Store,
+  User as UserIcon,
+  Clock,
+  Trash2,
+  Maximize2
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -70,13 +82,20 @@ interface Generation {
   created_at: string
   content: GeneratedContent
   image_url: string
+  platform?: string
 }
 
-export default function DashboardClient({ 
+interface ChatMessage {
+  role: 'user' | 'ai'
+  message: string
+  timestamp: Date
+}
+
+export default function DashboardClient({
   userId,
-  initialCredits, 
-  initialHistory 
-}: { 
+  initialCredits,
+  initialHistory
+}: {
   userId: string,
   initialCredits: number,
   initialHistory: Generation[]
@@ -91,11 +110,50 @@ export default function DashboardClient({
   const [history, setHistory] = useState<Generation[]>(initialHistory)
   const [activeTab, setActiveTab] = useState<'seo' | 'shopify' | 'amazon' | 'social' | 'data'>('seo')
   
-  // Phase 3 State
+  // Royal Obsidian State
+  const [displayCredits, setDisplayCredits] = useState(0)
+  const [selectedPlatform, setSelectedPlatform] = useState('amazon')
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
+    { 
+      role: 'ai', 
+      message: 'Matrix initialized. Upload a product image to begin analysis.', 
+      timestamp: new Date() 
+    }
+  ])
   const [refineInput, setRefineInput] = useState('')
   const [isRefining, setIsRefining] = useState(false)
   const [viewMode, setViewMode] = useState<'raw' | 'preview'>('raw')
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true) // For mobile bottom sheet
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
+  // Animated Credit Counter
+  useEffect(() => {
+    let start = 0
+    const end = initialCredits
+    const duration = 1000
+    const step = end / (duration / 16)
+    const timer = setInterval(() => {
+      start += step
+      if (start >= end) { 
+        setDisplayCredits(end)
+        clearInterval(timer) 
+      } else {
+        setDisplayCredits(Math.floor(start))
+      }
+    }, 16)
+    return () => clearInterval(timer)
+  }, [initialCredits])
+
+  // Scroll to bottom of chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatHistory])
+
+  const platforms = [
+    { id: 'amazon', label: 'Amazon', emoji: '🛒', color: 'orange' },
+    { id: 'shopify', label: 'Shopify', emoji: '🏪', color: 'green' },
+    { id: 'instagram', label: 'Instagram', emoji: '📱', color: 'pink' },
+    { id: 'tiktok', label: 'TikTok', emoji: '🎵', color: 'red' },
+  ]
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -125,7 +183,10 @@ export default function DashboardClient({
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: preview }),
+        body: JSON.stringify({ 
+          image: preview,
+          platform: selectedPlatform 
+        }),
       })
 
       const data = await response.json()
@@ -135,7 +196,16 @@ export default function DashboardClient({
       }
 
       setResults(data)
-      router.refresh() // Refresh to update context
+      
+      // Add to history locally for immediate feedback if needed, 
+      // but router.refresh() will handle the actual data sync
+      router.refresh() 
+      
+      setChatHistory(prev => [...prev, {
+        role: 'ai',
+        message: `Analysis complete for ${selectedPlatform}. Matrix synchronized.`,
+        timestamp: new Date()
+      }])
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -150,13 +220,21 @@ export default function DashboardClient({
     setIsRefining(true)
     setError(null)
 
+    // Add user message to chat history
+    const userMsg: ChatMessage = {
+      role: 'user',
+      message: finalInstruction,
+      timestamp: new Date()
+    }
+    setChatHistory(prev => [...prev, userMsg])
+
     try {
       const response = await fetch('/api/refine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           currentContent: results,
-          instruction: finalInstruction 
+          instruction: finalInstruction
         }),
       })
 
@@ -168,20 +246,45 @@ export default function DashboardClient({
 
       setResults(data)
       setRefineInput('')
+
+      // Add AI response to chat history
+      setChatHistory(prev => [...prev, {
+        role: 'ai',
+        message: 'Content refined successfully. The Matrix has been updated.',
+        timestamp: new Date()
+      }])
     } catch (err: any) {
       setError(err.message)
+      setChatHistory(prev => [...prev, {
+        role: 'ai',
+        message: `Error: ${err.message}. Please try a different instruction.`,
+        timestamp: new Date()
+      }])
     } finally {
       setIsRefining(false)
     }
   }
 
-  // --- MOCKUP COMPONENTS ---
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text)
+    setCopySuccess(id)
+    setTimeout(() => setCopySuccess(null), 2000)
+  }
+
+  const platformBadge = (platform?: string) => {
+    if (platform === 'shopify') return 'bg-green-500/20 text-green-400 border-green-500/30'
+    if (platform === 'instagram') return 'bg-pink-500/20 text-pink-400 border-pink-500/30'
+    if (platform === 'tiktok') return 'bg-red-500/20 text-red-400 border-red-500/30'
+    return 'bg-orange-500/20 text-orange-400 border-orange-500/30' // amazon default
+  }
+
+  // --- MOCKUP COMPONENTS (KEPT AS IS) ---
   const AmazonMockup = () => (
-    <div className="bg-white text-[#111] p-8 rounded-lg shadow-2xl font-sans max-w-4xl mx-auto border border-zinc-200">
+    <div className="bg-white text-[#111] p-8 rounded-2xl shadow-2xl font-sans max-w-4xl mx-auto border border-zinc-200 overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-4">
-          <div className="aspect-square rounded-md overflow-hidden bg-white border border-zinc-100 p-4">
-             <img src={preview!} alt="Amazon Product" className="w-full h-full object-contain" />
+          <div className="aspect-square rounded-xl overflow-hidden bg-white border border-zinc-100 p-4">
+            <img src={preview!} alt="Amazon Product" className="w-full h-full object-contain" />
           </div>
         </div>
         <div className="space-y-4">
@@ -225,11 +328,11 @@ export default function DashboardClient({
   )
 
   const ShopifyMockup = () => (
-    <div className="bg-white text-zinc-900 min-h-[600px] rounded-lg shadow-2xl overflow-hidden font-sans border border-zinc-100">
+    <div className="bg-white text-zinc-900 min-h-[600px] rounded-2xl shadow-2xl overflow-hidden font-sans border border-zinc-100">
       <nav className="border-b border-zinc-100 p-6 flex justify-between items-center bg-white">
         <div className="text-xl font-bold tracking-tighter flex items-center gap-2">
-           <ShoppingBag className="w-6 h-6" style={{ color: 'var(--theme-primary)' }} />
-           MODERN STORE
+          <ShoppingBag className="w-6 h-6 text-violet-600" />
+          MODERN STORE
         </div>
         <div className="flex gap-6 text-sm font-medium text-zinc-600">
           <span>Shop All</span>
@@ -239,74 +342,68 @@ export default function DashboardClient({
       </nav>
       <div className="max-w-6xl mx-auto p-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-           <motion.div 
-             initial={{ opacity: 0, scale: 0.9 }}
-             animate={{ opacity: 1, scale: 1 }}
-             className="aspect-[4/5] bg-zinc-50 rounded-2xl overflow-hidden shadow-inner border border-zinc-100"
-           >
-             <img src={preview!} alt="Shopify Product" className="w-full h-full object-cover" />
-           </motion.div>
-           <div className="space-y-8">
-              <div className="space-y-2">
-                <span className="text-[var(--theme-primary)] font-semibold tracking-widest text-xs uppercase">New Arrival</span>
-                <h1 className="text-4xl font-bold tracking-tight text-zinc-900">{results?.seoTitle}</h1>
-                <p className="text-2xl text-zinc-500 font-light">$99.00 USD</p>
-              </div>
-              
-              <div className="prose prose-zinc max-w-none prose-p:text-zinc-600 prose-headings:text-zinc-900">
-                {results?.shopifyHtml ? (
-                   <div dangerouslySetInnerHTML={{ __html: results.shopifyHtml }} />
-                ) : (
-                   <p>{results?.productDescription}</p>
-                )}
-              </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="aspect-[4/5] bg-zinc-50 rounded-2xl overflow-hidden shadow-inner border border-zinc-100"
+          >
+            <img src={preview!} alt="Shopify Product" className="w-full h-full object-cover" />
+          </motion.div>
+          <div className="space-y-8">
+            <div className="space-y-2">
+              <span className="text-violet-600 font-semibold tracking-widest text-xs uppercase">New Arrival</span>
+              <h1 className="text-4xl font-bold tracking-tight text-zinc-900">{results?.seoTitle}</h1>
+              <p className="text-2xl text-zinc-500 font-light">$99.00 USD</p>
+            </div>
 
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <div className="flex-1 space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-zinc-400">Quantity</label>
-                    <div className="h-12 border border-zinc-200 rounded-xl flex items-center justify-center font-medium">1</div>
-                  </div>
-                  <div className="flex-[2] space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-zinc-400">Variant</label>
-                    <div className="h-12 border border-zinc-200 rounded-xl flex items-center px-4 justify-between font-medium">
-                      Standard
-                      <ChevronDown className="w-4 h-4 text-zinc-400" />
-                    </div>
-                  </div>
+            <div className="prose prose-zinc max-w-none prose-p:text-zinc-600 prose-headings:text-zinc-900">
+              {results?.shopifyHtml ? (
+                <div dangerouslySetInnerHTML={{ __html: results.shopifyHtml }} />
+              ) : (
+                <p>{results?.productDescription}</p>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <div className="flex-1 space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold text-zinc-400">Quantity</label>
+                  <div className="h-12 border border-zinc-200 rounded-xl flex items-center justify-center font-medium">1</div>
                 </div>
-                <Button 
-                  className="w-full py-7 text-lg font-bold rounded-2xl shadow-xl shadow-[var(--theme-primary)]/20 transition-all hover:-translate-y-1"
-                  style={{ backgroundColor: 'var(--theme-primary)', color: 'white' }}
-                >
-                  ADD TO CART
-                </Button>
-                <div className="flex items-center justify-center gap-2 text-xs text-zinc-400 font-medium pt-2">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                  Fast worldwide shipping
+                <div className="flex-[2] space-y-1.5">
+                  <label className="text-[10px] uppercase font-bold text-zinc-400">Variant</label>
+                  <div className="h-12 border border-zinc-200 rounded-xl flex items-center px-4 justify-between font-medium">
+                    Standard
+                    <ChevronDown className="w-4 h-4 text-zinc-400" />
+                  </div>
                 </div>
               </div>
-           </div>
+              <Button
+                className="w-full py-7 text-lg font-bold rounded-2xl bg-violet-600 hover:bg-violet-500 text-white shadow-xl shadow-violet-500/20 transition-all hover:-translate-y-1 border-none"
+              >
+                ADD TO CART
+              </Button>
+              <div className="flex items-center justify-center gap-2 text-xs text-zinc-400 font-medium pt-2">
+                <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                Fast worldwide shipping
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   )
 
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text)
-    setCopySuccess(id)
-    setTimeout(() => setCopySuccess(null), 2000)
-  }
-
   const downloadCSV = (data: Generation[], filename: string) => {
     const headers = [
-      'SEO Title', 'Meta Description', 'Product Description', 'Social Media Tags',
+      'Platform', 'SEO Title', 'Meta Description', 'Product Description', 'Social Media Tags',
       'Shopify HTML', 'Amazon Bullet 1', 'Amazon Bullet 2', 'Amazon Bullet 3', 'Amazon Bullet 4', 'Amazon Bullet 5',
       'Material', 'Dominant Color', 'Target Audience', 'Care Instructions',
       'Viral Hook', 'Viral Concept',
       'Created At'
     ]
     const rows = data.map(item => [
+      item.platform || 'amazon',
       item.content.seoTitle || '',
       item.content.metaDescription || '',
       item.content.productDescription || '',
@@ -341,689 +438,572 @@ export default function DashboardClient({
     document.body.removeChild(link)
   }
 
-  const dynamicThemeStyles = {
-    '--theme-primary': results?.dynamicTheme?.dominantColorHex || '#10b981', // emerald-500
-    '--theme-accent': results?.dynamicTheme?.accentColorHex || '#34d399', // emerald-400
-  } as React.CSSProperties
-
   return (
-    <div className="space-y-8 min-h-screen text-zinc-100" style={dynamicThemeStyles}>
-      <div className="flex flex-col gap-4">
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-        >
-          <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-cyan-400">
-            AI Product Copywriter
-          </h2>
-          
-          {/* Top Up / Upgrade Section */}
-          <div className="flex flex-wrap gap-3">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                variant="outline"
-                className="bg-black/20 backdrop-blur-md border-white/10 hover:bg-white/10 text-zinc-100 shadow-sm group transition-all"
-                asChild
-              >
-                <a 
-                  href={`https://jadtrader.lemonsqueezy.com/checkout/buy/173d1849-c625-4fe5-952e-0372e6e337de?checkout[custom][user_id]=${userId}`}
-                  className="flex items-center gap-2"
-                >
-                  <CreditCardIcon className="w-4 h-4 text-zinc-400 group-hover:rotate-12 transition-transform" />
-                  Starter Plan ($9)
-                </a>
-              </Button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                className="group border border-[var(--theme-primary)] hover:shadow-[0_0_20px_var(--theme-primary)] transition-all duration-300 relative overflow-hidden text-zinc-50"
-                style={{ backgroundColor: 'var(--theme-primary)' }}
-                asChild
-              >
-                <a 
-                  href={`https://jadtrader.lemonsqueezy.com/checkout/buy/46ed7c0f-c7ad-4b0b-90f2-11cf50168bf2?checkout[custom][user_id]=${userId}`}
-                  className="flex items-center gap-2 relative z-10"
-                >
-                  <Zap className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                  Upgrade to Pro ($29)
-                </a>
-              </Button>
-            </motion.div>
-          </div>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-        >
-          <Card className="border-white/10 bg-white/20 backdrop-blur-xl overflow-hidden group hover:border-[var(--theme-primary)] hover:shadow-[0_0_30px_-5px_var(--theme-primary)] transition-all duration-500">
-            <CardContent className="p-12 text-center text-zinc-100">
-              {!preview ? (
-                <div
-                  className="flex flex-col items-center gap-4 cursor-pointer"
-                  onClick={() => document.getElementById('file-upload')?.click()}
-                >
-                  <div className="p-4 bg-white/5 rounded-full group-hover:scale-110 group-hover:bg-[var(--theme-primary)] transition-all duration-500">
-                    <UploadCloud className="w-8 h-8 text-zinc-400 group-hover:text-white transition-colors" />
-                  </div>
-                  <div>
-                    <p className="text-lg font-medium">Drag & Drop or Click to upload</p>
-                    <p className="text-sm text-zinc-100/80">Supported formats: JPEG, PNG (Max 4MB)</p>
-                  </div>
-                  <input
-                    id="file-upload"
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                  />
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="relative mx-auto w-full max-w-sm aspect-square rounded-lg overflow-hidden border border-white/10 shadow-2xl bg-black/50">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={preview} alt="Product preview" className="object-cover w-full h-full transform transition-transform group-hover:scale-105 duration-700 relative z-10" />
-                    
-                    {/* The AI Pulse (Scanning Laser & Brightness Sweep) */}
-                    {loading && (
-                      <div className="absolute inset-0 z-20 pointer-events-none rounded-lg overflow-hidden">
-                         <div className="absolute inset-0 bg-white/5 mix-blend-overlay transition-all duration-500" />
-                         <motion.div
-                           className="absolute left-0 right-0 h-0.5"
-                           style={{ backgroundColor: 'var(--theme-primary)', boxShadow: '0 0 20px 2px var(--theme-primary)', mixBlendMode: 'screen' }}
-                           animate={{ top: ['0%', '100%', '0%'] }}
-                           transition={{ repeat: Infinity, duration: 3, ease: 'linear' }}
-                         />
-                      </div>
-                    )}
-
-                    {/* Interactive Hotspots */}
-                    {!loading && results?.hotspots?.map((hotspot, idx) => (
-                      <div
-                        key={idx}
-                        className="absolute z-20 group/hotspot cursor-pointer"
-                        style={{ top: `${hotspot.y}%`, left: `${hotspot.x}%`, transform: 'translate(-50%, -50%)' }}
-                      >
-                        <motion.div
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ delay: 0.8 + idx * 0.2, type: 'spring' }}
-                          className="w-4 h-4 rounded-full border-2 border-white shadow-[0_0_15px_var(--theme-primary)] relative"
-                          style={{ backgroundColor: 'var(--theme-primary)' }}
-                        >
-                          <span className="absolute inset-0 rounded-full animate-ping opacity-75" style={{ backgroundColor: 'var(--theme-primary)' }} />
-                        </motion.div>
-                        <div className="absolute top-1/2 left-6 -translate-y-1/2 opacity-0 group-hover/hotspot:opacity-100 transition-opacity pointer-events-none whitespace-nowrap bg-black/60 backdrop-blur-md text-zinc-100 text-xs px-3 py-1.5 rounded-md border border-white/10 shadow-xl">
-                          {hotspot.label}
-                        </div>
-                      </div>
-                    ))}
-
-                    <button
-                      onClick={() => {
-                        setFile(null)
-                        setPreview(null)
-                        setResults(null)
-                      }}
-                      disabled={loading}
-                      className="absolute top-2 right-2 p-1 bg-black/60 backdrop-blur-md text-zinc-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition-colors z-30 border border-white/10 hover:border-white/30"
-                    >
-                      <AlertCircle className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="flex justify-center gap-4">
-                    <Button
-                      onClick={handleGenerate}
-                      disabled={loading || initialCredits <= 0}
-                      className="w-full max-w-xs shadow-lg transition-all text-zinc-50 hover:shadow-[0_0_20px_var(--theme-primary)]"
-                      style={{ backgroundColor: 'var(--theme-primary)' }}
-                    >
-                      {loading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Analyzing Context...
-                        </>
-                      ) : initialCredits <= 0 ? (
-                        'No Credits Available'
-                      ) : (
-                        'Ignite Matrix (1 Credit)'
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+    <div className="min-h-screen bg-[#070710] text-[#c8cfe0] selection:bg-violet-500/30 selection:text-white px-4 py-8 md:px-8">
+      {/* BACKGROUND EFFECTS */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-600/10 rounded-full blur-[120px] animate-float-orb" />
+        <div className="absolute bottom-[10%] right-[-5%] w-[35%] h-[35%] bg-blue-500/5 rounded-full blur-[120px] animate-float-orb-slow" />
       </div>
 
-      {error && (
-        <div className="bg-red-500/10 backdrop-blur-md border border-red-500/50 text-red-400 p-4 rounded-lg flex items-center gap-2">
-          <AlertCircle className="w-4 h-4" />
-          {error}
-        </div>
-      )}
+      <div className="max-w-7xl mx-auto space-y-12 relative z-10">
+        
+        {/* 1. CREDITS HEADER BAR */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative flex flex-col md:flex-row justify-between items-center bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 shadow-[0_0_40px_-15px_rgba(124,58,237,0.2)] overflow-hidden"
+        >
+          <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
+          
+          <div className="flex items-center gap-4 mb-4 md:mb-0">
+             <div className="w-10 h-10 bg-white text-slate-950 flex items-center justify-center rounded-xl text-xl font-black shadow-[0_0_20px_rgba(255,255,255,0.1)]">U</div>
+             <h1 className="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-violet-400">
+               AI PRODUCT ENGINE
+             </h1>
+          </div>
 
-      <AnimatePresence mode="wait">
-        {results && (
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: {
-                opacity: 1,
-                y: 0,
-                transition: { staggerChildren: 0.15 }
-              }
-            }}
-            className="flex flex-col gap-6"
-          >
-            <motion.div variants={{
-              hidden: { filter: "blur(12px)", opacity: 0, scale: 0.98 },
-              visible: { filter: "blur(0px)", opacity: 1, scale: 1 }
-            }}>
-              <Card className="col-span-full bg-black/40 backdrop-blur-xl border border-white/10 shadow-lg">
-                <CardHeader>
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <CardTitle className="flex items-center gap-2 text-white">
-                      <Sparkles className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--theme-primary)' }} />
-                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-cyan-400">
-                        Matrix Activated
-                      </span>
-                    </CardTitle>
-                    
-                    {/* View Mode Toggle */}
-                    <div className="flex items-center bg-white/5 backdrop-blur-md border border-white/10 rounded-full p-1 self-start md:self-center">
-                      <button
-                        onClick={() => setViewMode('raw')}
-                        className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${viewMode === 'raw' ? 'bg-white/10 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
-                      >
-                        <Layout className="w-3.5 h-3.5" />
-                        Raw Content
-                      </button>
-                      <button
-                        onClick={() => setViewMode('preview')}
-                        className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${viewMode === 'preview' ? 'bg-white/10 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
-                      >
-                        <Monitor className="w-3.5 h-3.5" />
-                        Live Preview
-                      </button>
-                    </div>
+          <div className="flex flex-wrap items-center gap-3">
+             <div className="bg-black/40 border border-white/10 rounded-2xl px-5 py-2.5 flex items-center gap-4 backdrop-blur-xl">
+                <div className="flex items-center gap-2">
+                   <Zap className="w-4 h-4 text-amber-400 animate-pulse" />
+                   <span className="text-xs font-black uppercase tracking-widest text-[#c8cfe0]">
+                     {displayCredits} <span className="text-slate-500">Credits Remaining</span>
+                   </span>
+                </div>
+                <div className="h-4 w-px bg-white/10" />
+                <div className="flex items-center gap-2">
+                   <a href={`https://jadtrader.lemonsqueezy.com/checkout/buy/173d1849-c625-4fe5-952e-0372e6e337de?checkout[custom][user_id]=${userId}`} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors">Starter $9</a>
+                   <a href={`https://jadtrader.lemonsqueezy.com/checkout/buy/46ed7c0f-c7ad-4b0b-90f2-11cf50168bf2?checkout[custom][user_id]=${userId}`} className="bg-violet-600/10 border border-violet-500/30 text-violet-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg hover:bg-violet-600 hover:text-white transition-all">Pro $29 ↗</a>
+                </div>
+             </div>
+             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:border-white/30" onClick={() => router.refresh()}>
+               <Clock className="w-4 h-4" />
+             </Button>
+          </div>
+        </motion.div>
 
-                    <div className="flex items-center gap-1 text-sm font-medium" style={{ color: 'var(--theme-accent)' }}>
-                      <CheckCircle2 className="w-4 h-4" />
-                      Target Established
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            </motion.div>
+        {/* 2. UPLOAD & PLATFORM CONTROL ZONE */}
+        <div className="grid lg:grid-cols-1 gap-8">
+           <motion.div
+              layout
+              className="relative p-1 bg-white/5 rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden group"
+           >
+              {/* DASHED ANIMATED BORDER */}
+              <div className="absolute inset-0 z-0 pointer-events-none p-2">
+                 <svg className="w-full h-full">
+                    <rect 
+                      width="100%" height="100%" 
+                      fill="none" 
+                      rx="32" ry="32" 
+                      stroke="rgba(124, 58, 237, 0.4)" 
+                      strokeWidth="2" 
+                      strokeDasharray="10 10" 
+                      className="animate-[dash-rotate_3s_linear_infinite]"
+                    />
+                 </svg>
+              </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr,360px] gap-8 items-start">
-              <div className="space-y-6">
-                <AnimatePresence mode="wait">
-                  {viewMode === 'raw' ? (
-                    <motion.div
-                      key="raw-view"
-                      initial={{ opacity: 0, x: -20, filter: 'blur(10px)' }}
-                      animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                      exit={{ opacity: 0, x: 20, filter: 'blur(10px)' }}
-                      transition={{ duration: 0.4 }}
-                      className="space-y-6"
-                    >
-                      {/* Tabs Navigation */}
-                      <div 
-                        className="flex gap-2 p-1 bg-black/40 backdrop-blur-xl border border-white/10 rounded-lg overflow-x-auto w-full custom-scrollbar shadow-lg"
-                      >
-                        {['seo', 'shopify', 'amazon', 'social', 'data'].map((tabId) => {
-                           const labels: Record<string, string> = {
-                             seo: 'SEO & Basic',
-                             shopify: 'Shopify HTML',
-                             amazon: 'Amazon Bullets',
-                             social: 'Social & Viral',
-                             data: 'Structured Data'
-                           }
-                           const isActive = activeTab === tabId;
-                           return (
-                             <button 
-                               key={tabId}
-                               onClick={() => setActiveTab(tabId as typeof activeTab)} 
-                               className={`whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-all duration-300 ${isActive ? 'bg-white/10 shadow-sm text-zinc-50' : 'text-zinc-100 hover:text-white hover:bg-white/5'}`}
-                               style={isActive ? { borderColor: 'var(--theme-primary)', borderWidth: '1px' } : { borderWidth: '1px', borderColor: 'transparent' }}
-                             >
-                               {labels[tabId]}
-                             </button>
-                           )
-                        })}
+              <div className="relative z-10 p-8 md:p-12">
+                 {!preview ? (
+                   <motion.div 
+                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                     className="flex flex-col items-center justify-center gap-8 py-12 cursor-pointer"
+                     onClick={() => document.getElementById('file-upload')?.click()}
+                   >
+                      <div className="relative">
+                         <div className="absolute inset-0 bg-violet-600/20 blur-3xl rounded-full scale-150 animate-pulse" />
+                         <div className="relative w-24 h-24 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                            <UploadCloud className="w-10 h-10 text-violet-400" />
+                         </div>
+                      </div>
+                      <div className="text-center space-y-3">
+                         <h2 className="text-3xl font-black text-white tracking-tighter">Drop Your Product Image Here</h2>
+                         <p className="text-slate-400 font-medium max-w-sm mx-auto">Gemini 3.1 Vision will analyze materials, colors & audience target hooks.</p>
+                      </div>
+                      <div className="flex gap-2 flex-wrap justify-center">
+                         {['PNG', 'JPG', 'WEBP', 'MAX 4MB'].map(b => (
+                           <span key={b} className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500">{b}</span>
+                         ))}
+                      </div>
+                      <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                   </motion.div>
+                 ) : (
+                   <div className="grid md:grid-cols-[1fr,400px] gap-12 items-start">
+                      {/* Left: Preview */}
+                      <div className="relative aspect-square rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl bg-black/50 group/img">
+                         <img src={preview} alt="Preview" className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-105" />
+                         {loading && (
+                            <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+                               <motion.div
+                                 className="absolute left-0 right-0 h-[2px] bg-violet-500 shadow-[0_0_30px_violet]"
+                                 animate={{ top: ['0%', '100%', '0%'] }}
+                                 transition={{ repeat: Infinity, duration: 2.5, ease: 'linear' }}
+                               />
+                               <div className="absolute inset-0 bg-violet-600/10 backdrop-blur-[2px]" />
+                            </div>
+                         )}
+
+                         {/* Results Hotspots */}
+                         {!loading && results?.hotspots?.map((hotspot, idx) => (
+                          <div
+                            key={idx}
+                            className="absolute z-20 group/hotspot cursor-pointer"
+                            style={{ top: `${hotspot.y}%`, left: `${hotspot.x}%`, transform: 'translate(-50%, -50%)' }}
+                          >
+                            <motion.div
+                              initial={{ scale: 0, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ delay: 0.5 + idx * 0.1 }}
+                              className="w-5 h-5 rounded-full border-2 border-white bg-violet-600 shadow-[0_0_20px_rgba(124,58,237,0.8)] relative"
+                            >
+                               <span className="absolute inset-0 rounded-full animate-ping bg-violet-400 opacity-75" />
+                            </motion.div>
+                            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/hotspot:opacity-100 transition-all pointer-events-none bg-black/80 backdrop-blur-xl text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border border-white/10 shadow-2xl whitespace-nowrap">
+                              {hotspot.label}
+                            </div>
+                          </div>
+                        ))}
+
+                         <button 
+                           onClick={() => { setFile(null); setPreview(null); setResults(null); }}
+                           className="absolute top-6 right-6 w-10 h-10 bg-black/60 backdrop-blur-xl border border-white/10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors z-30"
+                         >
+                            <Trash2 className="w-5 h-5" />
+                         </button>
                       </div>
 
-                      <div className="relative">
-                         {/* Content Cards based on Active Tab */}
-                         {activeTab === 'seo' && (
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                             <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
-                               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                 <CardTitle className="text-sm font-medium text-zinc-100">SEO Title</CardTitle>
-                                 <Button
-                                   variant="ghost"
-                                   size="sm"
-                                   onClick={() => copyToClipboard(results.seoTitle, 'title')}
-                                   className="transition-opacity text-white/60 hover:text-white"
-                                 >
-                                   {copySuccess === 'title' ? <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--theme-accent)' }} /> : <Copy className="h-4 w-4" />}
-                                 </Button>
-                               </CardHeader>
-                               <CardContent>
-                                 <p className="text-base font-semibold text-zinc-100">{results.seoTitle}</p>
-                               </CardContent>
-                             </Card>
-
-                             <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
-                               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                 <CardTitle className="text-sm font-medium text-zinc-100">Meta Description</CardTitle>
-                                 <Button
-                                   variant="ghost"
-                                   size="sm"
-                                   onClick={() => copyToClipboard(results.metaDescription, 'meta')}
-                                   className="transition-opacity text-white/60 hover:text-white"
-                                 >
-                                   {copySuccess === 'meta' ? <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--theme-accent)' }} /> : <Copy className="h-4 w-4" />}
-                                 </Button>
-                               </CardHeader>
-                               <CardContent>
-                                 <p className="text-base text-zinc-100 leading-relaxed">{results.metaDescription}</p>
-                               </CardContent>
-                             </Card>
-
-                             <Card className="col-span-full group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
-                               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                 <CardTitle className="text-sm font-medium text-zinc-100">Product Description</CardTitle>
-                                 <Button
-                                   variant="ghost"
-                                   size="sm"
-                                   onClick={() => copyToClipboard(results.productDescription, 'desc')}
-                                   className="transition-opacity text-white/60 hover:text-white"
-                                 >
-                                   {copySuccess === 'desc' ? <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--theme-accent)' }} /> : <Copy className="h-4 w-4" />}
-                                 </Button>
-                               </CardHeader>
-                               <CardContent>
-                                 <p className="text-base text-zinc-100 leading-relaxed whitespace-pre-line">
-                                   {results.productDescription}
-                                 </p>
-                               </CardContent>
-                             </Card>
-                           </div>
-                         )}
-
-                         {activeTab === 'shopify' && (
-                           <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)] overflow-hidden">
-                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-black/20 border-b border-white/5 rounded-t-xl">
-                               <CardTitle className="text-sm font-medium text-zinc-100">Shopify HTML Formatted</CardTitle>
-                               <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 onClick={() => copyToClipboard(results.shopifyHtml || '', 'shopify')}
-                                 className="text-zinc-300 hover:text-white"
-                               >
-                                 {copySuccess === 'shopify' ? <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--theme-accent)' }} /> : <Copy className="h-4 w-4" />}
-                               </Button>
-                             </CardHeader>
-                             <CardContent className="pt-6 overflow-x-auto custom-scrollbar">
-                               {results.shopifyHtml ? (
-                                  <div className="prose prose-invert max-w-none text-zinc-100" dangerouslySetInnerHTML={{ __html: results.shopifyHtml }} />
-                               ) : (
-                                  <p className="text-zinc-500 italic">No Shopify HTML generated.</p>
-                               )}
-                             </CardContent>
-                           </Card>
-                         )}
-
-                         {activeTab === 'amazon' && (
-                           <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
-                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                               <CardTitle className="text-sm font-medium text-zinc-100">A9-Optimized Bullets</CardTitle>
-                               <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 onClick={() => copyToClipboard(results.amazonBullets?.join('\n') || '', 'amazon')}
-                                 className="text-zinc-300 hover:text-white"
-                               >
-                                 {copySuccess === 'amazon' ? <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--theme-accent)' }} /> : <Copy className="h-4 w-4" />}
-                               </Button>
-                             </CardHeader>
-                             <CardContent className="pt-4">
-                               {results.amazonBullets?.length ? (
-                                 <ul className="space-y-3">
-                                   {results.amazonBullets.map((bullet, idx) => (
-                                     <li key={idx} className="flex items-start gap-3 text-zinc-100">
-                                       <span className="font-bold flex-shrink-0 mt-0.5" style={{ color: 'var(--theme-primary)' }}>•</span>
-                                       <span>{bullet}</span>
-                                     </li>
-                                   ))}
-                                 </ul>
-                               ) : (
-                                 <p className="text-zinc-500 italic">No Amazon Bullets generated.</p>
-                               )}
-                             </CardContent>
-                           </Card>
-                         )}
-
-                         {activeTab === 'social' && (
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                             <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                 <CardTitle className="text-sm font-medium text-zinc-100">TikTok/Reels Hook</CardTitle>
-                                 <Button
-                                   variant="ghost"
-                                   size="sm"
-                                   onClick={() => copyToClipboard(results.viralScript?.hook || '', 'hook')}
-                                   className="transition-opacity text-white/60 hover:text-white"
-                                 >
-                                   {copySuccess === 'hook' ? <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--theme-accent)' }} /> : <Copy className="h-4 w-4" />}
-                                 </Button>
-                               </CardHeader>
-                               <CardContent>
-                                 {results.viralScript?.hook ? (
-                                   <p 
-                                     className="text-base text-zinc-50 font-medium italic border-l-4 pl-4 py-1"
-                                     style={{ borderColor: 'var(--theme-accent)' }}
-                                   >&quot;{results.viralScript.hook}&quot;</p>
-                                 ) : (
-                                   <p className="text-zinc-500 italic">No hook generated.</p>
-                                 )}
-                               </CardContent>
-                             </Card>
-
-                             <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                 <CardTitle className="text-sm font-medium text-zinc-100">Visual Concept</CardTitle>
-                                 <Button
-                                   variant="ghost"
-                                   size="sm"
-                                   onClick={() => copyToClipboard(results.viralScript?.concept || '', 'concept')}
-                                   className="transition-opacity text-white/60 hover:text-white"
-                                 >
-                                   {copySuccess === 'concept' ? <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--theme-accent)' }} /> : <Copy className="h-4 w-4" />}
-                                 </Button>
-                               </CardHeader>
-                               <CardContent>
-                                 {results.viralScript?.concept ? (
-                                   <p className="text-base text-zinc-100 leading-relaxed">{results.viralScript.concept}</p>
-                                 ) : (
-                                   <p className="text-zinc-500 italic">No concept generated.</p>
-                                 )}
-                               </CardContent>
-                             </Card>
-
-                             <div className="col-span-full flex flex-wrap gap-2">
-                                {results.socialMediaTags?.map((tag) => (
-                                  <motion.span
-                                    initial={{ scale: 0.9, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    key={tag}
-                                    className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-sm font-medium transition-colors hover:bg-white/10 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.2)]"
-                                   
-                                  >
-                                    {tag}
-                                  </motion.span>
-                                ))}
-                             </div>
-                           </div>
-                         )}
-
-                         {activeTab === 'data' && (
-                           <Card className="group hover:shadow-[0_0_15px_var(--theme-primary)] transition-all bg-black/40 backdrop-blur-xl border border-white/10 hover:border-[var(--theme-primary)]">
-                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                               <CardTitle className="text-sm font-medium text-zinc-100">Structured Data</CardTitle>
-                               <Button
-                                 variant="ghost"
-                                 size="sm"
-                                 onClick={() => copyToClipboard(JSON.stringify(results.structuredData, null, 2) || '', 'data')}
-                                 className="text-zinc-300 hover:text-white"
-                               >
-                                 {copySuccess === 'data' ? <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--theme-accent)' }} /> : <Copy className="h-4 w-4" />}
-                               </Button>
-                             </CardHeader>
-                             <CardContent>
-                               {results.structuredData ? (
-                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                                    <div>
-                                      <p className="text-xs text-zinc-100 uppercase tracking-wider font-semibold">Material</p>
-                                      <p className="text-white font-medium">{results.structuredData.material}</p>
+                      {/* Right: Requirements & Action */}
+                      <div className="space-y-8 h-full flex flex-col justify-between">
+                         <div className="space-y-6">
+                            <h3 className="text-xl font-black text-white uppercase tracking-tighter">Ready to Analyze</h3>
+                            <div className="space-y-4">
+                               {[
+                                 { label: 'Image loaded', sub: 'Matrix format secured', status: 'done' },
+                                 { label: 'Gemini 3.1 Vision ready', sub: 'Multi-modal engine active', status: 'done' },
+                                 { label: `Platform: ${selectedPlatform.toUpperCase()}`, sub: 'Target logic established', status: 'platform' },
+                                 { label: loading ? 'Hyper-Analysis in progress...' : 'Analysis pending...', sub: loading ? 'Decoding visual vectors' : 'Awaiting ignition', status: loading ? 'loading' : 'pending' }
+                               ].map((item, i) => (
+                                 <div key={i} className={`flex items-start gap-4 p-4 rounded-2xl border transition-all ${item.status === 'done' ? 'bg-emerald-500/5 border-emerald-500/20' : item.status === 'platform' ? 'bg-violet-500/5 border-violet-500/20' : 'bg-white/5 border-white/10'}`}>
+                                    <div className="mt-1">
+                                       {item.status === 'done' ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : item.status === 'loading' ? <Loader2 className="w-5 h-5 text-violet-500 animate-spin" /> : item.status === 'platform' ? <Target className="w-5 h-5 text-violet-500" /> : <div className="w-5 h-5 rounded-full border-2 border-slate-700 animate-pulse" />}
                                     </div>
                                     <div>
-                                      <p className="text-xs text-zinc-100 uppercase tracking-wider font-semibold">Dominant Color</p>
-                                      <p className="text-white font-medium">{results.structuredData.dominantColor}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-zinc-100 uppercase tracking-wider font-semibold">Target Audience</p>
-                                      <p className="text-white font-medium">{results.structuredData.targetAudience}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-zinc-100 uppercase tracking-wider font-semibold">Care Instructions</p>
-                                      <p className="text-white font-medium">{results.structuredData.careInstructions}</p>
+                                       <p className={`text-sm font-black uppercase tracking-widest ${item.status === 'done' ? 'text-emerald-400' : item.status === 'platform' ? 'text-violet-400' : item.status === 'loading' ? 'text-violet-400' : 'text-slate-500'}`}>{item.label}</p>
+                                       <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">{item.sub}</p>
                                     </div>
                                  </div>
-                               ) : (
-                                 <p className="text-zinc-500 italic">No structured data generated.</p>
-                               )}
-                             </CardContent>
-                           </Card>
-                         )}
-                      </div>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="preview-view"
-                      initial={{ opacity: 0, x: 20, filter: 'blur(10px)' }}
-                      animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                      exit={{ opacity: 0, x: -20, filter: 'blur(10px)' }}
-                      transition={{ duration: 0.4 }}
-                      className="space-y-8"
-                    >
-                      <div className="flex justify-center gap-4 p-1 bg-white/20 rounded-full w-fit mx-auto border border-white/10">
-                        <button
-                          onClick={() => setActiveTab('amazon')}
-                          className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'amazon' ? 'bg-[#FF9900] text-black shadow-lg shadow-[#FF9900]/20' : 'text-zinc-400 hover:text-zinc-200'}`}
-                        >
-                          Amazon Mode
-                        </button>
-                        <button
-                          onClick={() => setActiveTab('shopify')}
-                          className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'shopify' ? 'bg-[#96bf48] text-white shadow-lg shadow-[#96bf48]/20' : 'text-zinc-400 hover:text-zinc-200'}`}
-                        >
-                          Shopify Mode
-                        </button>
-                      </div>
+                               ))}
+                            </div>
+                         </div>
 
-                      {activeTab === 'amazon' ? <AmazonMockup /> : <ShopifyMockup />}
+                         {/* 3. PLATFORM SELECTOR */}
+                         <div className="space-y-4">
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Target Platform</span>
+                            <div className="grid grid-cols-2 gap-2">
+                               {platforms.map(p => (
+                                 <button
+                                   key={p.id}
+                                   onClick={() => setSelectedPlatform(p.id)}
+                                   className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                                     selectedPlatform === p.id 
+                                     ? `border-${p.color}-500/50 bg-${p.color}-500/10 text-${p.color}-300 shadow-[0_0_15px_rgba(var(--${p.color}-rgb),0.2)] scale-[1.02]` 
+                                     : 'border-white/5 bg-white/5 text-slate-500 hover:border-white/20'
+                                   }`}
+                                   // Tailwind dynamic colors workaround - usually you'd use a record
+                                   style={selectedPlatform === p.id ? { 
+                                      borderColor: `var(--${p.id}-color-glow)`, 
+                                      backgroundColor: `var(--${p.id}-color-bg)`,
+                                      color: `var(--${p.id}-color-text)`
+                                   } : {}}
+                                 >
+                                    <span className="text-lg">{p.emoji}</span>
+                                    {p.label}
+                                 </button>
+                               ))}
+                               <style jsx>{`
+                                  button { --amazon-color-glow: rgba(251, 146, 60, 0.4); --amazon-color-bg: rgba(251, 146, 60, 0.1); --amazon-color-text: #fb923c; }
+                                  button { --shopify-color-glow: rgba(74, 222, 128, 0.4); --shopify-color-bg: rgba(74, 222, 128, 0.1); --shopify-color-text: #4ade80; }
+                                  button { --instagram-color-glow: rgba(244, 114, 182, 0.4); --instagram-color-bg: rgba(244, 114, 182, 0.1); --instagram-color-text: #f472b6; }
+                                  button { --tiktok-color-glow: rgba(248, 113, 113, 0.4); --tiktok-color-bg: rgba(248, 113, 113, 0.1); --tiktok-color-text: #f87171; }
+                               `}</style>
+                            </div>
+                         </div>
+
+                         {/* 4. GENERATE BUTTON UPGRADE */}
+                         <Button
+                           onClick={handleGenerate}
+                           disabled={loading || initialCredits <= 0}
+                           className={`w-full h-20 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-500 group relative overflow-hidden ${
+                             loading 
+                             ? 'bg-black border border-violet-500/50' 
+                             : initialCredits <= 0 
+                               ? 'bg-red-500/10 border border-red-500/20 text-red-400' 
+                               : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_40px_-5px_rgba(124,58,237,0.5)]'
+                           }`}
+                         >
+                            {loading ? (
+                              <div className="relative z-10 flex flex-col items-center">
+                                 <span className="text-xs font-black uppercase tracking-[0.3em] text-violet-400 animate-pulse">
+                                   ⟳ Gemini is analyzing your product...
+                                 </span>
+                                 <div className="mt-2 w-48 h-1 bg-white/5 rounded-full overflow-hidden">
+                                    <motion.div className="h-full bg-violet-500" animate={{ x: ['-100%', '100%'] }} transition={{ repeat: Infinity, duration: 1.5 }} />
+                                 </div>
+                              </div>
+                            ) : initialCredits <= 0 ? (
+                              <div className="flex items-center gap-3 font-black uppercase tracking-widest text-[11px]">
+                                 <AlertCircle className="w-5 h-5" />
+                                 <span>No Credits — Upgrade to Continue</span>
+                              </div>
+                            ) : (
+                              <>
+                                 <span className="relative z-10 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                                   <Sparkles className="w-5 h-5 animate-pulse" />
+                                   Ignite Matrix — Generate Content
+                                 </span>
+                                 <span className="relative z-10 text-[9px] font-bold uppercase tracking-widest text-white/60">
+                                   (Consumes 1 Credit)
+                                 </span>
+                                 <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-white/10 to-black/0 translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-1000" />
+                              </>
+                            )}
+                         </Button>
+                      </div>
+                   </div>
+                 )}
+              </div>
+           </motion.div>
+        </div>
+
+        {/* 5. RESULTS & STEALTH CONSOLE ZONE */}
+        {results && (
+           <div className="grid lg:grid-cols-[1fr,360px] gap-8 items-start">
+              <div className="space-y-6">
+                {/* Visual View Mode Selector */}
+                <div className="flex justify-between items-center bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-2">
+                   <div className="flex gap-1">
+                      <button onClick={() => setViewMode('raw')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'raw' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>Matrix Raw</button>
+                      <button onClick={() => setViewMode('preview')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'preview' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>Live Preview</button>
+                   </div>
+                   <div className="flex items-center gap-2 px-4 text-[10px] font-black uppercase tracking-widest text-emerald-400">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Analysis Stable
+                   </div>
+                </div>
+
+                <AnimatePresence mode="wait">
+                  {viewMode === 'preview' ? (
+                     <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }} className="space-y-12">
+                        <section className="space-y-6">
+                           <div className="flex items-center gap-3">
+                              <div className="p-2 bg-orange-500/20 rounded-lg"><ShoppingBag className="w-5 h-5 text-orange-400" /></div>
+                              <h2 className="text-xl font-black text-white uppercase tracking-tighter">Amazon Storefront Live</h2>
+                           </div>
+                           <AmazonMockup />
+                        </section>
+                        <section className="space-y-6">
+                           <div className="flex items-center gap-3">
+                              <div className="p-2 bg-green-500/20 rounded-lg"><Store className="w-5 h-5 text-green-400" /></div>
+                              <h2 className="text-xl font-black text-white uppercase tracking-tighter">Shopify Global Retail</h2>
+                           </div>
+                           <ShopifyMockup />
+                        </section>
+                     </motion.div>
+                  ) : (
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
+                       {/* 5. TABS UPGRADE */}
+                       <div className="flex gap-2 p-1 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto no-scrollbar">
+                          {[
+                            { id: 'seo', label: 'SEO', icon: <Search className="w-3.5 h-3.5" /> },
+                            { id: 'shopify', label: 'Shopify', icon: <Store className="w-3.5 h-3.5" /> },
+                            { id: 'amazon', label: 'Amazon', icon: <ShoppingBag className="w-3.5 h-3.5" /> },
+                            { id: 'social', label: 'Social', icon: <Hash className="w-3.5 h-3.5" /> },
+                            { id: 'data', label: 'Data', icon: <Database className="w-3.5 h-3.5" /> }
+                          ].map(t => (
+                            <button
+                              key={t.id}
+                              onClick={() => setActiveTab(t.id as any)}
+                              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all relative ${activeTab === t.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                            >
+                               {t.icon}
+                               {t.label}
+                               {activeTab === t.id && (
+                                 <motion.div layoutId="tab-active" className="absolute inset-0 bg-white/5 border border-white/10 rounded-xl -z-10 shadow-[0_0_15px_rgba(124,58,237,0.3)]">
+                                    <div className="absolute bottom-0 left-1/4 right-1/4 h-[2px] bg-violet-400" />
+                                 </motion.div>
+                               )}
+                            </button>
+                          ))}
+                       </div>
+
+                       <div className="grid gap-6">
+                          {activeTab === 'seo' && (
+                             <Card className="bg-white/[0.03] border-white/10 rounded-3xl overflow-hidden">
+                                <CardHeader className="border-b border-white/5 py-8 px-10">
+                                   <CardTitle className="text-white font-black text-2xl uppercase tracking-tighter">SEO & Global Identity</CardTitle>
+                                </CardHeader>
+                                <CardContent className="p-10 space-y-10">
+                                   <div className="space-y-4">
+                                      <div className="flex justify-between items-center">
+                                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Target SEO Title</span>
+                                         <Button variant="ghost" size="sm" onClick={() => copyToClipboard(results.seoTitle, 't')} className="h-8 px-3 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 text-[10px] font-black uppercase">
+                                            {copySuccess === 't' ? 'Copied' : 'Copy Matrix'}
+                                         </Button>
+                                      </div>
+                                      <p className="text-xl font-bold text-white leading-tight">{results.seoTitle}</p>
+                                   </div>
+                                   <div className="space-y-4">
+                                      <div className="flex justify-between items-center">
+                                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Global Meta Logic</span>
+                                         <Button variant="ghost" size="sm" onClick={() => copyToClipboard(results.metaDescription, 'm')} className="h-8 px-3 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 text-[10px] font-black uppercase">
+                                            {copySuccess === 'm' ? 'Copied' : 'Copy Logic'}
+                                         </Button>
+                                      </div>
+                                      <p className="text-slate-400 leading-relaxed font-medium">{results.metaDescription}</p>
+                                   </div>
+                                </CardContent>
+                             </Card>
+                          )}
+                          {/* Shopify Redesign */}
+                          {activeTab === 'shopify' && (
+                            <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-10 space-y-8">
+                               <div className="flex justify-between items-center">
+                                  <h3 className="text-xl font-black text-white uppercase tracking-tighter">Liquid Ready HTML</h3>
+                                  <Button onClick={() => copyToClipboard(results.shopifyHtml || '', 'sh')} className="bg-violet-600 hover:bg-violet-500 text-white text-[10px] font-black uppercase rounded-xl">Copy Code</Button>
+                               </div>
+                               <div className="bg-black/60 rounded-2xl p-6 border border-white/5 font-mono text-sm text-violet-300 h-[400px] overflow-auto custom-scrollbar">
+                                  <pre>{results.shopifyHtml}</pre>
+                               </div>
+                            </Card>
+                          )}
+                          {/* Amazon Redesign */}
+                          {activeTab === 'amazon' && (
+                            <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-10 space-y-8">
+                               <h3 className="text-xl font-black text-white uppercase tracking-tighter">A9 Bullet Optimization</h3>
+                               <div className="space-y-4">
+                                  {results.amazonBullets?.map((b, i) => (
+                                    <div key={i} className="flex items-start gap-4 p-5 bg-white/5 border border-white/5 rounded-2xl group hover:border-violet-500/30 transition-all">
+                                       <span className="text-violet-500 font-bold mt-1">✦</span>
+                                       <p className="text-slate-300 font-medium group-hover:text-white transition-colors">{b}</p>
+                                    </div>
+                                  ))}
+                               </div>
+                            </Card>
+                          )}
+                          {/* Social Redesign */}
+                          {activeTab === 'social' && (
+                            <div className="grid gap-6">
+                               <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-10 space-y-6">
+                                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">TikTok / Reels Hook</span>
+                                  <p className="text-2xl font-black text-white tracking-tight leading-none italic uppercase">&quot;{results.viralScript?.hook}&quot;</p>
+                               </Card>
+                               <div className="grid md:grid-cols-2 gap-6">
+                                  <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-8 space-y-4">
+                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Visual Concept</span>
+                                     <p className="text-slate-400 font-medium leading-relaxed">{results.viralScript?.concept}</p>
+                                  </Card>
+                                  <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-8 space-y-4">
+                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Growth Hashtags</span>
+                                     <div className="flex flex-wrap gap-2">
+                                        {results.socialMediaTags?.map(t => (
+                                          <span key={t} className="px-3 py-1 bg-violet-600/10 border border-violet-500/20 rounded-lg text-xs font-bold text-violet-400">{t}</span>
+                                        ))}
+                                     </div>
+                                  </Card>
+                               </div>
+                            </div>
+                          )}
+                          {/* Data Redesign */}
+                          {activeTab === 'data' && (
+                             <div className="grid md:grid-cols-2 gap-6">
+                                {[
+                                  { l: 'Material Composition', v: results.structuredData?.material },
+                                  { l: 'Dominant Aesthetics', v: results.structuredData?.dominantColor },
+                                  { l: 'Target Audience Profile', v: results.structuredData?.targetAudience },
+                                  { l: 'Longevity Care', v: results.structuredData?.careInstructions }
+                                ].map((d, i) => (
+                                  <Card key={i} className="bg-white/[0.03] border-white/10 rounded-3xl p-8 flex flex-col justify-between">
+                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">{d.l}</span>
+                                     <p className="text-white font-black text-lg uppercase tracking-tight">{d.v}</p>
+                                  </Card>
+                                ))}
+                             </div>
+                          )}
+                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
-              {/* MATRIX CHAT SIDEBAR */}
-              <div className="lg:sticky lg:top-8 order-none lg:order-last">
-                <Card className="bg-black/60 backdrop-blur-2xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl h-[600px] flex flex-col group/sidebar">
-                  <CardHeader className="border-b border-white/10 bg-white/20 p-4">
-                    <div className="flex items-center justify-between">
-                       <CardTitle className="text-sm font-bold flex items-center gap-2 text-white">
-                         <MessagesSquare className="w-4 h-4" style={{ color: 'var(--theme-primary)' }} />
-                         Matrix Chat
-                       </CardTitle>
-                       <div className="flex items-center gap-1">
-                          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                          <span className="text-[10px] text-zinc-400 uppercase font-bold tracking-widest">Active</span>
-                       </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-4">
-                    <div className="space-y-4">
-                       <div className="bg-white/20 border border-white/10 rounded-2xl p-4 text-xs leading-relaxed text-white">
-                         Welcome to the **Matrix Refinement**. Tell me how you&apos;d like to adjust this generation.
-                       </div>
-                       
-                       {/* Quick Action Chips */}
-                       <div className="grid grid-cols-2 gap-2">
-                         {[
-                           { label: 'Professional', icon: Target },
-                           { label: 'Shorten', icon: ZapIcon },
-                           { label: 'Younger Audience', icon: Smile },
-                           { label: 'More Viral', icon: Sparkles }
-                         ].map((chip) => (
-                           <button
-                             key={chip.label}
-                             onClick={() => handleRefine(`Make the output more ${chip.label.toLowerCase()}`)}
-                             disabled={isRefining}
-                             className="flex items-center gap-2 px-3 py-2 bg-gray-800/50 border border-white/10 rounded-xl text-[10px] font-bold text-white hover:bg-gray-700/50 hover:border-[var(--theme-primary)] transition-all group/chip"
-                           >
-                             <chip.icon className="w-3 h-3 group-hover/chip:text-[var(--theme-primary)] transition-colors" />
-                             {chip.label}
-                           </button>
-                         ))}
-                       </div>
-                    </div>
-
-                    {isRefining && (
-                      <div className="flex items-center gap-3 text-white text-xs py-4">
-                        <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--theme-primary)' }} />
-                        Recalculating Matrix...
-                      </div>
-                    )}
-                  </CardContent>
-
-                  <div className="p-4 border-t border-white/10 bg-white/20">
-                    <div className="relative group">
-                      <textarea
-                        value={refineInput}
-                        onChange={(e) => setRefineInput(e.target.value)}
-                        placeholder="Refine this generation..."
-                        className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-[var(--theme-primary)] transition-all resize-none h-24"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault()
-                            handleRefine()
-                          }
-                        }}
-                      />
-                      <button
-                        onClick={() => handleRefine()}
-                        disabled={isRefining || !refineInput.trim()}
-                        className="absolute bottom-3 right-3 p-2 rounded-lg bg-[var(--theme-primary)] text-white shadow-lg disabled:opacity-50 disabled:grayscale transition-all hover:scale-105"
-                      >
-                        <Send className="w-4 h-4" />
-                      </button>
-                    </div>
+              {/* 6. STEALTH CONSOLE UPGRADE */}
+              <div className="space-y-6">
+                  <div className="flex items-center justify-between px-2">
+                     <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white flex items-center gap-2">
+                        <MessagesSquare className="w-4 h-4 text-violet-500" />
+                        Stealth Console
+                     </h3>
+                     <span className="text-[8px] font-black uppercase tracking-widest text-slate-600 animate-pulse">Matrix Sync active</span>
                   </div>
-                </Card>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      {/* Recent Generations History */}
-      <div className="mt-12 space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-cyan-400 flex items-center gap-2">
-            <History className="w-5 h-5" style={{ color: 'var(--theme-primary)' }} />
-            Recent Generations
-          </h2>
-          {history.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => downloadCSV(history, 'all_generations.csv')}
-              className="border-white/10 bg-white/5 hover:bg-white/10 text-white"
-            >
-              <FileDown className="w-4 h-4 mr-2" />
-              Export All (CSV)
-            </Button>
-          )}
-        </div>
-        
-        <Card className="border-white/10 bg-white/20 backdrop-blur-xl overflow-hidden">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs text-white uppercase bg-black/60 border-b border-white/10">
-                  <tr>
-                    <th className="px-6 py-4 font-medium">Image</th>
-                    <th className="px-6 py-4 font-medium">Title</th>
-                    <th className="px-6 py-4 font-medium">Date</th>
-                    <th className="px-6 py-4 font-medium text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/10">
-                  {history.map((gen) => (
-                    <tr 
-                      key={gen.id} 
-                      className="hover:bg-white/5 transition-colors cursor-pointer group border-white/10"
-                      onClick={() => {
-                        setResults(gen.content)
-                        setPreview(gen.image_url)
-                        // This updates the main dashboard to reflect the clicked generation's theme
-                        window.scrollTo({ top: 0, behavior: 'smooth' })
-                      }}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="w-12 h-12 rounded border border-white/20 overflow-hidden bg-black flex items-center justify-center">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={gen.image_url} alt="" className="object-cover max-w-full max-h-full" />
+                  <Card className="bg-black/60 border border-white/5 rounded-[2rem] flex flex-col h-[650px] overflow-hidden shadow-2xl">
+                     {/* Chat History Area */}
+                     <div className="flex-grow overflow-y-auto p-6 space-y-6 custom-scrollbar scroll-smooth">
+                        {chatHistory.map((msg, i) => (
+                          <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                             <div className={`max-w-[85%] p-4 rounded-2xl text-xs font-medium leading-relaxed ${
+                               msg.role === 'user' 
+                               ? 'bg-violet-600 text-white rounded-tr-none shadow-[0_0_15px_rgba(124,58,237,0.3)]' 
+                               : 'bg-white/5 border border-white/10 text-slate-300 rounded-tl-none backdrop-blur-xl'
+                             }`}>
+                                {msg.message}
+                             </div>
+                             <span className="text-[8px] font-black text-slate-600 uppercase mt-2 px-1 tracking-widest">
+                                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {msg.role === 'user' ? 'Vector Sent' : 'Matrix Refined'}
+                             </span>
+                          </div>
+                        ))}
+                        <div ref={chatEndRef} />
+                     </div>
+
+                     {/* Console Input Area */}
+                     <div className="p-6 bg-white/[0.02] border-t border-white/5 space-y-6">
+                        <div className="flex flex-wrap gap-2">
+                           {[
+                             { l: 'Professional', v: 'Make it more professional' },
+                             { l: 'Shorten', v: 'Make it much shorter' },
+                             { l: 'Luxury', v: 'Add a luxury premium tone' },
+                             { l: 'Gulf Market', v: 'Optimize for the GCC/Gulf market luxury audience' }
+                           ].map(c => (
+                             <button
+                               key={c.l}
+                               onClick={() => handleRefine(c.v)}
+                               disabled={isRefining}
+                               className="px-3 py-1.5 bg-white/5 border border-white/5 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white hover:border-violet-500/50 transition-all active:scale-95 disabled:opacity-50"
+                             >
+                               {c.l}
+                             </button>
+                           ))}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 font-medium text-cyan-100 truncate max-w-[240px] group-hover:text-white">
-                        {gen.content.seoTitle}
-                      </td>
-                      <td className="px-6 py-4 text-cyan-100">
-                        {new Date(gen.created_at).toLocaleDateString(undefined, {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
-                      </td>
-                      <td className="px-6 py-4 text-right space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => { e.stopPropagation(); copyToClipboard(JSON.stringify(gen.content, null, 2), gen.id) }}
-                          title="Copy Full Content"
-                          className="text-zinc-100 hover:text-white"
-                        >
-                          {copySuccess === gen.id ? <CheckCircle2 className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => { e.stopPropagation(); downloadCSV([gen], `generation_${gen.id.slice(0, 8)}.csv`) }}
-                          title="Download CSV"
-                          className="text-zinc-100 hover:text-white"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                  {history.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-gray-400 italic">
-                        <div className="flex flex-col items-center gap-2">
-                          <UploadCloud className="w-8 h-8 opacity-20" />
-                          <p>No generations found yet. Your history will appear here.</p>
+                        
+                        <div className="relative">
+                           <input
+                             value={refineInput}
+                             onChange={(e) => setRefineInput(e.target.value)}
+                             onKeyDown={(e) => e.key === 'Enter' && handleRefine()}
+                             placeholder={isRefining ? 'The Matrix is processing...' : 'Enter refinement vector...'}
+                             disabled={isRefining}
+                             className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-5 pr-14 text-xs font-medium text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50 transition-all disabled:opacity-50"
+                           />
+                           <button 
+                             onClick={() => handleRefine()}
+                             disabled={isRefining || !refineInput.trim()}
+                             className="absolute right-2 top-2 w-10 h-10 rounded-xl bg-violet-600 hover:bg-violet-500 text-white flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 disabled:bg-slate-800"
+                           >
+                              {isRefining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                           </button>
                         </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                     </div>
+                  </Card>
+              </div>
+           </div>
+        )}
+
+        {/* 7. HISTORY TABLE UPGRADE */}
+        <section className="space-y-8">
+           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="flex items-center gap-4">
+                 <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center">
+                    <History className="w-6 h-6 text-violet-400" />
+                 </div>
+                 <div className="space-y-1">
+                    <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Matrix Archives</h2>
+                    <p className="text-xs font-medium text-slate-500 tracking-widest uppercase">Decoded Production History</p>
+                 </div>
+              </div>
+              <div className="flex gap-2">
+                 <Button 
+                   onClick={() => downloadCSV(history, `matrix-export-${new Date().toISOString().split('T')[0]}.csv`)}
+                   className="h-12 px-6 bg-white/5 border border-white/10 hover:border-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c8cfe0] flex items-center gap-2 transition-all"
+                 >
+                    <FileDown className="w-4 h-4" />
+                    Export Global CSV
+                 </Button>
+              </div>
+           </div>
+
+           <Card className="bg-black/40 border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+              <div className="overflow-x-auto no-scrollbar">
+                 <table className="w-full text-left border-collapse">
+                    <thead className="bg-white/5 border-b border-white/5">
+                       <tr>
+                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Asset</th>
+                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Platform</th>
+                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Matrix Signature</th>
+                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Timestamp</th>
+                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 text-right">Action</th>
+                       </tr>
+                    </thead>
+                    <tbody>
+                       {history.length > 0 ? history.map((item) => (
+                         <tr key={item.id} className="group border-b border-white/[0.02] hover:bg-white/[0.02] transition-colors relative cursor-pointer" onClick={() => {
+                            setResults(item.content);
+                            setPreview(item.image_url);
+                            setSelectedPlatform(item.platform || 'amazon');
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                         }}>
+                            {/* HOVER BORDER EFFECT */}
+                            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-violet-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            
+                            <td className="px-8 py-4">
+                               <div className="w-14 h-14 rounded-xl overflow-hidden border border-white/10 shadow-lg">
+                                  <img src={item.image_url} alt="Product" className="w-full h-full object-cover" />
+                               </div>
+                            </td>
+                            <td className="px-8 py-4">
+                               <span className={`px-4 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-widest ${platformBadge(item.platform)}`}>
+                                  {item.platform || 'amazon'}
+                               </span>
+                            </td>
+                            <td className="px-8 py-4">
+                               <div className="max-w-[300px]">
+                                  <p className="text-white font-bold truncate group-hover:text-violet-400 transition-colors uppercase tracking-tight">{item.content.seoTitle}</p>
+                                  <p className="text-[10px] font-medium text-slate-600 mt-1 uppercase tracking-widest">ID: {item.id.slice(0, 8)}</p>
+                               </div>
+                            </td>
+                            <td className="px-8 py-4">
+                               <div className="flex items-center gap-2 text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                                  <Clock className="w-3.5 h-3.5" />
+                                  {new Date(item.created_at).toLocaleDateString()}
+                               </div>
+                            </td>
+                            <td className="px-8 py-4 text-right">
+                               <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl text-slate-600 hover:text-white hover:bg-white/5">
+                                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                               </Button>
+                            </td>
+                         </tr>
+                       )) : (
+                         <tr>
+                            <td colSpan={5} className="py-32 text-center">
+                               <div className="flex flex-col items-center gap-6">
+                                  <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center">
+                                     <Database className="w-10 h-10 text-slate-700" />
+                                  </div>
+                                  <div className="space-y-2">
+                                     <p className="text-xl font-bold text-slate-500 uppercase tracking-tighter">Your Matrix Archives will appear here</p>
+                                     <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">No production signatures detected</p>
+                                  </div>
+                               </div>
+                            </td>
+                         </tr>
+                       )}
+                    </tbody>
+                 </table>
+              </div>
+           </Card>
+        </section>
+
       </div>
     </div>
   )
