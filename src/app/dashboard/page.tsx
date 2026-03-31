@@ -1,8 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import DashboardClient from './DashboardClient'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Sparkles, CreditCard } from 'lucide-react'
+import { Sparkles, Zap } from 'lucide-react'
 
 export default async function DashboardPage() {
   let credits = 0
@@ -72,29 +71,34 @@ export default async function DashboardPage() {
     <div className="container mx-auto py-10 px-4 max-w-5xl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
-            <Sparkles className="w-8 h-8 text-primary" />
-            Dashboard
+          <h1 className="text-4xl font-black tracking-tighter text-white flex items-center gap-3">
+             <div className="w-10 h-10 bg-violet-600/20 border border-violet-500/30 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(124,58,237,0.3)]">
+               <Sparkles className="w-5 h-5 text-violet-400" />
+             </div>
+             <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-violet-400 uppercase italic">
+               Dashboard
+             </span>
           </h1>
           <p className="text-zinc-500 dark:text-zinc-400 mt-1">
             Generate high-converting SEO copy for your e-commerce products.
           </p>
         </div>
 
-        <Card className="w-full md:w-auto min-w-[200px] border-zinc-200 dark:border-zinc-800">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Available Credits</CardTitle>
-            <CreditCard className="h-4 w-4 text-zinc-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-              {credits} {credits === 1 ? 'Credit' : 'Credits'}
-            </div>
-            <p className="text-xs text-zinc-500 mt-1 text-primary hover:underline cursor-pointer">
-              Top up for more generations
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-6 py-4 flex items-center gap-4 shadow-[0_0_30px_rgba(124,58,237,0.1)] transition-all hover:bg-white/10 group relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-600/5 to-transparent pointer-events-none" />
+          <Zap className="w-5 h-5 text-amber-400 animate-pulse relative z-10" />
+          <div className="relative z-10">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+              Available Credits
             </p>
-          </CardContent>
-        </Card>
+            <p className="text-3xl font-black text-white leading-none mt-1">
+              {credits}
+              <span className="text-sm font-black text-slate-400 ml-2 uppercase tracking-widest">
+                {credits === 1 ? 'Credit' : 'Credits'}
+              </span>
+            </p>
+          </div>
+        </div>
       </div>
 
       <DashboardClient 
