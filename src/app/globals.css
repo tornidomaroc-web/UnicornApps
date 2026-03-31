@@ -86,4 +86,8 @@ body {
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-indigo-500 to-purple-600;
   }
+
+  .font-arabic {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+  }
 }

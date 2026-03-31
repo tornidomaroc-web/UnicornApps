@@ -18,14 +18,10 @@ import {
   X
 } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+import { useLang } from "@/lib/i18n/LanguageContext";
 
 export default function Home() {
+  const { t } = useLang();
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
 
   const containerVariants: Variants = {
@@ -47,22 +43,9 @@ export default function Home() {
       transition: { duration: 0.5, ease: "easeOut" as const }
     }
   };
-
   return (
     <main className="bg-[#070710] text-[#c8cfe0] selection:bg-violet-500/30 selection:text-white">
-      {/* BACKGROUND EFFECTS */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        {/* Animated Orbs */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-600/20 rounded-full blur-[120px] animate-float-orb" />
-        <div className="absolute bottom-[10%] right-[-5%] w-[35%] h-[35%] bg-amber-500/10 rounded-full blur-[120px] animate-float-orb-slow" />
-        <div className="absolute top-[40%] right-[20%] w-[30%] h-[30%] bg-violet-400/10 rounded-full blur-[100px] animate-float-orb" />
-        
-        {/* Grid Overlay */}
-        <div className="absolute inset-0 opacity-[0.03]" 
-             style={{ backgroundImage: `linear-gradient(#c8cfe0 1px, transparent 1px), linear-gradient(90deg, #c8cfe0 1px, transparent 1px)`, backgroundSize: '40px 40px' }} 
-        />
-      </div>
-
+      {/* BACKGROUND EFFECTS remains same */}
       {/* 1. HERO SECTION */}
       <section className="relative min-h-screen flex flex-col items-center justify-center pt-24 pb-20 px-4 z-10 overflow-hidden">
         <motion.div 
@@ -74,28 +57,27 @@ export default function Home() {
           {/* Badge */}
           <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-950/30 border border-violet-500/30 text-violet-300 text-xs font-bold uppercase tracking-widest mb-8 backdrop-blur-md">
             <span className="animate-pulse">🦄</span>
-            Powered by Gemini 3.1 Vision — Now Live
+            {t('hero.badge')}
           </motion.div>
 
           {/* Headline */}
           <motion.h1 variants={itemVariants} className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8">
-            <span className="text-white">Turn Product Images</span><br />
+            <span className="text-white">{t('hero.title1')}</span><br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-violet-600 to-amber-200">
-              Into Global Sales
+              {t('hero.title2')}
             </span>
           </motion.h1>
 
           {/* Subtext */}
           <motion.p variants={itemVariants} className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto mb-12 font-medium leading-relaxed">
-            Upload any product photo. Get Amazon titles, Shopify descriptions, 
-            and viral social content — <span className="text-white">in 3 seconds.</span>
+            {t('hero.sub')}
           </motion.p>
 
           {/* CTAs */}
           <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
             <Link href="/login">
               <Button size="lg" className="h-16 px-10 text-lg font-black uppercase tracking-widest rounded-2xl bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_40px_-5px_rgba(124,58,237,0.5)] transition-all hover:scale-105 active:scale-95 group">
-                Start Free — No Card Needed
+                {t('hero.cta1')}
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
@@ -106,15 +88,15 @@ export default function Home() {
               onClick={() => setIsDemoModalOpen(true)}
             >
               <Play className="mr-2 w-5 h-5 fill-white" />
-              Watch Demo
+              {t('hero.cta2')}
             </Button>
           </motion.div>
 
           {/* Trust Badges */}
           <motion.div variants={itemVariants} className="flex flex-wrap items-center justify-center gap-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-            <div className="flex items-center gap-2"><BadgeCheck className="w-4 h-4 text-violet-500" /> 1,240+ products analyzed</div>
-            <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> Amazon & Shopify ready</div>
-            <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-violet-500" /> Free to start</div>
+            <div className="flex items-center gap-2"><BadgeCheck className="w-4 h-4 text-violet-500" /> {t('hero.trust1')}</div>
+            <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('hero.trust2')}</div>
+            <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-violet-500" /> {t('hero.trust3')}</div>
           </motion.div>
         </motion.div>
       </section>

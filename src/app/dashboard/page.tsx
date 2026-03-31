@@ -72,12 +72,12 @@ export default async function DashboardPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
         <div>
           <h1 className="text-4xl font-black tracking-tighter text-white flex items-center gap-3">
-             <div className="w-10 h-10 bg-violet-600/20 border border-violet-500/30 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(124,58,237,0.3)]">
-               <Sparkles className="w-5 h-5 text-violet-400" />
-             </div>
-             <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-violet-400 uppercase italic">
-               Dashboard
-             </span>
+            <div className="w-10 h-10 bg-violet-600/20 border border-violet-500/30 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(124,58,237,0.3)]">
+              <Sparkles className="w-5 h-5 text-violet-400" />
+            </div>
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-violet-400 uppercase italic">
+              Dashboard
+            </span>
           </h1>
           <p className="text-zinc-500 dark:text-zinc-400 mt-1">
             Generate high-converting SEO copy for your e-commerce products.
@@ -101,10 +101,10 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <DashboardClient 
-        userId={userId} 
-        initialCredits={credits} 
-        initialHistory={history} 
+      <DashboardClient
+        userId={userId}
+        initialCredits={credits}
+        initialHistory={history}
       />
     </div>
   )

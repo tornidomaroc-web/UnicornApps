@@ -37,7 +37,9 @@ import {
   User as UserIcon,
   Clock,
   Trash2,
-  Maximize2
+  Maximize2,
+  Camera,
+  X
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -125,6 +127,46 @@ export default function DashboardClient({
   const [viewMode, setViewMode] = useState<'raw' | 'preview'>('raw')
   const [shopifyViewMode, setShopifyViewMode] = useState<'preview' | 'code'>('preview')
   const chatEndRef = useRef<HTMLDivElement>(null)
+
+  // Camera Support
+  const [showCamera, setShowCamera] = useState(false)
+  const [stream, setStream] = useState<MediaStream | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  const openCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      })
+      setStream(mediaStream)
+      setShowCamera(true)
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream
+        }
+      }, 100)
+    } catch (err) {
+      setError('Camera access denied. Please allow camera permissions.')
+    }
+  }
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return
+    const canvas = canvasRef.current
+    canvas.width = videoRef.current.videoWidth
+    canvas.height = videoRef.current.videoHeight
+    canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0)
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9)
+    setPreview(dataUrl)
+    closeCamera()
+  }
+
+  const closeCamera = () => {
+    stream?.getTracks().forEach(track => track.stop())
+    setStream(null)
+    setShowCamera(false)
+  }
 
   // Animated Credit Counter
   useEffect(() => {
@@ -508,32 +550,58 @@ export default function DashboardClient({
                  </svg>
               </div>
 
-              <div className="relative z-10 p-8 md:p-12">
+              <div className="relative z-10">
                  {!preview ? (
-                   <motion.div 
-                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                     className="flex flex-col items-center justify-center gap-8 py-12 cursor-pointer"
-                     onClick={() => document.getElementById('file-upload')?.click()}
-                   >
-                      <div className="relative">
-                         <div className="absolute inset-0 bg-violet-600/20 blur-3xl rounded-full scale-150 animate-pulse" />
-                         <div className="relative w-24 h-24 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                            <UploadCloud className="w-10 h-10 text-violet-400" />
-                         </div>
-                      </div>
-                      <div className="text-center space-y-3">
-                         <h2 className="text-3xl font-black text-white tracking-tighter">Drop Your Product Image Here</h2>
-                         <p className="text-slate-400 font-medium max-w-sm mx-auto">Gemini 3.1 Vision will analyze materials, colors & audience target hooks.</p>
-                      </div>
-                      <div className="flex gap-2 flex-wrap justify-center">
-                         {['PNG', 'JPG', 'WEBP', 'MAX 4MB'].map(b => (
-                           <span key={b} className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500">{b}</span>
-                         ))}
-                      </div>
-                      <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                   </motion.div>
+                    <motion.div 
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      className="flex flex-col items-center justify-center gap-12 py-12"
+                    >
+                       <div className="text-center space-y-3">
+                          <h2 className="text-3xl font-black text-white tracking-tighter uppercase">AI Product Engine</h2>
+                          <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Select Matrix Input Source</p>
+                       </div>
+
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl px-4">
+                          {/* OPTION 1: UPLOAD */}
+                          <button 
+                            onClick={() => document.getElementById('file-upload')?.click()}
+                            className="group relative flex flex-col items-center gap-6 p-10 rounded-[2rem] bg-white/5 border border-white/10 hover:border-violet-500/50 transition-all duration-500 hover:-translate-y-1"
+                          >
+                             <div className="absolute inset-0 bg-violet-600/0 group-hover:bg-violet-600/5 rounded-[2rem] transition-all" />
+                             <div className="relative w-16 h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:border-violet-500/50 transition-all">
+                                <UploadCloud className="w-8 h-8 text-violet-400" />
+                             </div>
+                             <div className="text-center relative">
+                                <h3 className="text-lg font-black text-white uppercase tracking-tight">Upload Photo</h3>
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">JPG, PNG, WEBP</p>
+                             </div>
+                          </button>
+
+                          {/* OPTION 2: CAMERA */}
+                          <button 
+                            onClick={openCamera}
+                            className="group relative flex flex-col items-center gap-6 p-10 rounded-[2rem] bg-white/5 border border-white/10 hover:border-violet-500/50 transition-all duration-500 hover:-translate-y-1"
+                          >
+                             <div className="absolute inset-0 bg-violet-600/0 group-hover:bg-violet-600/5 rounded-[2rem] transition-all" />
+                             <div className="relative w-16 h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:border-violet-500/50 transition-all">
+                                <Camera className="w-8 h-8 text-violet-400" />
+                             </div>
+                             <div className="text-center relative">
+                                <h3 className="text-lg font-black text-white uppercase tracking-tight">Take Photo</h3>
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Use your camera</p>
+                             </div>
+                          </button>
+                       </div>
+
+                       <div className="flex gap-2 flex-wrap justify-center opacity-50">
+                          {['Edge Analysis', 'Vercel Deployment', 'Gemini 3.1'].map(b => (
+                            <span key={b} className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500">{b}</span>
+                          ))}
+                       </div>
+                       <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                    </motion.div>
                  ) : (
-                   <div className="grid md:grid-cols-[1fr,400px] gap-12 items-start">
+                   <div className="grid md:grid-cols-[1fr,400px] gap-12 items-start p-8 md:p-12">
                       {/* Left: Preview */}
                       <div className="relative aspect-square rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl bg-black/50 group/img">
                          <img src={preview} alt="Preview" className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-105" />
@@ -1051,6 +1119,48 @@ export default function DashboardClient({
            </Card>
         </section>
 
+        {/* CAMERA MODAL */}
+        <AnimatePresence>
+          {showCamera && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center"
+            >
+              <div className="absolute top-8 left-0 right-0 z-10 text-center">
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-white/40 mb-2">Matrix Vision Active</p>
+                <h3 className="text-xl font-black text-white uppercase tracking-tighter">Point camera at your product</h3>
+              </div>
+
+              <video 
+                ref={videoRef} 
+                autoPlay 
+                playsInline 
+                className="w-full h-full object-cover"
+              />
+              <canvas ref={canvasRef} className="hidden" />
+
+              <div className="absolute bottom-12 left-0 right-0 z-10 flex items-center justify-center gap-12">
+                <button 
+                  onClick={closeCamera}
+                  className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-all"
+                >
+                   <X className="w-6 h-6" />
+                </button>
+                
+                <button 
+                  onClick={capturePhoto}
+                  className="w-24 h-24 rounded-full bg-violet-600 border-4 border-white/20 flex items-center justify-center text-white shadow-[0_0_50px_rgba(124,58,237,0.5)] hover:scale-110 active:scale-95 transition-all"
+                >
+                   <Camera className="w-10 h-10" />
+                </button>
+
+                <div className="w-14 h-14" /> {/* Spacer for balance */}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )

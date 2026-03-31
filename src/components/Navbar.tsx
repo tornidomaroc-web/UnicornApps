@@ -1,31 +1,35 @@
+'use client'
+
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 import { logout } from "@/app/(auth)/login/actions";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Zap, LayoutDashboard, LogOut, User } from "lucide-react";
+import { Sparkles, Zap, LogOut, User } from "lucide-react";
+import { useLang } from '@/lib/i18n/LanguageContext';
+import { useEffect, useState } from "react";
 
-export default async function Navbar() {
+export default function Navbar() {
+  const { lang, toggleLang, t } = useLang();
+  const [user, setUser] = useState<any>(null);
+  const [credits, setCredits] = useState(0);
   const supabase = createClient();
-  
-  if (!supabase) {
-    return (
-      <nav className="fixed top-0 w-full z-50 border-b border-red-500/50 bg-[#070710]/80 backdrop-blur-md text-red-500 flex justify-center py-4 text-[10px] font-black uppercase tracking-widest">
-        Matrix Connection Error
-      </nav>
-    );
-  }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  let credits = 0;
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('credits')
-      .eq('id', user.id)
-      .single();
-    credits = profile?.credits || 0;
-  }
+  useEffect(() => {
+    const getData = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      setUser(authUser);
+      
+      if (authUser) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('credits')
+          .eq('id', authUser.id)
+          .single();
+        setCredits(profile?.credits || 0);
+      }
+    };
+    getData();
+  }, [supabase]);
 
   return (
     <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#070710]/80 backdrop-blur-xl transition-all duration-500 hover:bg-[#070710]/95">
@@ -41,27 +45,35 @@ export default async function Navbar() {
           </Link>
           
           <div className="hidden lg:flex items-center gap-8 text-[10px] uppercase font-black tracking-[0.2em] text-[#c8cfe0]/60">
-            <Link href="/" className="hover:text-violet-400 transition-all">Home</Link>
-            <Link href="/features" className="hover:text-violet-400 transition-all">Features</Link>
-            <Link href="/pricing" className="hover:text-violet-400 transition-all">Pricing</Link>
-            <Link href="/about" className="hover:text-violet-400 transition-all">About</Link>
+            <Link href="/" className="hover:text-violet-400 transition-all">{t('nav.home')}</Link>
+            <Link href="/features" className="hover:text-violet-400 transition-all">{t('nav.features')}</Link>
+            <Link href="/pricing" className="hover:text-violet-400 transition-all">{t('nav.pricing')}</Link>
+            <Link href="/about" className="hover:text-violet-400 transition-all">{t('nav.about')}</Link>
           </div>
         </div>
 
         <div className="flex items-center gap-6">
+          {/* Language Toggle */}
+          <button 
+            onClick={toggleLang} 
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white hover:border-violet-500/50 transition-all"
+          >
+            {lang === 'en' ? '🇸🇦 AR' : '🇬🇧 EN'}
+          </button>
+
           {user ? (
             <div className="flex items-center gap-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-1.5 pl-4 transition-all hover:border-violet-500/30">
               <div className="flex items-center gap-2">
                 <Zap className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-[#c8cfe0]">
-                  {credits} <span className="text-slate-500">Credits</span>
+                  {credits} <span className="text-slate-500">{t('nav.credits')}</span>
                 </span>
               </div>
               <div className="h-6 w-px bg-white/10 mx-1" />
               <div className="flex items-center gap-2">
                 <Link href="/dashboard">
                   <Button size="sm" className="h-8 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(124,58,237,0.3)] border-none transition-all hover:scale-105 active:scale-95">
-                    Dashboard
+                    {t('nav.dashboard')}
                   </Button>
                 </Link>
                 <form action={logout}>
@@ -74,11 +86,11 @@ export default async function Navbar() {
           ) : (
             <div className="flex items-center gap-6">
               <Link href="/login" className="hidden sm:block text-[10px] uppercase font-black tracking-[0.2em] text-[#c8cfe0]/60 hover:text-white transition-all">
-                Login
+                {t('nav.login')}
               </Link>
               <Link href="/login">
                 <Button size="sm" className="h-11 px-8 rounded-2xl bg-violet-600 hover:bg-violet-500 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(124,58,237,0.4)] transition-all hover:scale-105 active:scale-95 group">
-                  Get Started
+                  {t('nav.getStarted')}
                   <Sparkles className="ml-2 w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
                 </Button>
               </Link>

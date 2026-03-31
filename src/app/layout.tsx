@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,11 +32,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div className="flex min-h-screen flex-col relative">
-          <div className="matrix-glow-shell" />
-          <Navbar />
-          <main className="flex-1 mt-16">{children}</main>
-        </div>
+        <LanguageProvider>
+          <div className="flex min-h-screen flex-col relative">
+            <div className="matrix-glow-shell" />
+            <Navbar />
+            <main className="flex-1 mt-16">{children}</main>
+          </div>
+        </LanguageProvider>
       </body>
     </html>
   );
