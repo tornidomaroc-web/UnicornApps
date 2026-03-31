@@ -466,15 +466,13 @@ export default function DashboardClient({
 
           <div className="flex flex-wrap items-center gap-3">
              <div className="bg-black/40 border border-white/10 rounded-2xl px-5 py-2.5 flex items-center gap-4 backdrop-blur-xl">
-                 <div className="flex items-center gap-3">
-                    <div className="relative">
-                       <div className="absolute inset-0 bg-violet-600/30 blur-xl rounded-full animate-pulse" />
-                       <span className="relative text-2xl font-black text-white tracking-tighter">
-                         {displayCredits}
-                       </span>
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                      Credits <span className="text-slate-600 block text-[8px] tracking-widest mt-0.5">Remaining</span>
+                 <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-amber-400 animate-pulse" />
+                    <span className="text-2xl font-black text-white">
+                      {displayCredits}
+                    </span>
+                    <span className="text-xs font-black uppercase tracking-widest text-slate-400">
+                      Credits
                     </span>
                  </div>
                 <div className="h-4 w-px bg-white/10" />
