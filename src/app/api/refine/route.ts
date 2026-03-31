@@ -21,10 +21,15 @@ export async function POST(req: Request) {
     }
 
     // Parse request body
-    const { currentContent, instruction } = await req.json()
+    const { currentContent, instruction, lang } = await req.json()
     if (!currentContent || !instruction) {
       return NextResponse.json({ error: 'Content and instruction are required' }, { status: 400 })
     }
+
+    const isArabic = lang === 'ar'
+    const languageInstruction = isArabic 
+      ? "\nGENERATE ALL REFINED CONTENT IN ARABIC LANGUAGE. All titles, descriptions, bullet points, hashtags and hooks must be in Arabic." 
+      : "\nGENERATE ALL REFINED CONTENT IN ENGLISH LANGUAGE."
 
     const geminiApiKey = process.env.GEMINI_API_KEY
     if (!geminiApiKey) {
@@ -38,6 +43,7 @@ export async function POST(req: Request) {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${geminiApiKey}`
 
     const prompt = `You are an elite E-commerce Growth Architect. You are refining existing product copy based on a user instruction.
+    ${languageInstruction}
     
     CURRENT CONTENT:
     ${JSON.stringify(currentContent, null, 2)}

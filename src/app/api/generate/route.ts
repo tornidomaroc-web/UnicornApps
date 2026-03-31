@@ -38,10 +38,15 @@ export async function POST(req: Request) {
     }
 
     // 2. Parse request body
-    const { image } = await req.json()
+    const { image, lang } = await req.json()
     if (!image) {
       return NextResponse.json({ error: 'Image is required' }, { status: 400 })
     }
+
+    const isArabic = lang === 'ar'
+    const languageInstruction = isArabic 
+      ? "\nGENERATE ALL CONTENT IN ARABIC LANGUAGE. All titles, descriptions, bullet points, hashtags and hooks must be in Arabic." 
+      : "\nGENERATE ALL CONTENT IN ENGLISH LANGUAGE."
 
     // 3. Initialize Gemini DYNAMICALLY
     const geminiApiKey = process.env.GEMINI_API_KEY
@@ -82,6 +87,7 @@ export async function POST(req: Request) {
     }
 
     const prompt = `You are an elite E-commerce Growth Architect. Analyze the product image and return ONLY a valid JSON object with this EXACT schema, no formatting or backticks:
+${languageInstruction}
 {
   "seoTitle": "String (60 chars max)",
   "metaDescription": "String (160 chars max)",

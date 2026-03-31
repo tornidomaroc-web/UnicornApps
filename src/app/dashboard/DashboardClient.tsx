@@ -104,7 +104,7 @@ export default function DashboardClient({
   initialHistory: Generation[]
 }) {
   const router = useRouter()
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -230,7 +230,8 @@ export default function DashboardClient({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           image: preview,
-          platform: selectedPlatform 
+          platform: selectedPlatform,
+          lang: lang
         }),
       })
 
@@ -279,7 +280,8 @@ export default function DashboardClient({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           currentContent: results,
-          instruction: finalInstruction
+          instruction: finalInstruction,
+          lang: lang
         }),
       })
 

@@ -104,7 +104,7 @@ export default function Home() {
       {/* 2. SOCIAL PROOF BAR */}
       <section className="relative z-10 bg-black/40 border-y border-white/5 py-10 overflow-hidden">
         <div className="flex flex-col items-center gap-6">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Trusted by sellers on</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">{t('trusted.by')}</p>
           <div className="flex w-full overflow-hidden">
             <div className="flex animate-marquee whitespace-nowrap min-w-full items-center gap-20 px-10">
               {[
@@ -138,17 +138,17 @@ export default function Home() {
           variants={containerVariants}
           className="text-center mb-20"
         >
-          <motion.p variants={itemVariants} className="text-violet-500 font-black uppercase tracking-[0.3em] text-xs mb-4">The Workflow</motion.p>
+          <motion.p variants={itemVariants} className="text-violet-500 font-black uppercase tracking-[0.3em] text-xs mb-4">{t('how.tag')}</motion.p>
           <motion.h2 variants={itemVariants} className="text-4xl md:text-6xl font-black text-white tracking-tighter">
-            From Photo to Sales Copy in 3 Steps
+            {t('how.title')}
           </motion.h2>
         </motion.div>
 
         <div className="grid md:grid-cols-3 gap-8">
           {[
-            { step: "01", title: "Upload Product Photo", desc: "Drag and drop any raw image. We support 4K photography and mobile snapshots." },
-            { step: "02", title: "AI Analyzes Everything", desc: "Gemini 3.1 detects materials, weights, branding, and target audience hooks." },
-            { step: "03", title: "Export to Any Platform", desc: "One-click copy or CSV export tailored for Amazon, Shopify, or Socials." }
+            { step: "01", title: t('how.step1.title'), desc: t('how.step1.desc') },
+            { step: "02", title: t('how.step2.title'), desc: t('how.step2.desc') },
+            { step: "03", title: t('how.step3.title'), desc: t('how.step3.desc') }
           ].map((item, i) => (
             <motion.div
               key={item.step}
@@ -172,8 +172,8 @@ export default function Home() {
       {/* 4. FEATURES BENTO GRID */}
       <section className="relative z-10 py-32 px-4 max-w-7xl mx-auto">
         <div className="text-center mb-20">
-          <p className="text-amber-400 font-black uppercase tracking-[0.3em] text-xs mb-4">Unfair Advantage</p>
-          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter">Everything a Global Seller Needs</h2>
+          <p className="text-amber-400 font-black uppercase tracking-[0.3em] text-xs mb-4">{t('features.tag')}</p>
+          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter">{t('features.title')}</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-6 grid-rows-2 gap-6">
@@ -187,8 +187,8 @@ export default function Home() {
               <div className="w-12 h-12 bg-violet-600/20 rounded-xl flex items-center justify-center mb-6 border border-violet-500/20">
                 <Sparkles className="text-violet-400 w-6 h-6" />
               </div>
-              <h3 className="text-3xl font-black text-white mb-4">Gemini 3.1 Vision Analysis</h3>
-              <p className="text-slate-400 text-lg font-medium max-w-md">Our multi-model visual engine identifies materials, textures, colors, and branding elements with 99.8% accuracy.</p>
+              <h3 className="text-3xl font-black text-white mb-4">{t('features.vision.title')}</h3>
+              <p className="text-slate-400 text-lg font-medium max-w-md">{t('features.vision.desc')}</p>
             </div>
             <div className="mt-8 flex gap-3 flex-wrap">
               {["Material Detection", "Color Logic", "Audience Scoring"].map(tag => (
@@ -206,8 +206,8 @@ export default function Home() {
               <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mb-6 border border-amber-500/20">
                 <Globe className="text-amber-400 w-6 h-6" />
               </div>
-              <h3 className="text-2xl font-black text-white mb-4">SEO Performance Engine</h3>
-              <p className="text-slate-400 font-medium">Automatic optimization for Amazon A9, Shopify SEO, and Google Search rankings.</p>
+              <h3 className="text-2xl font-black text-white mb-4">{t('features.seo.title')}</h3>
+              <p className="text-slate-400 font-medium">{t('features.seo.desc')}</p>
             </div>
           </motion.div>
 
@@ -220,8 +220,8 @@ export default function Home() {
               <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-6 border border-emerald-500/20">
                 <Monitor className="text-emerald-400 w-6 h-6" />
               </div>
-              <h3 className="text-2xl font-black text-white mb-4">Live Listing Mockups</h3>
-              <p className="text-slate-400 font-medium">Preview your content inside a real Amazon or Shopify environment before you hit publish.</p>
+              <h3 className="text-2xl font-black text-white mb-4">{t('features.mockups.title')}</h3>
+              <p className="text-slate-400 font-medium">{t('features.mockups.desc')}</p>
             </div>
           </motion.div>
 
@@ -234,8 +234,8 @@ export default function Home() {
               <div className="w-12 h-12 bg-violet-600/20 rounded-xl flex items-center justify-center mb-6 border border-violet-500/20">
                 <MessagesSquare className="text-violet-400 w-6 h-6" />
               </div>
-              <h3 className="text-2xl font-black text-white mb-4">Stealth Refine Console</h3>
-              <p className="text-slate-400 font-medium">Chat directly with the AI to refine tone, shorten descriptions, or change audiences in real-time.</p>
+              <h3 className="text-2xl font-black text-white mb-4">{t('features.console.title')}</h3>
+              <p className="text-slate-400 font-medium">{t('features.console.desc')}</p>
             </div>
           </motion.div>
 
@@ -248,8 +248,8 @@ export default function Home() {
               <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 border border-white/10">
                 <FileDown className="text-white w-6 h-6" />
               </div>
-              <h3 className="text-2xl font-black text-white mb-4">One-Click CSV Export</h3>
-              <p className="text-slate-400 font-medium">Batch export 100+ generations into a perfectly formatted CSV for mass uploads.</p>
+              <h3 className="text-2xl font-black text-white mb-4">{t('features.csv.title')}</h3>
+              <p className="text-slate-400 font-medium">{t('features.csv.desc')}</p>
             </div>
           </motion.div>
         </div>
@@ -258,14 +258,14 @@ export default function Home() {
       {/* 5. PRICING TEASER */}
       <section className="relative z-10 py-32 bg-white/[0.02] border-y border-white/5 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-black text-white mb-12 tracking-tighter">Ready to Scale Your Listing Speed?</h2>
+          <h2 className="text-4xl font-black text-white mb-12 tracking-tighter">{t('pricing.teaser.title')}</h2>
           <div className="grid sm:grid-cols-2 gap-8 text-left">
             <div className="bg-[#0d0d1a] border border-white/10 p-8 rounded-[2rem] hover:border-violet-500/30 transition-all group">
               <h3 className="text-xl font-black text-white mb-2 uppercase tracking-widest">Starter</h3>
               <div className="text-4xl font-black text-white mb-6">$9 <span className="text-sm font-medium text-slate-500 uppercase">/ month</span></div>
               <ul className="space-y-4 mb-8 text-sm font-medium">
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> 50 AI Generations</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> Standard Exports</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('pricing.starter.feat1')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('pricing.starter.feat2')}</li>
               </ul>
               <Link href="/pricing" className="block">
                 <Button className="w-full h-12 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-[10px]">View Plan</Button>
@@ -276,9 +276,9 @@ export default function Home() {
               <h3 className="text-xl font-black text-white mb-2 uppercase tracking-widest">Global Pro</h3>
               <div className="text-4xl font-black text-white mb-6">$29 <span className="text-sm font-medium text-slate-500 uppercase">/ month</span></div>
               <ul className="space-y-4 mb-8 text-sm font-medium">
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> 500 AI Generations</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-400" /> Priority Vision Queue</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-400" /> Bulk CSV Engine</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('pricing.pro.feat1')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-400" /> {t('pricing.pro.feat2')}</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-400" /> {t('pricing.pro.feat3')}</li>
               </ul>
               <Link href="/pricing" className="block">
                 <Button className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(124,58,237,0.5)]">View Plan</Button>
@@ -298,15 +298,14 @@ export default function Home() {
            className="relative z-10 max-w-4xl mx-auto"
         >
           <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-8 italic uppercase leading-[0.8]">
-            Ready to Sell Globally?
+            {t('cta.title')}
           </h2>
           <p className="text-xl md:text-2xl text-slate-400 mb-12 font-medium">
-            Join 1,200+ sellers already using UnicornApps to dominate 
-            Amazon, Shopify, and social commerce.
+            {t('cta.sub')}
           </p>
           <Link href="/login">
             <Button size="lg" className="h-20 px-16 text-xl font-black uppercase tracking-widest rounded-3xl bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_50px_-5px_rgba(124,58,237,0.6)] transition-all hover:scale-105 active:scale-95 group">
-              Start Free Today 
+              {t('cta.btn')}
               <ArrowRight className="ml-4 w-6 h-6 group-hover:translate-x-2 transition-transform" />
             </Button>
           </Link>
@@ -322,21 +321,20 @@ export default function Home() {
               UnicornApps
             </Link>
             <p className="text-slate-500 font-medium max-w-sm leading-relaxed">
-              The ultimate B2B SaaS tool for modern e-commerce. 
-              Accelerating global commerce with Gemini 3.1 Vision technology.
+              {t('footer.desc')}
             </p>
           </div>
           <div>
-            <h4 className="text-white font-black uppercase tracking-widest text-[10px] mb-8">Navigation</h4>
+            <h4 className="text-white font-black uppercase tracking-widest text-[10px] mb-8">{t('footer.nav')}</h4>
             <ul className="space-y-4 text-sm font-medium text-slate-500">
-              <li><Link href="/" className="hover:text-violet-400 transition-colors">Home</Link></li>
-              <li><Link href="/features" className="hover:text-violet-400 transition-colors">Features</Link></li>
-              <li><Link href="/pricing" className="hover:text-violet-400 transition-colors">Pricing</Link></li>
-              <li><Link href="/about" className="hover:text-violet-400 transition-colors">About</Link></li>
+              <li><Link href="/" className="hover:text-violet-400 transition-colors">{t('nav.home')}</Link></li>
+              <li><Link href="/features" className="hover:text-violet-400 transition-colors">{t('nav.features')}</Link></li>
+              <li><Link href="/pricing" className="hover:text-violet-400 transition-colors">{t('nav.pricing')}</Link></li>
+              <li><Link href="/about" className="hover:text-violet-400 transition-colors">{t('nav.about')}</Link></li>
             </ul>
           </div>
           <div>
-            <h4 className="text-white font-black uppercase tracking-widest text-[10px] mb-8">Connect</h4>
+            <h4 className="text-white font-black uppercase tracking-widest text-[10px] mb-8">{t('footer.connect')}</h4>
             <div className="flex gap-4">
                {["Twitter", "LinkedIn", "Instagram", "Youtube"].map(s => (
                  <a key={s} href="#" className="w-10 h-10 border border-white/10 rounded-xl flex items-center justify-center hover:bg-white/5 transition-all text-slate-500 hover:text-white font-black text-[10px] uppercase">{s[0]}</a>
@@ -345,10 +343,10 @@ export default function Home() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">
-          <p>© {new Date().getFullYear()} UnicornApps Global. All Matrix Reserved.</p>
+          <p>© {new Date().getFullYear()} UnicornApps Global. {t('footer.rights')}.</p>
           <div className="flex gap-8">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+            <a href="#" className="hover:text-white transition-colors">{t('footer.privacy')}</a>
+            <a href="#" className="hover:text-white transition-colors">{t('footer.terms')}</a>
           </div>
         </div>
       </footer>
