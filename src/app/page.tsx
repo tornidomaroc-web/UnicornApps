@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { 
@@ -23,6 +23,19 @@ import { useLang } from "@/lib/i18n/LanguageContext";
 export default function Home() {
   const { t } = useLang();
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+  const [isNative, setIsNative] = useState(false);
+
+  useEffect(() => {
+    const checkNative = async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core')
+        setIsNative(Capacitor.isNativePlatform())
+      } catch {
+        setIsNative(false)
+      }
+    }
+    checkNative()
+  }, []);
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -256,37 +269,39 @@ export default function Home() {
       </section>
 
       {/* 5. PRICING TEASER */}
-      <section className="relative z-10 py-32 bg-white/[0.02] border-y border-white/5 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-black text-white mb-12 tracking-tighter">{t('pricing.teaser.title')}</h2>
-          <div className="grid sm:grid-cols-2 gap-8 text-left">
-            <div className="bg-[#0d0d1a] border border-white/10 p-8 rounded-[2rem] hover:border-violet-500/30 transition-all group">
-              <h3 className="text-xl font-black text-white mb-2 uppercase tracking-widest">Starter</h3>
-              <div className="text-4xl font-black text-white mb-6">$9 <span className="text-sm font-medium text-slate-500 uppercase">/ month</span></div>
-              <ul className="space-y-4 mb-8 text-sm font-medium">
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('pricing.starter.feat1')}</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('pricing.starter.feat2')}</li>
-              </ul>
-              <Link href="/pricing" className="block">
-                <Button className="w-full h-12 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-[10px]">View Plan</Button>
-              </Link>
-            </div>
-            <div className="bg-[#0d0d1a] border border-violet-500/50 p-8 rounded-[2rem] shadow-[0_0_40px_-10px_rgba(124,58,237,0.3)] group relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-violet-600 text-white text-[8px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-bl-xl shadow-lg">Popular</div>
-              <h3 className="text-xl font-black text-white mb-2 uppercase tracking-widest">Global Pro</h3>
-              <div className="text-4xl font-black text-white mb-6">$29 <span className="text-sm font-medium text-slate-500 uppercase">/ month</span></div>
-              <ul className="space-y-4 mb-8 text-sm font-medium">
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('pricing.pro.feat1')}</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-400" /> {t('pricing.pro.feat2')}</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-400" /> {t('pricing.pro.feat3')}</li>
-              </ul>
-              <Link href="/pricing" className="block">
-                <Button className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(124,58,237,0.5)]">View Plan</Button>
-              </Link>
+      {!isNative && (
+        <section className="relative z-10 py-32 bg-white/[0.02] border-y border-white/5 px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-4xl font-black text-white mb-12 tracking-tighter">{t('pricing.teaser.title')}</h2>
+            <div className="grid sm:grid-cols-2 gap-8 text-left">
+              <div className="bg-[#0d0d1a] border border-white/10 p-8 rounded-[2rem] hover:border-violet-500/30 transition-all group">
+                <h3 className="text-xl font-black text-white mb-2 uppercase tracking-widest">Starter</h3>
+                <div className="text-4xl font-black text-white mb-6">$9 <span className="text-sm font-medium text-slate-500 uppercase">/ month</span></div>
+                <ul className="space-y-4 mb-8 text-sm font-medium">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('pricing.starter.feat1')}</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('pricing.starter.feat2')}</li>
+                </ul>
+                <Link href="/pricing" className="block">
+                  <Button className="w-full h-12 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-[10px]">View Plan</Button>
+                </Link>
+              </div>
+              <div className="bg-[#0d0d1a] border border-violet-500/50 p-8 rounded-[2rem] shadow-[0_0_40px_-10px_rgba(124,58,237,0.3)] group relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-violet-600 text-white text-[8px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-bl-xl shadow-lg">Popular</div>
+                <h3 className="text-xl font-black text-white mb-2 uppercase tracking-widest">Global Pro</h3>
+                <div className="text-4xl font-black text-white mb-6">$29 <span className="text-sm font-medium text-slate-500 uppercase">/ month</span></div>
+                <ul className="space-y-4 mb-8 text-sm font-medium">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('pricing.pro.feat1')}</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-400" /> {t('pricing.pro.feat2')}</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-400" /> {t('pricing.pro.feat3')}</li>
+                </ul>
+                <Link href="/pricing" className="block">
+                  <Button className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(124,58,237,0.5)]">View Plan</Button>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 6. FINAL CTA SECTION */}
       <section className="relative z-10 py-40 px-4 text-center overflow-hidden">
