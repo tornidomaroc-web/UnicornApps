@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -16,6 +17,20 @@ import { useLang } from "@/lib/i18n/LanguageContext";
 
 export default function PricingClient() {
   const { t } = useLang();
+  const [isNative, setIsNative] = useState(false);
+
+  useEffect(() => {
+    const checkNative = async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core')
+        setIsNative(Capacitor.isNativePlatform())
+      } catch {
+        setIsNative(false)
+      }
+    }
+    checkNative()
+  }, []);
+
   const tiers = [
     {
       name: t('pricing.free'),
@@ -48,6 +63,7 @@ export default function PricingClient() {
       cta: t('pricing.cta.starter'),
       featured: false,
       href: "/login",
+      checkoutUrl: "https://jadtrader.lemonsqueezy.com/checkout/buy/173d1849-c625-4fe5-952e-0372e6e337de",
       icon: <Zap className="w-6 h-6 text-amber-400" />
     },
     {
@@ -66,6 +82,7 @@ export default function PricingClient() {
       cta: t('pricing.cta.pro'),
       featured: true,
       href: "/login",
+      checkoutUrl: "https://jadtrader.lemonsqueezy.com/checkout/buy/46ed7c0f-c7ad-4b0b-90f2-11cf50168bf2",
       icon: <Sparkles className="w-6 h-6 text-violet-400" />
     },
   ];
@@ -176,6 +193,19 @@ export default function PricingClient() {
                 </CardContent>
 
                 <CardFooter className="px-10 pb-12 pt-4">
+                  {!isNative && tier.checkoutUrl ? (
+                    <a href={tier.checkoutUrl} target="_blank" rel="noopener noreferrer" className="w-full">
+                      <Button
+                        className={`w-full h-16 text-xs font-black uppercase tracking-[0.2em] rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${
+                          tier.featured
+                            ? "bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_30px_rgba(124,58,237,0.4)]"
+                            : "bg-white/5 hover:bg-white/10 text-white border border-white/10"
+                        }`}
+                      >
+                        {tier.cta}
+                      </Button>
+                    </a>
+                  ) : (
                     <Link href={tier.href} className="w-full">
                       <Button
                         className={`w-full h-16 text-xs font-black uppercase tracking-[0.2em] rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${
@@ -187,6 +217,7 @@ export default function PricingClient() {
                         {tier.cta}
                       </Button>
                     </Link>
+                  )}
                 </CardFooter>
               </Card>
             </motion.div>
