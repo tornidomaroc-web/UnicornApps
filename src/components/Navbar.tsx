@@ -47,7 +47,6 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-8 text-[10px] uppercase font-black tracking-[0.2em] text-[#c8cfe0]/60">
             <Link href="/" className="hover:text-violet-400 transition-all">{t('nav.home')}</Link>
             <Link href="/features" className="hover:text-violet-400 transition-all">{t('nav.features')}</Link>
-            <Link href="/pricing" className="hover:text-violet-400 transition-all">{t('nav.pricing')}</Link>
             <Link href="/about" className="hover:text-violet-400 transition-all">{t('nav.about')}</Link>
           </div>
         </div>
