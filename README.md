@@ -1,4 +1,18 @@
-# UnicornApps — AI E-commerce Growth Architect
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:1a0533,50:6d28d9,100:ec4899&height=160&section=header&text=UnicornApps&fontSize=52&fontColor=ffffff&fontAlignY=40&desc=AI%20E-commerce%20Growth%20Architect&descAlignY=62&descColor=f9a8d4&animation=fadeIn" width="100%"/>
+
+<br/>
+
+[![Live](https://img.shields.io/badge/●_LIVE-1D9E75?style=for-the-badge)](https://unicorn-apps.vercel.app)
+[![Launch App](https://img.shields.io/badge/unicorn--apps.vercel.app-Launch%20Now-ec4899?style=for-the-badge&logo=vercel&logoColor=white)](https://unicorn-apps.vercel.app)
+[![Gemini Vision](https://img.shields.io/badge/Gemini%20Vision-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
+[![Next.js 14](https://img.shields.io/badge/Next.js%2014-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org)
+[![Arabic First](https://img.shields.io/badge/Arabic%20%26%20RTL-🇸🇦-1a1a2e?style=for-the-badge)](https://unicorn-apps.vercel.app)
+
+</div>
+
+---
 
 ## Overview
 UnicornApps is a production-ready, AI-powered e-commerce asset generation platform. It empowers sellers to instantly transform product photos into fully optimized, platform-specific listings for Amazon, Shopify, and social media. Using vision models, it generates high-converting SEO titles, metadata, feature bullets, multilingual content, and interactive mockups.
@@ -73,3 +87,9 @@ UnicornApps is a production-ready, AI-powered e-commerce asset generation platfo
 - **Multimodal AI Strategy**: Passes base64 image data directly to Gemini APIs to skip intermediate bucket storage overhead, maximizing speed and cost-efficiency.
 - **Cross-Platform Native Bridge**: Employs Capacitor to cleanly map native APIs (like Camera hardware), serving as a unified PWA and a hardware-accelerated iOS/Android app from one codebase.
 - **Micro-transaction Scalability**: Leverages robust PostgreSQL triggers alongside high-availability webhook endpoints for real-time credit adjustments independent of frontend availability.
+
+---
+
+<div align="center">
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:1a0533,50:6d28d9,100:ec4899&height=100&section=footer&animation=fadeIn" width="100%"/>
+</div>
