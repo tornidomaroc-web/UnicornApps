@@ -362,6 +362,7 @@ export default function Home() {
           <div className="flex gap-8">
             <Link href="/privacy" className="hover:text-white transition-colors">{t('footer.privacy')}</Link>
             <Link href="/terms" className="hover:text-white transition-colors">{t('footer.terms')}</Link>
+            <Link href="/refund" className="hover:text-white transition-colors">Refund Policy</Link>
           </div>
         </div>
       </footer>

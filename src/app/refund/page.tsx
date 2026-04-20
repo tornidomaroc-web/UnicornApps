@@ -1,58 +1,37 @@
-import { Shield, Mail, ArrowRight, FileText } from "lucide-react";
+import { Shield, Mail, ArrowRight, FileText, CheckCircle2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Terms of Service | UnicornApps",
-  description: "Official terms and conditions governing the use of UnicornApps services.",
+  title: "Refund Policy | UnicornApps",
+  description: "Official refund and cancellation policy for UnicornApps services.",
 };
 
-export default function TermsPage() {
+export default function RefundPage() {
   const sections = [
     {
       id: "01",
-      title: "Acceptance of Terms",
-      content: "By using UnicornApps, you agree to these Terms of Service. If you do not agree, please do not use the platform."
+      title: "Overview",
+      icon: <FileText className="w-4 h-4 text-violet-400" />,
+      content: "At UnicornApps, we stand behind the quality of our AI-powered e-commerce tools. We want you to be completely satisfied with your purchase, and we've designed our refund policy to be as transparent and user-friendly as possible."
     },
     {
       id: "02",
-      title: "Use of Service",
-      content: "UnicornApps is an AI-powered tool for generating product descriptions from images. You may use it only for lawful purposes."
+      title: "Eligibility (14 Days)",
+      icon: <CheckCircle2 className="w-4 h-4 text-violet-400" />,
+      content: "We offer a full refund within 14 days of purchase, no questions asked. Whether you've used our services or not, if you are not satisfied within the first 14 days, you are eligible for a complete reimbursement of your payment."
     },
     {
       id: "03",
-      title: "User Accounts",
-      content: "You are responsible for maintaining the confidentiality of your account credentials and all activity under your account."
+      title: "How to Request",
+      icon: <Mail className="w-4 h-4 text-violet-400" />,
+      content: "To request a refund, simply contact us at support@unicorn-apps.com. Please include the email address associated with your account and your order number to help us process your request quickly."
     },
     {
       id: "04",
-      title: "Credits & Payments",
-      content: "Credits are non-refundable once consumed. Payments are processed securely via Paddle. For more information on our 14-day refund guarantee, please see our Refund Policy. Pricing may change with prior notice."
-    },
-    {
-      id: "05",
-      title: "Intellectual Property",
-      content: "All generated content belongs to the user. UnicornApps retains no rights over your generated descriptions or uploaded images."
-    },
-    {
-      id: "06",
-      title: "Prohibited Use",
-      content: "You may not use UnicornApps to process illegal, harmful, or offensive content. Abuse will result in immediate account termination."
-    },
-    {
-      id: "07",
-      title: "Limitation of Liability",
-      content: "UnicornApps is provided \"as is\". We are not liable for any indirect or consequential damages arising from use of the service."
-    },
-    {
-      id: "08",
-      title: "Termination",
-      content: "We reserve the right to suspend or terminate accounts that violate these terms without prior notice."
-    },
-    {
-      id: "09",
-      title: "Contact",
-      content: "For questions about these Terms, contact us at: support@unicornapps.com"
+      title: "Processing Time",
+      icon: <Clock className="w-4 h-4 text-violet-400" />,
+      content: "Once your refund request is received, it will be processed immediately. The funds will typically appear in your original payment method within 5-10 business days, depending on your bank or credit card provider."
     }
   ];
 
@@ -71,17 +50,17 @@ export default function TermsPage() {
         <div className="border-b border-white/5 pb-12 mb-16 text-center md:text-left">
           <div className="inline-flex items-center gap-2 mb-6">
             <div className="w-8 h-8 rounded-lg bg-violet-600/20 flex items-center justify-center border border-violet-500/20">
-               <FileText className="w-4 h-4 text-violet-400" />
+               <Shield className="w-4 h-4 text-violet-400" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-400">Legal & Terms</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-400">Legal & Compliance</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-4 uppercase">
-             Terms of Service
+             Refund Policy
           </h1>
           <div className="flex flex-col md:flex-row md:items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-500">
-             <span>Version 1.2</span>
+             <span>Version 1.0</span>
              <span className="hidden md:inline text-white/10">•</span>
-             <span>Effective Date: April 1, 2026</span>
+             <span>Effective Date: April 20, 2026</span>
           </div>
         </div>
 
@@ -121,15 +100,15 @@ export default function TermsPage() {
           
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
              <div className="space-y-2 text-center md:text-left">
-                <h3 className="text-lg font-black text-white uppercase tracking-tight">Acceptance agreement</h3>
-                <p className="text-xs text-slate-500 font-medium tracking-wide">By continuing to use UnicornApps, you acknowledge and agree to these terms.</p>
+                <h3 className="text-lg font-black text-white uppercase tracking-tight">Need a refund?</h3>
+                <p className="text-xs text-slate-500 font-medium tracking-wide">Contact our support team and we will handle your request immediately.</p>
              </div>
              
              <div className="flex gap-4">
-                <Link href="mailto:support@unicornapps.com">
+                <Link href="mailto:support@unicorn-apps.com">
                    <Button size="sm" className="h-12 px-6 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-violet-600/20 group">
                       <Mail className="mr-2 h-3.5 w-3.5" />
-                      Contact Legal
+                      Email Support
                       <ArrowRight className="ml-2 h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
                    </Button>
                 </Link>
