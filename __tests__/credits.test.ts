@@ -1,5 +1,5 @@
 import { POST as generatePOST } from '../src/app/api/generate/route'
-import { POST as webhookPOST } from '../src/app/api/webhooks/lemonsqueezy/route'
+import { POST as webhookPOST } from '../src/app/api/webhooks/paddle/route'
 import { NextRequest } from 'next/server'
 import crypto from 'crypto'
 
