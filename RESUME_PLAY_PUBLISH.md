@@ -6,22 +6,48 @@
 
 ---
 
-## TL;DR
+## ✅ UPDATE — 2026-05-17 (pass 2): both blockers cleared, signed AAB ready
+
+Both hard blockers are resolved. There is now a **signed, uploadable AAB.**
+
+- **B1 (keystore) — RESOLVED.** The "backup" keystore was the genuine original
+  signing key. Password recovered (your Candidate 1, exact; store = key password;
+  alias `unicornapps_key`). It is installed at `android/app/unicornapps-release.jks`;
+  the locked stray keystore was preserved as `unicornapps-release.jks.locked-orphan.bak`.
+- **B2 (package name) — RESOLVED.** Code renamed `com.unicornapps.app` →
+  **`com.unicornappsai.app`** to match the Console listing.
+
+**Signed release bundle:**
+| Field | Value |
+|---|---|
+| Path | `android/app/build/outputs/bundle/release/app-release.aab` |
+| Size | **4.78 MB** (was 57.53 MB — a 92% cut) |
+| SHA-256 | `ad17a9f1169161d82257da4f9adb06adeccecad9ac650f9852608e8f85f2fb7f` |
+| Package | `com.unicornappsai.app` |
+| versionCode / versionName | 2 / 1.0 |
+| Signing cert | `D2:F8:96:6D:…:E6:2F` (original UnicornApps key) |
+
+Since the code only ever produced `com.unicornapps.app` AABs and the Console is
+`com.unicornappsai.app`, **nothing was ever uploaded** to that listing — so there
+is no Play App Signing key locked in yet. This AAB's key will become the upload
+key on first upload. Safe to proceed.
+
+**What is left is all yours** (Console access / device / your taste) — see §13.
+The sections below are the original pass-1 detail; §4 and §5 are now historical.
+
+---
+
+## TL;DR (pass 1 — historical)
 
 I executed every code change that was not blocked. The repo is now in a clean,
 Play-oriented state: Android-free payments, Lemon Squeezy fully purged, AAB bloat
-fixed, account deletion implemented.
+fixed, account deletion implemented. The two blockers below were later resolved
+in pass 2 (see the update box above).
 
-**But I cannot hand you a signed, uploadable AAB. Two hard blockers need you —
-and one of them (the keystore) is serious.**
-
-| # | Blocker | Owner | Severity |
-|---|---|---|---|
-| B1 | **Keystore password is wrong** — signing fails | You | 🔴 P0 — could be fatal |
-| B2 | **Package name** — can't read Play Console from here | You | 🟠 P0 — easy to resolve |
-
-The AAB bloat fix is **proven**: the rebuilt bundle is **12.57 MB**, down from
-57.53 MB. It just couldn't be *signed*. Details in §3 and §4.
+| # | Blocker | Status |
+|---|---|---|
+| B1 | Keystore password | ✅ resolved (pass 2) |
+| B2 | Package name | ✅ resolved (pass 2) |
 
 ---
 
@@ -396,18 +422,33 @@ unusable. Those are different axes and I should have separated them.
 
 ---
 
-## 13. Resume checklist (do these in order)
+## 13. Resume checklist
 
-1. [ ] **B1:** Recover the keystore password → update `android/keystore.properties` → tell me.
-2. [ ] **B1:** Confirm whether an AAB was ever uploaded + whether Play App Signing is on.
-3. [ ] **B2:** Read the package name in Play Console → tell me.
-4. [ ] I rebuild + **sign** the AAB (`versionCode 2`), give you the final path + size + SHA.
-5. [ ] Push branch `chore/play-store-readiness`, merge, let Vercel redeploy (so account-deletion is live).
-6. [ ] Create the icon, feature graphic, screenshots (§8) — I can do the first two via Canva.
-7. [ ] Fill Console: App access (test login), Ads → No, Content rating, Target audience → 18+, Data safety (§7), Government → No, Financial → No, Health → No, category → Business.
-8. [ ] Set up Closed testing + recruit 12 testers (§9) — start this now, it isn't blocked.
-9. [ ] Upload signed AAB to the closed-testing track, start the 14-day clock.
-10. [ ] After 14 clean days → apply for production. **(You push the production button — I stop here.)**
+**Done (pass 2):**
+- [x] ~~B1: keystore~~ — resolved, signed AAB built.
+- [x] ~~B2: package name~~ — code matches Console (`com.unicornappsai.app`).
+- [x] ~~Rebuild + sign the AAB~~ — `app-release.aab`, 4.78 MB, versionCode 2.
+
+**Yours now (Console access / a device / your call):**
+1. [ ] **Push** branch `chore/play-store-readiness`, merge, let Vercel redeploy
+   — required so the account-deletion page is live *before* you submit for review.
+2. [ ] **Upload** `android/app/build/outputs/bundle/release/app-release.aab` to
+   Play Console → Testing → Closed testing → create release.
+3. [ ] Store listing: short/full description from §8 are ready. Produce the
+   **icon (512×512)**, **feature graphic (1024×500)**, **screenshots (2–8)**.
+   I can generate the icon + feature graphic via Canva — just say go. Screenshots
+   must come off the real app on a phone.
+4. [ ] Fill Console forms: App access (give an **email/password** test login, not
+   Google — see §10), Ads → No, Content rating questionnaire, Target audience →
+   18+, Data safety (§7), Government → No, Financial → No, Health → No,
+   category → Business.
+5. [ ] Recruit 12 testers (§9) — you can do this in parallel with everything above.
+6. [ ] Roll out the closed-testing release; keep 12 testers opted in for 14 days.
+7. [ ] After 14 clean days → apply for production. **(You push the production
+   button — I stop here.)**
+
+**Optional cleanup (not blocking):** wire in the AI-content report link (§10),
+enable R8 to shave the AAB further (§3), un-ignore `android/` for traceability (§11).
 
 ---
 

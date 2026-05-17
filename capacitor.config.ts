@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.unicornapps.app',
+  appId: 'com.unicornappsai.app',
   appName: 'UnicornApps',
   webDir: 'capacitor-shell',
   server: {
