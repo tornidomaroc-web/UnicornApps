@@ -26,7 +26,7 @@ jest.mock('@google/generative-ai', () => ({
 
 // Provide test environment variables
 process.env.GEMINI_API_KEY = 'mock_gemini_key'
-process.env.LEMON_SQUEEZY_WEBHOOK_SECRET = 'mock_secret'
+process.env.PADDLE_WEBHOOK_SECRET = 'mock_secret'
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://mock-url'
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'mock_service_key'
 
@@ -58,7 +58,7 @@ describe('Credit Logic', () => {
       update: jest.fn().mockReturnThis(),
       insert: jest.fn().mockReturnThis()
     };
-    
+
     (createClient as jest.Mock).mockReturnValue(mockSupabase);
     (createClientJS as jest.Mock).mockReturnValue(mockSupabase);
   })
@@ -67,7 +67,7 @@ describe('Credit Logic', () => {
     // User has 5 credits initially
     mockSupabase.single.mockResolvedValueOnce({ data: { credits: 5 }, error: null });
     mockSupabase.update.mockResolvedValueOnce({ error: null });
-    
+
     const req = new Request('http://localhost/api/generate', {
       method: 'POST',
       body: JSON.stringify({ image: 'data:image/jpeg;base64,mock', lang: 'en' })
@@ -90,30 +90,44 @@ describe('Credit Logic', () => {
 
     const res = await generatePOST(req);
     expect(res.status).toBe(403);
-    
+
     const json = await res.json();
     expect(json.error).toBe('Insufficient credits');
     expect(mockSupabase.update).not.toHaveBeenCalled();
   })
 
-  it('adds credits via Lemon Squeezy webhook', async () => {
-    // User profile originally has 2 credits
-    mockSupabase.single.mockResolvedValueOnce({ data: { credits: 2 }, error: null });
+  it('adds credits via Paddle webhook on transaction.completed', async () => {
+    // single() call #1 -> webhook dedup check (event not seen before)
+    // single() call #2 -> addCredits() reads current profile balance (2 credits)
+    mockSupabase.single
+      .mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({ data: { credits: 2 }, error: null });
 
     const payload = {
-      meta: { event_name: 'order_created', custom_data: { user_id: 'user-123' } },
-      data: { attributes: { total: 900 } } // 900 cents = $9 -> 50 credits
+      event_type: 'transaction.completed',
+      event_id: 'evt_test_1',
+      data: {
+        custom_data: { user_id: 'user-123', credits_to_add: 50 }
+      }
     };
-    
-    const bodyText = JSON.stringify(payload);
-    
-    const hmac = crypto.createHmac('sha256', process.env.LEMON_SQUEEZY_WEBHOOK_SECRET!);
-    const signature = hmac.update(bodyText).digest('hex');
 
-    const req = new NextRequest('http://localhost/api/webhooks/lemonsqueezy', {
+    const bodyText = JSON.stringify(payload);
+
+    // Paddle signs `${ts}:${rawBody}` with HMAC-SHA256 and sends it as
+    // a `paddle-signature: ts=<ts>;h1=<digest>` header.
+    const ts = '1700000000';
+    const digest = crypto
+      .createHmac('sha256', process.env.PADDLE_WEBHOOK_SECRET!)
+      .update(`${ts}:${bodyText}`)
+      .digest('hex');
+
+    const req = new NextRequest('http://localhost/api/webhooks/paddle', {
       method: 'POST',
       body: bodyText,
-      headers: { 'x-signature': signature }
+      headers: {
+        'x-signature': 'present',
+        'paddle-signature': `ts=${ts};h1=${digest}`
+      }
     });
 
     const res = await webhookPOST(req);

@@ -3,7 +3,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.unicornapps.app',
   appName: 'UnicornApps',
-  webDir: '.next',
+  webDir: 'capacitor-shell',
   server: {
     url: 'https://unicorn-apps.vercel.app',
     cleartext: false

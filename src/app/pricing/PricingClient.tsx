@@ -18,8 +18,23 @@ import { useLang } from "@/lib/i18n/LanguageContext";
 export default function PricingClient() {
   const { t } = useLang();
   const [isNative, setIsNative] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { createClient } = await import('@/lib/supabase/client')
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          setUserId(session.user.id)
+        }
+      } catch (err) {
+        console.error('Failed to fetch user session', err)
+      }
+    }
+    fetchUser()
+
     const checkNative = async () => {
       try {
         const { Capacitor } = await import('@capacitor/core')
@@ -63,7 +78,7 @@ export default function PricingClient() {
       cta: t('pricing.cta.starter'),
       featured: false,
       href: "/login",
-      checkoutUrl: "https://jadtrader.lemonsqueezy.com/checkout/buy/173d1849-c625-4fe5-952e-0372e6e337de",
+      checkoutUrl: `https://buy.paddle.com/product/pri_01kpnqr5df47ce3nvfh92qmxc9?user_id=${userId || ''}`,
       icon: <Zap className="w-6 h-6 text-amber-400" />
     },
     {
@@ -82,7 +97,7 @@ export default function PricingClient() {
       cta: t('pricing.cta.pro'),
       featured: true,
       href: "/login",
-      checkoutUrl: "https://jadtrader.lemonsqueezy.com/checkout/buy/46ed7c0f-c7ad-4b0b-90f2-11cf50168bf2",
+      checkoutUrl: `https://buy.paddle.com/product/pri_01kpnqr5df47ce3nvfh92qmxc9?user_id=${userId || ''}`,
       icon: <Sparkles className="w-6 h-6 text-violet-400" />
     },
   ];
@@ -145,7 +160,7 @@ export default function PricingClient() {
           variants={containerVariants}
           className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto"
         >
-          {tiers.map((tier, idx) => (
+          {(isNative ? tiers.filter((tier) => !tier.checkoutUrl) : tiers).map((tier, idx) => (
             <motion.div key={tier.name} variants={itemVariants} className="h-full">
               <Card
                 className={`flex flex-col h-full relative transition-all duration-500 bg-white/5 backdrop-blur-3xl border-white/10 group ${
@@ -224,7 +239,8 @@ export default function PricingClient() {
           ))}
         </motion.div>
 
-        <motion.div 
+        {!isNative && (
+        <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -248,6 +264,7 @@ export default function PricingClient() {
             </Link>
           </div>
         </motion.div>
+        )}
       </div>
 
       {/* FOOTER */}

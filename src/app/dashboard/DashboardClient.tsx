@@ -551,26 +551,24 @@ export default function DashboardClient({
                       {t('dash.creditsWord')}
                     </span>
                  </div>
-                <div className="h-4 w-px bg-white/10" />
-                 {isNative ? (
-                   <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest text-center px-2">
-                     You&apos;ve reached your free limit. More features are available on the official UnicornApps website.
-                   </p>
-                 ) : (
-                   <div className="flex items-center gap-2">
-                     <a
-                       href={`https://jadtrader.lemonsqueezy.com/checkout/buy/173d1849-c625-4fe5-952e-0372e6e337de?checkout[custom][user_id]=${userId}`}
-                       className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
-                     >
-                       Starter $9
-                     </a>
-                     <a
-                       href={`https://jadtrader.lemonsqueezy.com/checkout/buy/46ed7c0f-c7ad-4b0b-90f2-11cf50168bf2?checkout[custom][user_id]=${userId}`}
-                       className="bg-violet-600/10 border border-violet-500/30 text-violet-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg hover:bg-violet-600 hover:text-white transition-all"
-                     >
-                       Pro $29 ↗
-                     </a>
-                   </div>
+                 {!isNative && (
+                   <>
+                     <div className="h-4 w-px bg-white/10" />
+                     <div className="flex items-center gap-2">
+                       <a
+                         href={`https://buy.paddle.com/product/pri_01kpnqr5df47ce3nvfh92qmxc9?user_id=${userId}`}
+                         className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+                       >
+                         Starter $9
+                       </a>
+                       <a
+                         href={`https://buy.paddle.com/product/pri_01kpnqr5df47ce3nvfh92qmxc9?user_id=${userId}`}
+                         className="bg-violet-600/10 border border-violet-500/30 text-violet-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg hover:bg-violet-600 hover:text-white transition-all"
+                       >
+                         Pro $29 ↗
+                       </a>
+                     </div>
+                   </>
                  )}
               </div>
              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:border-white/30" onClick={() => router.refresh()}>

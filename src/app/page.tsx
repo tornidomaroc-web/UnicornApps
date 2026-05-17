@@ -281,7 +281,7 @@ export default function Home() {
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('pricing.starter.feat1')}</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('pricing.starter.feat2')}</li>
                 </ul>
-                <a href="https://jadtrader.lemonsqueezy.com/checkout/buy/173d1849-c625-4fe5-952e-0372e6e337de" target="_blank" rel="noopener noreferrer" className="block">
+                <a href="/pricing" className="block">
                   <Button className="w-full h-12 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-[10px]">View Plan</Button>
                 </a>
               </div>
@@ -294,7 +294,7 @@ export default function Home() {
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-400" /> {t('pricing.pro.feat2')}</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-400" /> {t('pricing.pro.feat3')}</li>
                 </ul>
-                <a href="https://jadtrader.lemonsqueezy.com/checkout/buy/46ed7c0f-c7ad-4b0b-90f2-11cf50168bf2" target="_blank" rel="noopener noreferrer" className="block">
+                <a href="/pricing" className="block">
                   <Button className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(124,58,237,0.5)]">View Plan</Button>
                 </a>
               </div>

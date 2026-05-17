@@ -1,95 +1,48 @@
-<div align="center">
+# UnicornApps
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:1a0533,50:6d28d9,100:ec4899&height=160&section=header&text=UnicornApps&fontSize=52&fontColor=ffffff&fontAlignY=40&desc=AI%20E-commerce%20Growth%20Architect&descAlignY=62&descColor=f9a8d4&animation=fadeIn" width="100%"/>
+> AI content engine for e-commerce sellers — product listings at scale.
 
-<br/>
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
+[![Gemini Vision](https://img.shields.io/badge/Gemini-Vision-yellow)](https://deepmind.google/technologies/gemini/)
+[![Capacitor](https://img.shields.io/badge/Capacitor-Android%2FiOS-blue)](https://capacitorjs.com/)
 
-[![Live](https://img.shields.io/badge/●_LIVE-1D9E75?style=for-the-badge)](https://unicorn-apps.vercel.app)
-[![Launch App](https://img.shields.io/badge/unicorn--apps.vercel.app-Launch%20Now-ec4899?style=for-the-badge&logo=vercel&logoColor=white)](https://unicorn-apps.vercel.app)
-[![Gemini Vision](https://img.shields.io/badge/Gemini%20Vision-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
-[![Next.js 14](https://img.shields.io/badge/Next.js%2014-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org)
-[![Arabic First](https://img.shields.io/badge/Arabic%20%26%20RTL-🇸🇦-1a1a2e?style=for-the-badge)](https://unicorn-apps.vercel.app)
+Take a product photo. Get Arabic + English listings, descriptions,  
+and social captions — ready to publish in seconds.
 
-</div>
+## Features
 
----
+- Camera capture → instant AI content generation
+- Bilingual output: Arabic (RTL) + English
+- Optimized for Gulf e-commerce (Noon, Amazon.ae, Shopify)
+- Android + iOS via Capacitor
+- Paddle payments — Pro tier (web only; the Android app ships free)
 
-## Overview
-UnicornApps is a production-ready, AI-powered e-commerce asset generation platform. It empowers sellers to instantly transform product photos into fully optimized, platform-specific listings for Amazon, Shopify, and social media. Using vision models, it generates high-converting SEO titles, metadata, feature bullets, multilingual content, and interactive mockups.
+## Stack
 
-## Tech Stack
-- Frontend: Next.js 14.2 (App Router) — Core React framework with Server Components
-- Styling: Tailwind CSS & Framer Motion — Modern utility-first styling and fluid animations
-- Backend/Database: Supabase — Serverless BaaS providing PostgreSQL, Auth, and Row Level Security
-- AI Engine: Google Gemini 1.5 Pro/Flash Vision — Multimodal AI for dynamic image analysis and content generation
-- Mobile: Capacitor 6 — Native wrapper for robust iOS and Android deployment from web code
-- Payments: Lemon Squeezy — Merchant of record for subscriptions and credit-based monetization
+`Next.js` · `Gemini Vision` · `Supabase` · `Capacitor` · `Paddle` · `Vercel`
 
-## Project Structure
-- `/src` — Core application code including frontend and API routes
-  - `/src/app` — Next.js App Router containing pages, API routes, and layouts
-  - `/src/components` — Reusable, atomic UI components (Radix/Tailwind)
-  - `/src/lib` — Shared business logic, database clients, native bridges, and i18n
-- `/android` — Generated native Android project for Capacitor
-- `/node_modules` — Project dependencies
+## Live
 
-## Prerequisites
-- Node.js (v18+)
-- Supabase Account (for PostgreSQL database and Auth)
-- Google AI Studio Account (for Gemini API key)
-- Lemon Squeezy Account (for payment links and webhooks)
-- Vercel Account (for serverless deployment)
+🌐 [unicorn-apps.vercel.app](https://unicorn-apps.vercel.app)
 
-## Environment Variables
-| Variable Name | Description | Where to get it |
-| --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Public URL of the Supabase project | Supabase Dashboard > API |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anonymous API key for Supabase client | Supabase Dashboard > API |
-| `SUPABASE_SERVICE_ROLE_KEY` | Secret admin key to bypass RLS in secure server routes | Supabase Dashboard > API |
-| `GEMINI_API_KEY` | API key to communicate with Google's Generative AI models | Google AI Studio |
-| `LEMON_SQUEEZY_WEBHOOK_SECRET` | Secret to sign and verify incoming payment webhooks | Lemon Squeezy > Webhooks |
+## Run locally
 
-## Local Development Setup
-1. Clone the repository and navigate into the project root.
-2. Run `npm install` to install all required dependencies.
-3. Copy your project keys into a `.env.local` file at the root.
-4. Run the Supabase schema script detailed in the Database Setup section.
-5. Run `npm run dev` to start the local Next.js development server at `http://localhost:3000`.
+```bash
+npm install && npm run dev
 
-## Deployment Guide
-1. Push the local repository to GitHub.
-2. In the Vercel Dashboard, select "Add New Project" and import the GitHub repository.
-3. Navigate to the Environment Variables settings in Vercel and paste all variables found in your `.env.local`.
-4. Deploy the project; Next.js 14 configurations are automatically detected.
-5. Ensure that the deployed Vercel URL is added to the Supabase Authentication Redirect URLs settings.
+# Mobile (Android)
+npx cap sync android
+npx cap open android
+```
 
-## Mobile Build Guide
-1. Ensure the web application builds successfully using `npm run build`.
-2. Sync the web build with Capacitor architectures by running `npx cap sync`.
-3. For Android: Run `npx cap open android` and build/deploy using Android Studio.
-4. For iOS: Run `npx cap open ios` and build/deploy using Xcode.
+```env
+GEMINI_API_KEY=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+PADDLE_WEBHOOK_SECRET=
+```
 
-## Database Setup
-1. Create a new Supabase project in the Supabase Cloud dashboard.
-2. Navigate to the SQL Editor and run the provided `supabase_schema.sql` file.
-3. This creates the essential `profiles` and `generations` tables, establishes the Row Level Security (RLS) policies, and creates an automatic user trigger.
-4. Ensure Email Auth is enabled in Supabase Authentication settings.
+## Built by
 
-## Payment Integration
-1. In Lemon Squeezy, navigate to Store settings and create a Webhook.
-2. Set the Webhook URL to point to your live deployment: `https://your-domain.com/api/webhooks/lemonsqueezy`.
-3. Generate a strong Webhook Secret and save it as `LEMON_SQUEEZY_WEBHOOK_SECRET` in Vercel.
-4. Select the `order_created` event to subscribe to credit top-ups.
-5. Test the integration using Lemon Squeezy's "Test Mode" to securely simulate checkouts.
-
-## Architecture Notes
-- **App Router Design Pattern**: Adopts standard Next.js 14 paradigms, keeping pure business logic (Supabase operations, AI orchestration) on the backend via Server Actions/API Routes to mask sensitive tokens.
-- **Multimodal AI Strategy**: Passes base64 image data directly to Gemini APIs to skip intermediate bucket storage overhead, maximizing speed and cost-efficiency.
-- **Cross-Platform Native Bridge**: Employs Capacitor to cleanly map native APIs (like Camera hardware), serving as a unified PWA and a hardware-accelerated iOS/Android app from one codebase.
-- **Micro-transaction Scalability**: Leverages robust PostgreSQL triggers alongside high-availability webhook endpoints for real-time credit adjustments independent of frontend availability.
-
----
-
-<div align="center">
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:1a0533,50:6d28d9,100:ec4899&height=100&section=footer&animation=fadeIn" width="100%"/>
-</div>
+[AboJad](https://github.com/tornidomaroc-web) — Full Stack AI Engineer, Marrakesh 🇲🇦

@@ -75,6 +75,11 @@ export default function Navbar() {
                     {t('nav.dashboard')}
                   </Button>
                 </Link>
+                <Link href="/account">
+                  <Button variant="ghost" size="icon" className="w-8 h-8 rounded-xl text-slate-500 hover:text-violet-400 hover:bg-violet-500/10 transition-all">
+                    <User className="w-3.5 h-3.5" />
+                  </Button>
+                </Link>
                 <form action={logout}>
                   <Button variant="ghost" size="icon" type="submit" className="w-8 h-8 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all">
                     <LogOut className="w-3.5 h-3.5" />

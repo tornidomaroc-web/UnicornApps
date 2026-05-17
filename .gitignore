@@ -5,3 +5,11 @@
 /node_modules
 /ios
 /android
+
+# Android signing
+android/keystore.properties
+android/app/*.jks
+
+# Local clutter (not part of the app)
+/scratch
+/out
