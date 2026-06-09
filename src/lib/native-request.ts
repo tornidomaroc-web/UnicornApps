@@ -16,8 +16,10 @@ export const NATIVE_UA_TOKEN = 'UnicornAppsAndroid'
  */
 export function isNativeRequest(): boolean {
   try {
-    const ua = headers().get('user-agent') || ''
-    return ua.includes(NATIVE_UA_TOKEN)
+    const h = headers()
+    // Set by middleware (edge), which always sees the real WebView User-Agent.
+    if (h.get('x-unicorn-native') === '1') return true
+    return (h.get('user-agent') || '').includes(NATIVE_UA_TOKEN)
   } catch {
     return false
   }

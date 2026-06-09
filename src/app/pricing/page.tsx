@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   description: "Simple, transparent pricing for global e-commerce sellers. Start free, upgrade when ready.",
 }
 
+// Must render per-request so the native check (below) always runs — never
+// statically prerendered. The primary gate is middleware; this is defense.
+export const dynamic = 'force-dynamic'
+
 export default function PricingPage() {
   // The native Android app is payment-free (Google Play disallows external
   // checkout for digital goods). Make the pricing page physically unreachable
