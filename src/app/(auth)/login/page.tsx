@@ -87,8 +87,12 @@ export default function LoginPage({
       ? t('login.signupSub')
       : t('login.resetSub')
 
+  // Google provider is currently disabled in Supabase, so the button can't work.
+  // Flip to true once it's enabled (Supabase → Authentication → Providers → Google)
+  // to restore the "Continue with Google" button and the "or" divider.
+  const GOOGLE_ENABLED = false
   const showPasswordField = mode !== 'reset'
-  const showSocial = mode !== 'reset'
+  const showSocial = GOOGLE_ENABLED && mode !== 'reset'
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#070710] px-4 py-10 sm:py-12 relative overflow-hidden">
