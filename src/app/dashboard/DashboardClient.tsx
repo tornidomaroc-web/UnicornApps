@@ -98,11 +98,13 @@ interface ChatMessage {
 export default function DashboardClient({
   userId,
   initialCredits,
-  initialHistory
+  initialHistory,
+  serverIsNative = false
 }: {
   userId: string,
   initialCredits: number,
-  initialHistory: Generation[]
+  initialHistory: Generation[],
+  serverIsNative?: boolean
 }) {
   const router = useRouter()
   const { t, lang } = useLang()
@@ -131,15 +133,17 @@ export default function DashboardClient({
   const [shopifyViewMode, setShopifyViewMode] = useState<'preview' | 'code'>('preview')
   const chatEndRef = useRef<HTMLDivElement>(null)
 
-  const [isNative, setIsNative] = useState(false)
+  // Seeded from the server's native User-Agent check so the Paddle upgrade links
+  // never render on native (no flash). Client check only ever upgrades to native.
+  const [isNative, setIsNative] = useState(serverIsNative)
 
   useEffect(() => {
     const checkNative = async () => {
       try {
         const { Capacitor } = await import('@capacitor/core')
-        setIsNative(Capacitor.isNativePlatform())
+        if (Capacitor.isNativePlatform()) setIsNative(true)
       } catch {
-        setIsNative(false)
+        // keep server-seeded value
       }
     }
     checkNative()

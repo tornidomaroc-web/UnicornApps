@@ -4,10 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, BarChart3, History, Shield, Zap, Globe, Layout, Monitor, FileDown, MessagesSquare } from "lucide-react";
 import Link from "next/link";
 import { useLang } from "@/lib/i18n/LanguageContext";
+import { useIsNative } from "@/hooks/useIsNative";
 
 export default function FeaturesPage() {
   const { t } = useLang();
-  
+  const { isNative, resolved } = useIsNative();
+  const showPricing = resolved && !isNative;
+
   const featureGroups = [
     {
       title: t('features.group1.title'),
@@ -104,11 +107,13 @@ export default function FeaturesPage() {
                 {t('features.cta.btn1')}
               </Button>
             </Link>
-            <Link href="/pricing">
-              <Button variant="ghost" size="lg" className="h-16 px-12 text-xs font-black uppercase tracking-widest rounded-2xl text-white hover:bg-white/5 border border-white/10">
-                {t('features.cta.btn2')}
-              </Button>
-            </Link>
+            {showPricing && (
+              <Link href="/pricing">
+                <Button variant="ghost" size="lg" className="h-16 px-12 text-xs font-black uppercase tracking-widest rounded-2xl text-white hover:bg-white/5 border border-white/10">
+                  {t('features.cta.btn2')}
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>

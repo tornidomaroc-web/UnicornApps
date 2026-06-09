@@ -1,6 +1,5 @@
 "use client"
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { 
@@ -18,23 +17,14 @@ import {
 } from "lucide-react";
 import { motion, Variants } from "framer-motion";
 import { useLang } from "@/lib/i18n/LanguageContext";
+import { useIsNative } from "@/hooks/useIsNative";
 
 export default function Home() {
   const { t } = useLang();
 
-  const [isNative, setIsNative] = useState(false);
-
-  useEffect(() => {
-    const checkNative = async () => {
-      try {
-        const { Capacitor } = await import('@capacitor/core')
-        setIsNative(Capacitor.isNativePlatform())
-      } catch {
-        setIsNative(false)
-      }
-    }
-    checkNative()
-  }, []);
+  // Default-hidden: only treat as web (and show pricing) once Capacitor confirms.
+  const { isNative, resolved } = useIsNative();
+  const showPricing = resolved && !isNative;
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -269,7 +259,7 @@ export default function Home() {
       </section>
 
       {/* 5. PRICING TEASER */}
-      {!isNative && (
+      {showPricing && (
         <section className="relative z-10 py-32 bg-white/[0.02] border-y border-white/5 px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl font-black text-white mb-12 tracking-tighter">{t('pricing.teaser.title')}</h2>
@@ -344,7 +334,7 @@ export default function Home() {
             <ul className="space-y-4 text-sm font-medium text-slate-500">
               <li><Link href="/" className="hover:text-violet-400 transition-colors">{t('nav.home')}</Link></li>
               <li><Link href="/features" className="hover:text-violet-400 transition-colors">{t('nav.features')}</Link></li>
-              <li><Link href="/pricing" className="hover:text-violet-400 transition-colors">{t('nav.pricing')}</Link></li>
+              {showPricing && <li><Link href="/pricing" className="hover:text-violet-400 transition-colors">{t('nav.pricing')}</Link></li>}
               <li><Link href="/about" className="hover:text-violet-400 transition-colors">{t('nav.about')}</Link></li>
             </ul>
           </div>
