@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import DashboardClient from './DashboardClient'
 import { Sparkles, Zap } from 'lucide-react'
+import { isNativeRequest } from '@/lib/native-request'
 
 export default async function DashboardPage() {
   let credits = 0
@@ -105,6 +106,7 @@ export default async function DashboardPage() {
         userId={userId}
         initialCredits={credits}
         initialHistory={history}
+        serverIsNative={isNativeRequest()}
       />
     </div>
   )

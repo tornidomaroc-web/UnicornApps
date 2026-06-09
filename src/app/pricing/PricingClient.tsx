@@ -14,10 +14,15 @@ import {
 import { Check, Sparkles, Zap, Shield, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLang } from "@/lib/i18n/LanguageContext";
+import { useIsNative } from "@/hooks/useIsNative";
 
 export default function PricingClient() {
   const { t } = useLang();
-  const [isNative, setIsNative] = useState(false);
+  // Backstop: the server already redirects /pricing → / on native, but if that
+  // is ever bypassed, default to HIDDEN and only reveal paid tiers once the
+  // client confirms it is web. No native flash of paid plans / Paddle links.
+  const { isNative, resolved } = useIsNative();
+  const showPaid = resolved && !isNative;
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,16 +39,6 @@ export default function PricingClient() {
       }
     }
     fetchUser()
-
-    const checkNative = async () => {
-      try {
-        const { Capacitor } = await import('@capacitor/core')
-        setIsNative(Capacitor.isNativePlatform())
-      } catch {
-        setIsNative(false)
-      }
-    }
-    checkNative()
   }, []);
 
   const tiers = [
@@ -160,7 +155,7 @@ export default function PricingClient() {
           variants={containerVariants}
           className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto"
         >
-          {(isNative ? tiers.filter((tier) => !tier.checkoutUrl) : tiers).map((tier, idx) => (
+          {(showPaid ? tiers : tiers.filter((tier) => !tier.checkoutUrl)).map((tier, idx) => (
             <motion.div key={tier.name} variants={itemVariants} className="h-full">
               <Card
                 className={`flex flex-col h-full relative transition-all duration-500 bg-white/5 backdrop-blur-3xl border-white/10 group ${
@@ -208,7 +203,7 @@ export default function PricingClient() {
                 </CardContent>
 
                 <CardFooter className="px-10 pb-12 pt-4">
-                  {!isNative && tier.checkoutUrl ? (
+                  {showPaid && tier.checkoutUrl ? (
                     <a href={tier.checkoutUrl} target="_blank" rel="noopener noreferrer" className="w-full">
                       <Button
                         className={`w-full h-16 text-xs font-black uppercase tracking-[0.2em] rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${
@@ -239,7 +234,7 @@ export default function PricingClient() {
           ))}
         </motion.div>
 
-        {!isNative && (
+        {showPaid && (
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
