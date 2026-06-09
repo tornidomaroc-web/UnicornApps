@@ -1,7 +1,11 @@
 "use client"
 
 import { useState } from 'react'
-import { login, signup, signInWithGoogle } from './actions'
+import { useFormState, useFormStatus } from 'react-dom'
+import Link from 'next/link'
+import { login, signup, requestPasswordReset, signInWithGoogle } from './actions'
+import type { AuthResult } from './actions'
+import { useLang } from '@/lib/i18n/LanguageContext'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -13,139 +17,267 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Sparkles } from 'lucide-react'
+
+type Mode = 'signin' | 'signup' | 'reset'
+
+function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
+  const { pending } = useFormStatus()
+  return (
+    <Button
+      type="submit"
+      disabled={pending}
+      className="w-full h-12 bg-violet-600 hover:bg-violet-500 text-white font-semibold text-base rounded-xl shadow-[0_0_24px_-6px_rgba(124,58,237,0.7)] transition-all active:scale-[0.99] disabled:opacity-70 disabled:active:scale-100"
+    >
+      {pending ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          {pendingLabel}
+        </>
+      ) : (
+        label
+      )}
+    </Button>
+  )
+}
 
 export default function LoginPage({
   searchParams,
 }: {
   searchParams: { error?: string; message?: string }
 }) {
+  const { t } = useLang()
+  const [mode, setMode] = useState<Mode>('signin')
   const [showPassword, setShowPassword] = useState(false)
 
+  const [signinState, signinAction] = useFormState(login, undefined)
+  const [signupState, signupAction] = useFormState(signup, undefined)
+  const [resetState, resetAction] = useFormState(requestPasswordReset, undefined)
+
+  const state: AuthResult | undefined =
+    mode === 'signin' ? signinState : mode === 'signup' ? signupState : resetState
+  const action =
+    mode === 'signin' ? signinAction : mode === 'signup' ? signupAction : resetAction
+
+  // Translate an action result code into a user-facing message.
+  let feedback: { kind: 'success' | 'error'; text: string } | null = null
+  if (state) {
+    if (state.code === 'check_email' || state.code === 'reset_sent') {
+      feedback = { kind: 'success', text: t(`login.msg.${state.code}`) }
+    } else if (state.code === 'unknown' && state.detail) {
+      feedback = { kind: 'error', text: state.detail }
+    } else {
+      feedback = { kind: 'error', text: t(`login.err.${state.code}`) }
+    }
+  } else if (searchParams.error) {
+    // OAuth / callback failures arrive here as ?error=...
+    feedback = { kind: 'error', text: searchParams.error }
+  }
+
+  const title =
+    mode === 'signin'
+      ? t('login.signinTitle')
+      : mode === 'signup'
+      ? t('login.signupTitle')
+      : t('login.resetTitle')
+  const sub =
+    mode === 'signin'
+      ? t('login.signinSub')
+      : mode === 'signup'
+      ? t('login.signupSub')
+      : t('login.resetSub')
+
+  const showPasswordField = mode !== 'reset'
+  const showSocial = mode !== 'reset'
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#070710] px-4 py-12 relative overflow-hidden">
-      {/* Background Effects */}
+    <div className="flex min-h-screen items-center justify-center bg-[#070710] px-4 py-10 sm:py-12 relative overflow-hidden">
+      {/* Background glow */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-600/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] bg-violet-600/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-15%] right-[-10%] w-[45%] h-[45%] bg-indigo-500/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[30%] right-[20%] w-[20%] h-[20%] bg-amber-400/5 rounded-full blur-[100px]" />
       </div>
 
-      <Card className="w-full max-w-md bg-white/5 backdrop-blur-3xl border-white/10 shadow-[0_0_50px_-20px_rgba(139,92,246,0.3)] overflow-hidden relative z-10">
-        <CardHeader className="space-y-2 pb-8">
-          <CardTitle className="text-4xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400">
-            Sign In
+      <Card className="w-full max-w-md bg-white/[0.04] backdrop-blur-2xl border-white/10 shadow-[0_0_60px_-25px_rgba(124,58,237,0.45)] rounded-2xl overflow-hidden relative z-10">
+        <CardHeader className="space-y-3 pb-6 pt-8">
+          {/* Brand mark — gold accent */}
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-300/90 to-amber-500/80 text-black shadow-[0_0_18px_-4px_rgba(251,191,36,0.6)]">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <span className="text-sm font-semibold tracking-wide text-slate-200">UnicornApps</span>
+          </div>
+          <CardTitle className="text-3xl font-bold tracking-tight text-white">
+            {title}
           </CardTitle>
-          <CardDescription className="text-slate-400 font-medium tracking-tight">
-            Enter the Matrix to access your AI assets.
+          <CardDescription className="text-slate-400 text-[15px] leading-relaxed">
+            {sub}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <form className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-500 mb-1.5 block">Email Identity</Label>
+
+        <CardContent className="space-y-5">
+          <form action={action} className="space-y-4" noValidate={false}>
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm font-medium text-slate-300">
+                {t('login.email')}
+              </Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="identity@matrix.com"
+                autoComplete="email"
+                inputMode="email"
+                placeholder={t('login.emailPlaceholder')}
                 required
-                className="bg-black/40 border-white/10 text-white placeholder:text-slate-700 focus:border-violet-500/50 focus:ring-violet-500/20 transition-all h-12"
+                className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-violet-500/60 focus:ring-violet-500/20 transition-all h-12 rounded-xl"
               />
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between mb-1.5">
-                <Label htmlFor="password" className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-500">Security Key</Label>
-              </div>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  className="bg-black/40 border-white/10 text-white placeholder:text-slate-700 focus:border-violet-500/50 focus:ring-violet-500/20 transition-all h-12 pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-violet-400 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-            {searchParams.error && (
-              <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-                {searchParams.error}
+
+            {showPasswordField && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-sm font-medium text-slate-300">
+                    {t('login.password')}
+                  </Label>
+                  {mode === 'signin' && (
+                    <button
+                      type="button"
+                      onClick={() => setMode('reset')}
+                      className="text-xs font-medium text-violet-400 hover:text-violet-300 transition-colors"
+                    >
+                      {t('login.forgot')}
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                    placeholder={t('login.passwordPlaceholder')}
+                    required
+                    minLength={mode === 'signup' ? 6 : undefined}
+                    className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-violet-500/60 focus:ring-violet-500/20 transition-all h-12 rounded-xl ltr:pr-12 rtl:pl-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
+                    className="absolute top-1/2 -translate-y-1/2 ltr:right-3 rtl:left-3 text-slate-500 hover:text-violet-400 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
             )}
-            {searchParams.message && (
-              <div className="rounded-md bg-zinc-100 p-3 text-sm text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200">
-                {searchParams.message}
-              </div>
-            )}
-            <Button 
-              type="submit" 
-              className="w-full h-12 bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all active:scale-[0.98]" 
-              formAction={login}
-            >
-              Authorize Access
-            </Button>
-            <Button
-              type="submit"
-              variant="outline"
-              className="w-full h-12 border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 font-black uppercase tracking-[0.2em] transition-all"
-              formAction={signup}
-            >
-              Initialize Profile
-            </Button>
-          </form>
 
-          <div className="relative py-4">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-white/10" />
-            </div>
-            <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest">
-              <span className="bg-slate-950 px-4 text-slate-600">
-                Direct Sync Integration
-              </span>
-            </div>
-          </div>
-
-          <form action={signInWithGoogle}>
-            <Button 
-              variant="outline" 
-              type="submit" 
-              className="w-full h-12 border-white/10 bg-white/5 hover:bg-white/10 text-slate-300 font-black uppercase tracking-[0.2em]"
-            >
-              <svg
-                className="mr-3 h-4 w-4"
-                aria-hidden="true"
-                focusable="false"
-                data-prefix="fab"
-                data-icon="google"
-                role="img"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 488 512"
+            {feedback && (
+              <div
+                role={feedback.kind === 'error' ? 'alert' : 'status'}
+                className={
+                  feedback.kind === 'error'
+                    ? 'rounded-xl bg-red-500/10 border border-red-500/25 px-4 py-3 text-sm text-red-300'
+                    : 'rounded-xl bg-emerald-500/10 border border-emerald-500/25 px-4 py-3 text-sm text-emerald-300'
+                }
               >
-                <path
-                  fill="currentColor"
-                  d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
-                ></path>
-              </svg>
-              Google Cloud Auth
-            </Button>
+                {feedback.text}
+              </div>
+            )}
+
+            <SubmitButton
+              label={
+                mode === 'signin'
+                  ? t('login.signinButton')
+                  : mode === 'signup'
+                  ? t('login.signupButton')
+                  : t('login.resetButton')
+              }
+              pendingLabel={
+                mode === 'signin'
+                  ? t('login.signinPending')
+                  : mode === 'signup'
+                  ? t('login.signupPending')
+                  : t('login.resetPending')
+              }
+            />
+
+            {mode === 'reset' && (
+              <button
+                type="button"
+                onClick={() => setMode('signin')}
+                className="w-full text-center text-sm font-medium text-slate-400 hover:text-white transition-colors"
+              >
+                {t('login.backToSignin')}
+              </button>
+            )}
           </form>
+
+          {showSocial && (
+            <>
+              <div className="relative py-1">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-white/10" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-[#0b0b16] px-3 text-slate-500">{t('login.or')}</span>
+                </div>
+              </div>
+
+              <form action={signInWithGoogle}>
+                <Button
+                  variant="outline"
+                  type="submit"
+                  className="w-full h-12 rounded-xl border-white/10 bg-white/5 hover:bg-white/10 text-slate-200 font-medium"
+                >
+                  <svg
+                    className="ltr:mr-3 rtl:ml-3 h-4 w-4"
+                    aria-hidden="true"
+                    focusable="false"
+                    role="img"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 488 512"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
+                    />
+                  </svg>
+                  {t('login.google')}
+                </Button>
+              </form>
+            </>
+          )}
+
+          {/* Mode toggle — keeps sign-in and create-account clearly distinct */}
+          {mode !== 'reset' && (
+            <p className="text-center text-sm text-slate-400 pt-1">
+              {mode === 'signin' ? t('login.noAccount') : t('login.haveAccount')}{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setMode(mode === 'signin' ? 'signup' : 'signin')
+                  setShowPassword(false)
+                }}
+                className="font-semibold text-violet-400 hover:text-violet-300 transition-colors"
+              >
+                {mode === 'signin' ? t('login.createOne') : t('login.signinLink')}
+              </button>
+            </p>
+          )}
         </CardContent>
-        <CardFooter className="pb-8">
-          <p className="px-8 text-center text-[10px] font-black uppercase tracking-widest text-slate-600 leading-relaxed">
-            Secure Encryption Active. By authorizing, you accept our{" "}
-            <a href="#" className="underline underline-offset-4 hover:text-white transition-colors">
-              Protocol
-            </a>{" "}
-            and{" "}
-            <a href="#" className="underline underline-offset-4 hover:text-white transition-colors">
-              Vault Policy
-            </a>
+
+        <CardFooter className="pb-8 pt-2">
+          <p className="px-4 text-center text-xs text-slate-500 leading-relaxed mx-auto">
+            {t('login.agreePrefix')}{' '}
+            <Link href="/terms" className="underline underline-offset-4 hover:text-slate-300 transition-colors">
+              {t('login.terms')}
+            </Link>{' '}
+            {t('login.and')}{' '}
+            <Link href="/privacy" className="underline underline-offset-4 hover:text-slate-300 transition-colors">
+              {t('login.privacy')}
+            </Link>
             .
           </p>
         </CardFooter>
