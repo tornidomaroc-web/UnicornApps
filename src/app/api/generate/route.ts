@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { GENERATE_CREDIT_COST, createServiceClient, tryDeductCredits } from '@/lib/credits'
 import { isRetryableGeminiError, resolveGeminiModels } from '@/lib/gemini'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextResponse } from 'next/server'
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
-    if (profile.credits <= 0) {
+    if (profile.credits < GENERATE_CREDIT_COST) {
       return NextResponse.json({ error: 'Insufficient credits' }, { status: 403 })
     }
 
@@ -137,15 +138,14 @@ ${languageInstruction}
       )
     }
 
-    // 4. Deduct 1 credit
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ credits: profile.credits - 1 })
-      .eq('id', user.id)
-
-    if (updateError) {
-      console.error('Error deducting credit:', updateError)
-      // We still return the content even if credit deduction fails, 
+    // 4. Deduct credits (compare-and-swap so parallel calls can't write a
+    // stale balance; service client so it doesn't lean on the user-update
+    // RLS policy)
+    const creditClient = createServiceClient() ?? supabase
+    const deducted = await tryDeductCredits(creditClient, user.id, GENERATE_CREDIT_COST)
+    if (!deducted) {
+      console.error('Credit deduction failed after successful generation for user', user.id)
+      // We still return the content even if credit deduction fails,
       // but in production, you might want to handle this more strictly.
     }
 

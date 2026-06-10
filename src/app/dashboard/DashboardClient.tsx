@@ -321,12 +321,22 @@ export default function DashboardClient({
 
       const data = await response.json()
 
+      if (response.status === 403) {
+        setChatHistory(prev => [...prev, {
+          role: 'ai',
+          message: t('dash.noCredits'),
+          timestamp: new Date()
+        }])
+        return
+      }
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to refine content')
       }
 
       setResults(data)
       setRefineInput('')
+      router.refresh()
 
       // Add AI response to chat history
       setChatHistory(prev => [...prev, {
