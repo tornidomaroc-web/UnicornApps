@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { REFINE_CREDIT_COST, createServiceClient, tryDeductCredits } from '@/lib/credits'
 import { isRetryableGeminiError, resolveGeminiModels } from '@/lib/gemini'
 import { NextResponse } from 'next/server'
 
@@ -19,6 +20,21 @@ export async function POST(req: Request) {
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Check user credits — same gate as the generate route
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('credits')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+    }
+
+    if (profile.credits < REFINE_CREDIT_COST) {
+      return NextResponse.json({ error: 'Insufficient credits' }, { status: 403 })
     }
 
     // Parse request body
@@ -149,6 +165,14 @@ export async function POST(req: Request) {
         { error: 'AI refinement failed due to formatting issues.' },
         { status: 422 }
       )
+    }
+
+    // Deduct only after a successful refinement — capacity fallbacks and
+    // parse failures above must never charge the user.
+    const creditClient = createServiceClient() ?? supabase
+    const deducted = await tryDeductCredits(creditClient, user.id, REFINE_CREDIT_COST)
+    if (!deducted) {
+      console.error('Credit deduction failed after successful refine for user', user.id)
     }
 
     return NextResponse.json(refinedContent)
