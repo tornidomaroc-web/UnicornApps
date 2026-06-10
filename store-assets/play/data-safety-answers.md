@@ -6,8 +6,8 @@ call, and the network requests in the app). Fill the Console section by section.
 
 ## Required URLs
 
-- **Privacy policy URL:** https://unicorn-apps.vercel.app/privacy
-- **Account & data deletion URL:** https://unicorn-apps.vercel.app/delete-account
+- **Privacy policy URL:** https://www.unicornapps.app/privacy
+- **Account & data deletion URL:** https://www.unicornapps.app/delete-account
 
 ---
 
@@ -37,7 +37,7 @@ call, and the network requests in the app). Fill the Console section by section.
 ### Do you provide a way for users to request that their data is deleted?
 **Answer:** Yes. Users delete their account and all associated data in-app from the
 Account page. A public instructions page is also provided at
-https://unicorn-apps.vercel.app/delete-account
+https://www.unicornapps.app/delete-account
 
 ---
 
