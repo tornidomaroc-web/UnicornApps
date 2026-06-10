@@ -120,9 +120,9 @@ export default function RefundPage() {
         <div className="mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 opacity-40">
            <div className="flex items-center gap-4">
               <div className="w-6 h-6 bg-white text-black text-[12px] font-black rounded flex items-center justify-center">U</div>
-              <span className="text-[10px] font-black uppercase tracking-widest">UnicornApps Global Matrix</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">UnicornApps Global</span>
            </div>
-           <p className="text-[10px] font-black uppercase tracking-[0.2em]">Matrix Compliance Certified • 2026</p>
+           <p className="text-[10px] font-black uppercase tracking-[0.2em]">Last Updated • 2026</p>
         </div>
       </div>
     </main>

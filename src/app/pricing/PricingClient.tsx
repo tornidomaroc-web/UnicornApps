@@ -265,7 +265,7 @@ export default function PricingClient() {
       {/* FOOTER */}
       <footer className="mt-40 border-t border-white/5 py-12 text-center">
         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">
-          © {new Date().getFullYear()} UnicornApps Global. Powered by Matrix.
+          © {new Date().getFullYear()} UnicornApps Global. Powered by Google Gemini.
         </p>
       </footer>
     </main>
