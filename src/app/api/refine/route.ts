@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { isRetryableGeminiError, resolveGeminiModels } from '@/lib/gemini'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
@@ -39,8 +40,8 @@ export async function POST(req: Request) {
       )
     }
 
-    // ARCHITECTURE: Direct REST API Bypass to Gemini 3.1 Flash-Lite
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${geminiApiKey}`
+    // Same dynamic model lookup as the generate route — never pin a version.
+    const candidates = (await resolveGeminiModels(geminiApiKey)).slice(0, 3)
 
     const prompt = `You are an elite E-commerce Growth Architect. You are refining existing product copy based on a user instruction.
     ${languageInstruction}
@@ -98,25 +99,36 @@ export async function POST(req: Request) {
       ],
       generationConfig: {
         temperature: 0.7,
-        topK: 1,
-        topP: 1,
-        maxOutputTokens: 2048,
+        // Thinking models (2.5+) spend output tokens on reasoning before the
+        // answer; 2048 truncated the JSON mid-array. JSON mode also stops the
+        // model from wrapping the object in markdown fences.
+        maxOutputTokens: 8192,
+        responseMimeType: 'application/json',
       }
     }
 
-    const apiResponse = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload)
-    })
+    // Try candidates in order; fall back when a model is over capacity.
+    let apiResponse: Response | null = null
+    let data: any = null
+    for (const modelName of candidates) {
+      apiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }
+      )
+      data = await apiResponse.json()
+      if (apiResponse.ok) break
+      const message = data.error?.message || ''
+      if (!isRetryableGeminiError(apiResponse.status, message)) break
+      console.warn(`Gemini ${modelName} over capacity (${apiResponse.status}), trying next model`)
+    }
 
-    const data = await apiResponse.json()
-
-    if (!apiResponse.ok) {
-      console.error('Gemini 2.0 REST Error:', data)
-      throw new Error(data.error?.message || 'Failed to communicate with Gemini 2.0 API')
+    if (!apiResponse || !apiResponse.ok) {
+      console.error('Gemini REST error:', data)
+      throw new Error(data?.error?.message || 'Failed to communicate with the Gemini API')
     }
 
     // Extracting text from REST response schema

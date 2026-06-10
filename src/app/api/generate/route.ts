@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { isRetryableGeminiError, resolveGeminiModels } from '@/lib/gemini'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextResponse } from 'next/server'
 
@@ -59,23 +60,8 @@ export async function POST(req: Request) {
       )
     }
 
-    const modelsResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiApiKey}`
-    )
-    const modelsData = await modelsResponse.json()
-
-    const dynamicModel = modelsData.models?.find(
-      (m: any) =>
-        m.supportedGenerationMethods?.includes('generateContent') && m.name?.includes('gemini')
-    )
-
-    if (!dynamicModel) {
-      throw new Error('No compatible Gemini models found in this environment.')
-    }
-
-    const modelName = dynamicModel.name.replace('models/', '')
+    const candidates = (await resolveGeminiModels(geminiApiKey)).slice(0, 3)
     const genAI = new GoogleGenerativeAI(geminiApiKey)
-    const model = genAI.getGenerativeModel({ model: modelName })
 
     // Prepare image for Gemini (assuming base64)
     const base64Data = image.split(',')[1] || image
@@ -118,7 +104,23 @@ ${languageInstruction}
   ]
 }`
 
-    const result = await model.generateContent([prompt, imagePart])
+    // Try candidates in order; fall back when a model is over capacity.
+    let result: Awaited<ReturnType<ReturnType<typeof genAI.getGenerativeModel>['generateContent']>> | null = null
+    let lastError: any = null
+    for (const modelName of candidates) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName })
+        result = await model.generateContent([prompt, imagePart])
+        break
+      } catch (e: any) {
+        lastError = e
+        const status = e?.status ?? e?.response?.status ?? 0
+        if (!isRetryableGeminiError(status, String(e?.message ?? ''))) throw e
+        console.warn(`Gemini ${modelName} over capacity, trying next model`)
+      }
+    }
+    if (!result) throw lastError ?? new Error('All Gemini models are over capacity.')
+
     const response = await result.response
     const text = response.text()
 

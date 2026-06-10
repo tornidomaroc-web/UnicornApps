@@ -1092,7 +1092,7 @@ export default function DashboardClient({
               </div>
               <div className="flex gap-2">
                  <Button 
-                   onClick={() => downloadCSV(history, `matrix-export-${new Date().toISOString().split('T')[0]}.csv`)}
+                   onClick={() => downloadCSV(history, `unicornapps-export-${new Date().toISOString().split('T')[0]}.csv`)}
                    className="h-12 px-6 bg-white/5 border border-white/10 hover:border-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c8cfe0] flex items-center gap-2 transition-all"
                  >
                     <FileDown className="w-4 h-4" />
