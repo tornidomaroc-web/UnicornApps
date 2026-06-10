@@ -61,14 +61,14 @@ export default function Navbar() {
           </button>
 
           {user ? (
-            <div className="flex items-center gap-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-1.5 pl-4 transition-all hover:border-violet-500/30">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:gap-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-1.5 sm:pl-4 transition-all hover:border-violet-500/30">
+              <div className="hidden sm:flex items-center gap-2">
                 <Zap className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-[#c8cfe0]">
                   {credits} <span className="text-slate-500">{t('nav.credits')}</span>
                 </span>
               </div>
-              <div className="h-6 w-px bg-white/10 mx-1" />
+              <div className="hidden sm:block h-6 w-px bg-white/10 mx-1" />
               <div className="flex items-center gap-2">
                 <Link href="/dashboard">
                   <Button size="sm" className="h-8 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(124,58,237,0.3)] border-none transition-all hover:scale-105 active:scale-95">
