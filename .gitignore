@@ -13,3 +13,5 @@ android/app/*.jks
 # Local clutter (not part of the app)
 /scratch
 /out
+# Build artifacts — keep AABs out of the repo
+*.aab
