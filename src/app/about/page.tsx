@@ -11,7 +11,7 @@ export default function AboutPage() {
   return (
     <main className="min-h-screen bg-[#070710] text-[#c8cfe0] pt-32 pb-24 px-4 relative overflow-hidden">
       {/* BACKGROUND EFFECTS */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-violet-600/10 rounded-full blur-[120px] animate-float-orb" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px] animate-float-orb-slow" />
         <div className="absolute inset-0 opacity-[0.03]" 
@@ -39,7 +39,7 @@ export default function AboutPage() {
         {/* MISSION SECTION */}
         <div className="relative mb-24 group">
           <div className="absolute inset-0 bg-violet-600/5 rounded-[2.5rem] blur-2xl group-hover:bg-violet-600/10 transition-all" />
-          <div className="relative bg-white/5 backdrop-blur-3xl border border-white/10 p-12 md:p-16 rounded-[2.5rem] space-y-8">
+          <div className="relative bg-white/5 backdrop-blur-3xl border border-white/10 p-8 sm:p-12 md:p-16 rounded-[2.5rem] space-y-8">
             <h2 className="text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-4">
               <Heart className="text-violet-500 w-8 h-8" />
               {t('about.mission.title')}
@@ -86,9 +86,9 @@ export default function AboutPage() {
            </div>
            <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
               {[
-                { label: t('about.stats.offices'), value: '2' },
-                { label: t('about.stats.products'), value: '1.2k+' },
-                { label: t('about.stats.uptime'), value: '99.9%' }
+                { label: t('about.stats.languages'), value: '2' },
+                { label: t('about.stats.formats'), value: '5+' },
+                { label: t('about.stats.start'), value: '$0' }
               ].map(stat => (
                 <div key={stat.label} className="bg-white/5 border border-white/5 py-8 rounded-3xl">
                    <div className="text-3xl font-black text-white tracking-widest">{stat.value}</div>
@@ -101,7 +101,7 @@ export default function AboutPage() {
         {/* CTA */}
         <div className="relative text-center">
           <div className="absolute inset-0 bg-violet-600/10 blur-[120px] rounded-full scale-50" />
-          <div className="relative z-10 bg-white/5 border border-white/10 p-16 rounded-[3rem] space-y-8 backdrop-blur-2xl">
+          <div className="relative z-10 bg-white/5 border border-white/10 p-8 sm:p-16 rounded-[3rem] space-y-8 backdrop-blur-2xl">
             <h2 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">
               {t('about.cta.title').split('<br />')[0]} <br /> {t('about.cta.title').split('<br />')[1]}
             </h2>

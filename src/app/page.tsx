@@ -54,16 +54,16 @@ export default function Home() {
           initial="hidden"
           animate="visible"
           variants={containerVariants}
-          className="max-w-6xl mx-auto text-center"
+          className="w-full max-w-6xl mx-auto text-center"
         >
           {/* Badge */}
-          <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-violet-950/30 border border-violet-500/30 text-violet-300 text-xs font-bold uppercase tracking-widest mb-8 backdrop-blur-md">
+          <motion.div variants={itemVariants} className="inline-flex max-w-full items-center gap-2 px-4 py-1.5 rounded-full bg-violet-950/30 border border-violet-500/30 text-violet-300 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-8 backdrop-blur-md">
             <span className="animate-pulse">🦄</span>
             {t('hero.badge')}
           </motion.div>
 
           {/* Headline */}
-          <motion.h1 variants={itemVariants} className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8">
+          <motion.h1 variants={itemVariants} className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8">
             <span className="text-white">{t('hero.title1')}</span><br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-violet-600 to-amber-200">
               {t('hero.title2')}
@@ -71,23 +71,23 @@ export default function Home() {
           </motion.h1>
 
           {/* Subtext */}
-          <motion.p variants={itemVariants} className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto mb-12 font-medium leading-relaxed">
+          <motion.p variants={itemVariants} className="text-lg sm:text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto mb-12 font-medium leading-relaxed">
             {t('hero.sub')}
           </motion.p>
 
           {/* CTAs */}
-          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
+          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-16">
             <Link href="/login">
-              <Button size="lg" className="h-16 px-10 text-lg font-black uppercase tracking-widest rounded-2xl bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_40px_-5px_rgba(124,58,237,0.5)] transition-all hover:scale-105 active:scale-95 group">
+              <Button size="lg" className="h-14 sm:h-16 px-5 sm:px-10 text-sm sm:text-lg font-black uppercase tracking-wide sm:tracking-widest rounded-2xl bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_40px_-5px_rgba(124,58,237,0.5)] transition-all hover:scale-105 active:scale-95 group">
                 {t('hero.cta1')}
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
             <a href="https://youtu.be/sdQH-03jsCg?si=3jbRTboLZkp7XJce" target="_blank" rel="noopener noreferrer">
-              <Button 
-                variant="ghost" 
-                size="lg" 
-                className="h-16 px-10 text-lg font-black uppercase tracking-widest rounded-2xl text-white hover:bg-white/5 border border-white/10 group"
+              <Button
+                variant="ghost"
+                size="lg"
+                className="h-14 sm:h-16 px-5 sm:px-10 text-sm sm:text-lg font-black uppercase tracking-wide sm:tracking-widest rounded-2xl text-white hover:bg-white/5 border border-white/10 group"
               >
                 <Play className="mr-2 w-5 h-5 fill-white" />
                 {t('hero.cta2')}
@@ -228,7 +228,7 @@ export default function Home() {
             </div>
           </motion.div>
 
-          {/* Card 4: Stealth Console */}
+          {/* Card 4: AI Refine Chat */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
             className="md:col-span-2 bg-gradient-to-br from-violet-950/20 to-transparent border border-violet-500/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
@@ -302,14 +302,14 @@ export default function Home() {
            viewport={{ once: true }}
            className="relative z-10 max-w-4xl mx-auto"
         >
-          <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-8 italic uppercase leading-[0.8]">
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-black text-white tracking-tighter mb-8 italic uppercase leading-[0.8]">
             {t('cta.title')}
           </h2>
           <p className="text-xl md:text-2xl text-slate-400 mb-12 font-medium">
             {t('cta.sub')}
           </p>
           <Link href="/login">
-            <Button size="lg" className="h-20 px-16 text-xl font-black uppercase tracking-widest rounded-3xl bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_50px_-5px_rgba(124,58,237,0.6)] transition-all hover:scale-105 active:scale-95 group">
+            <Button size="lg" className="h-14 sm:h-20 px-8 sm:px-16 text-base sm:text-xl font-black uppercase tracking-widest rounded-2xl sm:rounded-3xl bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_50px_-5px_rgba(124,58,237,0.6)] transition-all hover:scale-105 active:scale-95 group">
               {t('cta.btn')}
               <ArrowRight className="ml-4 w-6 h-6 group-hover:translate-x-2 transition-transform" />
             </Button>
