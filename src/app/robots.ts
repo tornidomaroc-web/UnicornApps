@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: '/dashboard',
     },
-    sitemap: 'https://unicornapps.com/sitemap.xml',
+    sitemap: 'https://www.unicornapps.app/sitemap.xml',
   }
 }

@@ -23,7 +23,7 @@ and social captions — ready to publish in seconds.
 
 ## Live
 
-🌐 [unicorn-apps.vercel.app](https://unicorn-apps.vercel.app)
+🌐 [www.unicornapps.app](https://www.unicornapps.app)
 
 ## Run locally
 
