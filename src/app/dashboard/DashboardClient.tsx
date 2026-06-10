@@ -371,7 +371,7 @@ export default function DashboardClient({
 
   // --- MOCKUP COMPONENTS (KEPT AS IS) ---
   const AmazonMockup = () => (
-    <div className="bg-white text-[#111] p-8 rounded-2xl shadow-2xl font-sans max-w-4xl mx-auto border border-zinc-200 overflow-hidden">
+    <div className="bg-white text-[#111] p-4 sm:p-8 rounded-2xl shadow-2xl font-sans max-w-4xl mx-auto border border-zinc-200 overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-4">
           <div className="aspect-square rounded-xl overflow-hidden bg-white border border-zinc-100 p-4">
@@ -425,14 +425,14 @@ export default function DashboardClient({
           <ShoppingBag className="w-6 h-6 text-violet-600" />
           MODERN STORE
         </div>
-        <div className="flex gap-6 text-sm font-medium text-zinc-600">
+        <div className="hidden sm:flex gap-6 text-sm font-medium text-zinc-600">
           <span>Shop All</span>
           <span>Our Story</span>
           <span>Contact</span>
         </div>
       </nav>
-      <div className="max-w-6xl mx-auto p-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+      <div className="max-w-6xl mx-auto p-5 sm:p-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -443,7 +443,7 @@ export default function DashboardClient({
           <div className="space-y-8">
             <div className="space-y-2">
               <span className="text-violet-600 font-semibold tracking-widest text-xs uppercase">{t('dash.newArrival')}</span>
-              <h1 className="text-4xl font-bold tracking-tight text-zinc-900">{results?.seoTitle}</h1>
+              <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-zinc-900 break-words">{results?.seoTitle}</h1>
               <p className="text-2xl text-zinc-500 font-light">$99.00 USD</p>
             </div>
 
@@ -543,19 +543,19 @@ export default function DashboardClient({
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative flex flex-col md:flex-row justify-between items-center bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 shadow-[0_0_40px_-15px_rgba(124,58,237,0.2)] overflow-hidden"
+          className="relative flex flex-col md:flex-row justify-between items-center gap-4 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-4 sm:p-6 shadow-[0_0_40px_-15px_rgba(124,58,237,0.2)] overflow-hidden"
         >
           <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
           
-          <div className="flex items-center gap-4 mb-4 md:mb-0">
+          <div className="flex items-center gap-4 mb-2 md:mb-0">
              <div className="w-10 h-10 bg-white text-slate-950 flex items-center justify-center rounded-xl text-xl font-black shadow-[0_0_20px_rgba(255,255,255,0.1)]">U</div>
-             <h1 className="text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-violet-400">
+             <h1 className="text-xl sm:text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-violet-400">
                {t('dash.title').toUpperCase()}
              </h1>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-             <div className="bg-black/40 border border-white/10 rounded-2xl px-5 py-2.5 flex items-center gap-4 backdrop-blur-xl">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+             <div className="bg-black/40 border border-white/10 rounded-2xl px-4 sm:px-5 py-2.5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 backdrop-blur-xl">
                  <div className="flex items-center gap-2">
                     <Zap className="w-4 h-4 text-amber-400 animate-pulse" />
                     <span className="text-2xl font-black text-white">
@@ -567,7 +567,7 @@ export default function DashboardClient({
                  </div>
                  {!isNative && (
                    <>
-                     <div className="h-4 w-px bg-white/10" />
+                     <div className="hidden sm:block h-4 w-px bg-white/10" />
                      <div className="flex items-center gap-2">
                        <a
                          href={`https://buy.paddle.com/product/pri_01kpnqr5df47ce3nvfh92qmxc9?user_id=${userId}`}
@@ -663,9 +663,9 @@ export default function DashboardClient({
                        <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                     </motion.div>
                  ) : (
-                   <div className="grid md:grid-cols-[1fr,400px] gap-12 items-start p-8 md:p-12">
+                   <div className="grid md:grid-cols-[1fr,400px] gap-8 md:gap-12 items-start p-5 sm:p-8 md:p-12">
                       {/* Left: Preview */}
-                      <div className="relative aspect-square rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl bg-black/50 group/img">
+                      <div className="relative min-w-0 aspect-square rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl bg-black/50 group/img">
                          <img src={preview} alt="Preview" className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-105" />
                          {loading && (
                             <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
@@ -708,7 +708,7 @@ export default function DashboardClient({
                       </div>
 
                       {/* Right: Requirements & Action */}
-                      <div className="space-y-8 h-full flex flex-col justify-between">
+                      <div className="min-w-0 space-y-8 h-full flex flex-col justify-between">
                          <div className="space-y-6">
                             <h3 className="text-xl font-black text-white uppercase tracking-tighter">{t('dash.readyTitle')}</h3>
                             <div className="space-y-4">
@@ -815,14 +815,14 @@ export default function DashboardClient({
         {/* 5. RESULTS & STEALTH CONSOLE ZONE */}
         {results && (
            <div className="grid lg:grid-cols-[1fr,360px] gap-8 items-start">
-              <div className="space-y-6">
+              <div className="min-w-0 space-y-6">
                 {/* Visual View Mode Selector */}
                 <div className="flex justify-between items-center bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-2">
                    <div className="flex gap-1">
-                      <button onClick={() => setViewMode('raw')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'raw' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>{t('dash.raw')}</button>
-                      <button onClick={() => setViewMode('preview')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'preview' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>{t('dash.preview')}</button>
+                      <button onClick={() => setViewMode('raw')} className={`px-4 sm:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'raw' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>{t('dash.raw')}</button>
+                      <button onClick={() => setViewMode('preview')} className={`px-4 sm:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'preview' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>{t('dash.preview')}</button>
                    </div>
-                   <div className="flex items-center gap-2 px-4 text-[10px] font-black uppercase tracking-widest text-emerald-400">
+                   <div className="hidden sm:flex items-center gap-2 px-4 text-[10px] font-black uppercase tracking-widest text-emerald-400">
                       <CheckCircle2 className="w-4 h-4" />
                       {t('dash.stable')}
                    </div>
@@ -849,37 +849,42 @@ export default function DashboardClient({
                   ) : (
                     <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
                        {/* 5. TABS UPGRADE */}
-                       <div className="flex gap-2 p-1 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto no-scrollbar">
-                          {[
-                            { id: 'seo', label: t('dash.tab.seo'), icon: <Search className="w-3.5 h-3.5" /> },
-                            { id: 'shopify', label: t('dash.tab.shopify'), icon: <Store className="w-3.5 h-3.5" /> },
-                            { id: 'amazon', label: t('dash.tab.amazon'), icon: <ShoppingBag className="w-3.5 h-3.5" /> },
-                            { id: 'social', label: t('dash.tab.social'), icon: <Hash className="w-3.5 h-3.5" /> },
-                            { id: 'data', label: t('dash.tab.data'), icon: <Database className="w-3.5 h-3.5" /> }
-                          ].map(t => (
-                            <button
-                              key={t.id}
-                              onClick={() => setActiveTab(t.id as any)}
-                              className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all relative ${activeTab === t.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
-                            >
-                               {t.icon}
-                               {t.label}
-                               {activeTab === t.id && (
-                                 <motion.div layoutId="tab-active" className="absolute inset-0 bg-white/5 border border-white/10 rounded-xl -z-10 shadow-[0_0_15px_rgba(124,58,237,0.3)]">
-                                    <div className="absolute bottom-0 left-1/4 right-1/4 h-[2px] bg-violet-400" />
-                                 </motion.div>
-                               )}
-                            </button>
-                          ))}
+                       <div className="relative">
+                          <div className="flex gap-2 p-1 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto no-scrollbar">
+                             {[
+                               { id: 'seo', label: t('dash.tab.seo'), icon: <Search className="w-3.5 h-3.5" /> },
+                               { id: 'shopify', label: t('dash.tab.shopify'), icon: <Store className="w-3.5 h-3.5" /> },
+                               { id: 'amazon', label: t('dash.tab.amazon'), icon: <ShoppingBag className="w-3.5 h-3.5" /> },
+                               { id: 'social', label: t('dash.tab.social'), icon: <Hash className="w-3.5 h-3.5" /> },
+                               { id: 'data', label: t('dash.tab.data'), icon: <Database className="w-3.5 h-3.5" /> }
+                             ].map(t => (
+                               <button
+                                 key={t.id}
+                                 onClick={() => setActiveTab(t.id as any)}
+                                 className={`flex items-center gap-2 px-4 sm:px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all relative ${activeTab === t.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                               >
+                                  {t.icon}
+                                  {t.label}
+                                  {activeTab === t.id && (
+                                    <motion.div layoutId="tab-active" className="absolute inset-0 bg-white/5 border border-white/10 rounded-xl -z-10 shadow-[0_0_15px_rgba(124,58,237,0.3)]">
+                                       <div className="absolute bottom-0 left-1/4 right-1/4 h-[2px] bg-violet-400" />
+                                    </motion.div>
+                                  )}
+                               </button>
+                             ))}
+                          </div>
+                          {/* scroll affordance: fade on the trailing edge, mobile only */}
+                          <div className="pointer-events-none absolute inset-y-1 right-1 w-10 rounded-r-2xl bg-gradient-to-l from-[#070710] to-transparent lg:hidden rtl:hidden" />
+                          <div className="pointer-events-none absolute inset-y-1 left-1 w-10 rounded-l-2xl bg-gradient-to-r from-[#070710] to-transparent hidden rtl:block rtl:lg:hidden" />
                        </div>
 
                        <div className="grid gap-6">
                           {activeTab === 'seo' && (
                              <Card className="bg-white/[0.03] border-white/10 rounded-3xl overflow-hidden">
-                                <CardHeader className="border-b border-white/5 py-8 px-10">
-                                   <CardTitle className="text-white font-black text-2xl uppercase tracking-tighter">{t('dash.seo.title')}</CardTitle>
+                                <CardHeader className="border-b border-white/5 py-5 px-5 sm:py-8 sm:px-10">
+                                   <CardTitle className="text-white font-black text-lg sm:text-2xl uppercase tracking-tighter">{t('dash.seo.title')}</CardTitle>
                                 </CardHeader>
-                                <CardContent className="p-10 space-y-10">
+                                <CardContent className="p-5 sm:p-10 space-y-8 sm:space-y-10">
                                    <div className="space-y-4">
                                       <div className="flex justify-between items-center">
                                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('dash.seo.target')}</span>
@@ -887,7 +892,7 @@ export default function DashboardClient({
                                             {copySuccess === 't' ? t('dash.copied') : t('dash.seo.copy')}
                                          </Button>
                                       </div>
-                                      <p className="text-xl font-bold text-white leading-tight">{results.seoTitle}</p>
+                                      <p className="text-lg sm:text-xl font-bold text-white leading-tight break-words">{results.seoTitle}</p>
                                    </div>
                                    <div className="space-y-4">
                                       <div className="flex justify-between items-center">
@@ -903,10 +908,10 @@ export default function DashboardClient({
                           )}
                           {/* Shopify Redesign */}
                           {activeTab === 'shopify' && (
-                            <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-10 space-y-8">
-                               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                            <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-10 space-y-6 sm:space-y-8">
+                               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6">
                                   <div className="space-y-1">
-                                     <h3 className="text-xl font-black text-white uppercase tracking-tighter">{t('dash.shopify.title')}</h3>
+                                     <h3 className="text-base sm:text-xl font-black text-white uppercase tracking-tighter">{t('dash.shopify.title')}</h3>
                                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('dash.liquidData')}</p>
                                   </div>
                                   <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
@@ -935,7 +940,7 @@ export default function DashboardClient({
                                       initial={{ opacity: 0, scale: 0.98 }}
                                       animate={{ opacity: 1, scale: 1 }}
                                       exit={{ opacity: 0, scale: 1.02 }}
-                                      className="bg-black/60 rounded-[2rem] p-10 border border-white/5 h-[500px] overflow-auto custom-scrollbar"
+                                      className="bg-black/60 rounded-[2rem] p-5 sm:p-10 border border-white/5 h-[500px] overflow-auto custom-scrollbar"
                                     >
                                        <div className="prose prose-invert max-w-none prose-p:text-slate-300 prose-headings:text-white prose-strong:text-violet-400 prose-ul:text-slate-400 prose-li:marker:text-violet-500">
                                           <div dangerouslySetInnerHTML={{ __html: results.shopifyHtml || '' }} />
@@ -947,9 +952,9 @@ export default function DashboardClient({
                                       initial={{ opacity: 0, scale: 0.98 }}
                                       animate={{ opacity: 1, scale: 1 }}
                                       exit={{ opacity: 0, scale: 1.02 }}
-                                      className="bg-black/80 rounded-[2rem] p-8 border border-white/5 font-mono text-xs text-violet-300/80 h-[500px] overflow-auto custom-scrollbar relative"
+                                      className="bg-black/80 rounded-[2rem] p-5 sm:p-8 border border-white/5 font-mono text-xs text-violet-300/80 h-[500px] overflow-auto custom-scrollbar relative"
                                     >
-                                       <pre className="whitespace-pre-wrap">{results.shopifyHtml}</pre>
+                                       <pre className="whitespace-pre-wrap break-words">{results.shopifyHtml}</pre>
                                        <div className="absolute top-4 right-4 text-[8px] font-black uppercase tracking-[0.2em] text-slate-700 pointer-events-none">{t('dash.liquidSig')}</div>
                                     </motion.div>
                                   )}
@@ -958,11 +963,11 @@ export default function DashboardClient({
                           )}
                           {/* Amazon Redesign */}
                           {activeTab === 'amazon' && (
-                            <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-10 space-y-8">
-                               <h3 className="text-xl font-black text-white uppercase tracking-tighter">{t('dash.amazon.title')}</h3>
+                            <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-10 space-y-6 sm:space-y-8">
+                               <h3 className="text-base sm:text-xl font-black text-white uppercase tracking-tighter">{t('dash.amazon.title')}</h3>
                                <div className="space-y-4">
                                   {results.amazonBullets?.map((b, i) => (
-                                    <div key={i} className="flex items-start gap-4 p-5 bg-white/5 border border-white/5 rounded-2xl group hover:border-violet-500/30 transition-all">
+                                    <div key={i} className="flex items-start gap-3 sm:gap-4 p-4 sm:p-5 bg-white/5 border border-white/5 rounded-2xl group hover:border-violet-500/30 transition-all">
                                        <span className="text-violet-500 font-bold mt-1">✦</span>
                                        <p className="text-slate-300 font-medium group-hover:text-white transition-colors">{b}</p>
                                     </div>
@@ -973,16 +978,16 @@ export default function DashboardClient({
                           {/* Social Redesign */}
                           {activeTab === 'social' && (
                             <div className="grid gap-6">
-                               <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-10 space-y-6">
+                               <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-10 space-y-4 sm:space-y-6">
                                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('dash.social.hook')}</span>
-                                  <p className="text-2xl font-black text-white tracking-tight leading-none italic uppercase">&quot;{results.viralScript?.hook}&quot;</p>
+                                  <p className="text-lg sm:text-2xl font-black text-white tracking-tight leading-tight sm:leading-none italic uppercase">&quot;{results.viralScript?.hook}&quot;</p>
                                </Card>
                                <div className="grid md:grid-cols-2 gap-6">
-                                  <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-8 space-y-4">
+                                  <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-8 space-y-4">
                                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('dash.social.concept')}</span>
                                      <p className="text-slate-400 font-medium leading-relaxed">{results.viralScript?.concept}</p>
                                   </Card>
-                                  <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-8 space-y-4">
+                                  <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-8 space-y-4">
                                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('dash.social.tags')}</span>
                                      <div className="flex flex-wrap gap-2">
                                         {results.socialMediaTags?.map(t => (
@@ -1002,7 +1007,7 @@ export default function DashboardClient({
                                   { l: t('dash.data.audience'), v: results.structuredData?.targetAudience },
                                   { l: t('dash.data.care'), v: results.structuredData?.careInstructions }
                                 ].map((d, i) => (
-                                  <Card key={i} className="bg-white/[0.03] border-white/10 rounded-3xl p-8 flex flex-col justify-between">
+                                  <Card key={i} className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-8 flex flex-col justify-between">
                                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">{d.l}</span>
                                      <p className="text-white font-black text-lg uppercase tracking-tight">{d.v}</p>
                                   </Card>
@@ -1015,8 +1020,8 @@ export default function DashboardClient({
                 </AnimatePresence>
               </div>
 
-              {/* 6. STEALTH CONSOLE UPGRADE */}
-              <div className="space-y-6">
+              {/* 6. REFINE CONSOLE */}
+              <div className="min-w-0 space-y-6">
                   <div className="flex items-center justify-between px-2">
                      <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white flex items-center gap-2">
                         <MessagesSquare className="w-4 h-4 text-violet-500" />
@@ -1116,11 +1121,11 @@ export default function DashboardClient({
                  <table className="w-full text-left border-collapse">
                     <thead className="bg-white/5 border-b border-white/5">
                        <tr>
-                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.asset')}</th>
-                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.platformName')}</th>
-                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.matrixSignature')}</th>
-                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.timestamp')}</th>
-                          <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 text-right">{t('dash.action')}</th>
+                          <th className="px-4 sm:px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.asset')}</th>
+                          <th className="px-4 sm:px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.platformName')}</th>
+                          <th className="px-4 sm:px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.matrixSignature')}</th>
+                          <th className="px-4 sm:px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.timestamp')}</th>
+                          <th className="px-4 sm:px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 text-right">{t('dash.action')}</th>
                        </tr>
                     </thead>
                     <tbody>
@@ -1134,29 +1139,29 @@ export default function DashboardClient({
                             {/* HOVER BORDER EFFECT */}
                             <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-violet-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                             
-                            <td className="px-8 py-4">
+                            <td className="px-4 sm:px-8 py-4">
                                <div className="w-14 h-14 rounded-xl overflow-hidden border border-white/10 shadow-lg">
                                   <img src={item.image_url} alt="Product" className="w-full h-full object-cover" />
                                </div>
                             </td>
-                            <td className="px-8 py-4">
+                            <td className="px-4 sm:px-8 py-4">
                                <span className={`px-4 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-widest ${platformBadge(item.platform)}`}>
                                   {item.platform || 'amazon'}
                                </span>
                             </td>
-                            <td className="px-8 py-4">
+                            <td className="px-4 sm:px-8 py-4">
                                <div className="max-w-[300px]">
                                   <p className="text-white font-bold truncate group-hover:text-violet-400 transition-colors uppercase tracking-tight">{item.content.seoTitle}</p>
                                   <p className="text-[10px] font-medium text-slate-600 mt-1 uppercase tracking-widest">{t('dash.id')}: {item.id.slice(0, 8)}</p>
                                </div>
                             </td>
-                            <td className="px-8 py-4">
+                            <td className="px-4 sm:px-8 py-4">
                                <div className="flex items-center gap-2 text-slate-500 text-[10px] font-black uppercase tracking-widest">
                                   <Clock className="w-3.5 h-3.5" />
                                   {new Date(item.created_at).toLocaleDateString()}
                                </div>
                             </td>
-                            <td className="px-8 py-4 text-right">
+                            <td className="px-4 sm:px-8 py-4 text-right">
                                <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl text-slate-600 hover:text-white hover:bg-white/5">
                                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                </Button>
