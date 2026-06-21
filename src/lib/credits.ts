@@ -5,6 +5,11 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 export const GENERATE_CREDIT_COST = 1
 export const REFINE_CREDIT_COST = 1
 
+// Maximum credit balance. addCredits clamps to this ceiling so subscription
+// rollover (and pack top-ups) can't accumulate unbounded AI COGS. ~5 months of
+// the 100/mo allotment; comfortably above any single grant.
+export const CREDIT_BALANCE_CAP = 500
+
 // Service-role client for credit mutations. Deductions must not depend on
 // the permissive "users can update own profile" RLS policy (which should be
 // tightened — see supabase_schema.sql notes), so they run with the service
@@ -48,7 +53,7 @@ export async function tryDeductCredits(
 export async function addCredits(supabase: any, userId: string, amount: number): Promise<void> {
   const { data: profile } = await supabase.from('profiles').select('credits').eq('id', userId).single()
   if (profile) {
-    const newCredits = Math.max(0, (profile.credits || 0) + amount)
+    const newCredits = Math.min(CREDIT_BALANCE_CAP, Math.max(0, (profile.credits || 0) + amount))
     await supabase.from('profiles').update({ credits: newCredits }).eq('id', userId)
   }
 }
