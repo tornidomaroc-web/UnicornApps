@@ -14,6 +14,11 @@ const createJestConfig = nextJest({ dir: './' })
 const config = {
   // Route handlers + crypto + Request/NextRequest — Node globals, no DOM.
   testEnvironment: 'node',
+  // Only treat *.test.* / *.spec.* as suites. Jest's default ALSO globs every
+  // __tests__/**/*.ts, which would try to run helpers/fixtures (e.g.
+  // __tests__/helpers/supabaseMock.ts) as empty suites and fail. Existing tests
+  // are *.test.ts, so they still match.
+  testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],
   // tsconfig path alias: @/* -> src/* (explicit, independent of auto-detection).
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
