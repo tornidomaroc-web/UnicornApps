@@ -45,6 +45,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { useLang } from '@/lib/i18n/LanguageContext'
 import { takePicture } from '@/lib/capacitor'
+import { openCheckout } from '@/lib/checkout'
+import { PADDLE_EVENT } from '@/lib/paddle'
 import {
   Card,
   CardContent,
@@ -148,6 +150,28 @@ export default function DashboardClient({
     }
     checkNative()
   }, [])
+
+  // Paddle checkout feedback — same PADDLE_EVENT bridge (lib/paddle.ts) used by
+  // the pricing page. Real credit/ad-free changes are applied by the
+  // (not-yet-built) webhook, asynchronously — hence the transitional banner.
+  const [checkoutStatus, setCheckoutStatus] = useState<'success' | 'failed' | null>(null)
+  useEffect(() => {
+    const onPaddle = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { name?: string } | undefined
+      // CheckoutEventNames: 'checkout.completed' | 'checkout.payment.failed' | 'checkout.error'
+      if (detail?.name === 'checkout.completed') setCheckoutStatus('success')
+      else if (detail?.name === 'checkout.payment.failed' || detail?.name === 'checkout.error') setCheckoutStatus('failed')
+    }
+    window.addEventListener(PADDLE_EVENT, onPaddle)
+    return () => window.removeEventListener(PADDLE_EVENT, onPaddle)
+  }, [])
+
+  // Reuses the SAME openCheckout from lib/checkout.ts as the pricing page (no
+  // duplicated checkout logic). userId is the server-provided prop, so it is
+  // non-null at click time; openCheckout's null guard stays as a harmless backstop.
+  const handlePaid = (kind: 'sub' | 'pack') => {
+    void openCheckout({ kind, userId, navigate: (path) => router.push(path) })
+  }
 
   // Camera Support
   const [showCamera, setShowCamera] = useState(false)
@@ -569,18 +593,22 @@ export default function DashboardClient({
                    <>
                      <div className="hidden sm:block h-4 w-px bg-white/10" />
                      <div className="flex items-center gap-2">
-                       <a
-                         href={`https://buy.paddle.com/product/pri_01kpnqr5df47ce3nvfh92qmxc9?user_id=${userId}`}
+                       {/* NOTE(d): placeholder labels; final copy + i18n in commit (d).
+                           Both CTAs reuse openCheckout from lib/checkout.ts. */}
+                       <button
+                         type="button"
+                         onClick={() => handlePaid('pack')}
                          className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
                        >
-                         Starter $9
-                       </a>
-                       <a
-                         href={`https://buy.paddle.com/product/pri_01kpnqr5df47ce3nvfh92qmxc9?user_id=${userId}`}
+                         Credit Pack $4.99
+                       </button>
+                       <button
+                         type="button"
+                         onClick={() => handlePaid('sub')}
                          className="bg-violet-600/10 border border-violet-500/30 text-violet-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg hover:bg-violet-600 hover:text-white transition-all"
                        >
-                         Pro $29 ↗
-                       </a>
+                         Subscribe $9.99 ↗
+                       </button>
                      </div>
                    </>
                  )}
@@ -590,6 +618,21 @@ export default function DashboardClient({
              </Button>
           </div>
         </motion.div>
+
+        {checkoutStatus && (
+          <div
+            className={`max-w-2xl mx-auto mb-8 rounded-2xl border px-6 py-4 text-center text-sm font-medium ${
+              checkoutStatus === 'success'
+                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+                : 'border-red-500/30 bg-red-500/10 text-red-200'
+            }`}
+          >
+            {/* TODO(d): move to i18n (EN + AR). Transitional internal-test copy. */}
+            {checkoutStatus === 'success'
+              ? 'Payment received, your credits will appear shortly.'
+              : "Payment didn't go through. Please try again."}
+          </div>
+        )}
 
         {/* 2. UPLOAD & PLATFORM CONTROL ZONE */}
         <div className="grid lg:grid-cols-1 gap-8">
