@@ -49,7 +49,7 @@ export default function PricingClient() {
   // Surface the Paddle checkout lifecycle (re-broadcast as PADDLE_EVENT by
   // lib/paddle.ts). The overlay stays in-page; we show a transitional banner.
   // Real credit/ad-free changes are applied by the (not-yet-built) webhook,
-  // asynchronously — hence the "appear shortly" copy.
+  // asynchronously, hence the "appear shortly" copy.
   useEffect(() => {
     const onPaddle = (e: Event) => {
       const detail = (e as CustomEvent).detail as { name?: string } | undefined;
@@ -65,12 +65,8 @@ export default function PricingClient() {
     void openCheckout({ kind, userId, navigate: (path) => router.push(path) });
   };
 
-  // NOTE(d): All PAID-tier display copy below (names, prices, periods, features,
-  // CTAs) is provisional/neutral placeholder text pending the gated EN+AR copy
-  // rewrite in commit (d) — do not treat it as final. Prices reflect the locked
-  // model ($9.99/mo subscription, $4.99 one-time pack). Free-tier strings stay
-  // sourced from LanguageContext. The old stale Starter/Pro $9/$29 tiers and the
-  // hardcoded pri_01kpnqr5df47ce3nvfh92qmxc9 link are removed here.
+  // Three cards: Free (signup credits, ad-supported) + the two locked paid
+  // products. All copy is sourced from LanguageContext (EN + AR).
   const tiers: {
     name: string; price: string; period: string; description: string;
     features: string[]; cta: string; featured: boolean;
@@ -85,7 +81,7 @@ export default function PricingClient() {
         t('pricing.f.gen3'),
         t('pricing.f.vision.std'),
         t('pricing.f.seo.basic'),
-        t('pricing.f.web'),
+        t('pricing.f.adssupported'),
       ],
       cta: t('pricing.cta.free'),
       featured: false,
@@ -93,33 +89,31 @@ export default function PricingClient() {
       icon: <Shield className="w-6 h-6 text-slate-400" />
     },
     {
-      // PLACEHOLDER copy — finalized + translated in commit (d).
-      name: "Subscription",
-      price: "$9.99",
-      period: "/mo",
-      description: "100 credits every month, ad-free.",
+      name: t('pricing.sub.name'),
+      price: t('pricing.sub.price'),
+      period: t('pricing.sub.period'),
+      description: t('pricing.sub.desc'),
       features: [
-        "100 credits per month",
-        "Ad-free experience",
-        "All AI generation features",
+        t('pricing.f.credits100'),
+        t('pricing.f.adfree'),
+        t('pricing.f.allai'),
       ],
-      cta: "Subscribe",
+      cta: t('pricing.sub.cta'),
       featured: true,
       checkoutKind: 'sub',
       icon: <Sparkles className="w-6 h-6 text-violet-400" />
     },
     {
-      // PLACEHOLDER copy — finalized + translated in commit (d).
-      name: "Credit Pack",
-      price: "$4.99",
-      period: "one-time",
-      description: "30 credits, one-time. Ads stay on.",
+      name: t('pricing.pack.name'),
+      price: t('pricing.pack.price'),
+      period: t('pricing.pack.period'),
+      description: t('pricing.pack.desc'),
       features: [
-        "30 credits",
-        "One-time purchase",
-        "All AI generation features",
+        t('pricing.f.credits30'),
+        t('pricing.f.onetime'),
+        t('pricing.f.allai'),
       ],
-      cta: "Buy credits",
+      cta: t('pricing.pack.cta'),
       featured: false,
       checkoutKind: 'pack',
       icon: <Zap className="w-6 h-6 text-amber-400" />
@@ -186,10 +180,7 @@ export default function PricingClient() {
                 : 'border-red-500/30 bg-red-500/10 text-red-200'
             }`}
           >
-            {/* TODO(d): move to i18n (EN + AR). Transitional internal-test copy. */}
-            {status === 'success'
-              ? 'Payment received, your credits will appear shortly.'
-              : "Payment didn't go through. Please try again."}
+            {status === 'success' ? t('pricing.banner.success') : t('pricing.banner.failed')}
           </div>
         )}
 

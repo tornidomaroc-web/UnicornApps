@@ -151,9 +151,9 @@ export default function DashboardClient({
     checkNative()
   }, [])
 
-  // Paddle checkout feedback — same PADDLE_EVENT bridge (lib/paddle.ts) used by
+  // Paddle checkout feedback: same PADDLE_EVENT bridge (lib/paddle.ts) used by
   // the pricing page. Real credit/ad-free changes are applied by the
-  // (not-yet-built) webhook, asynchronously — hence the transitional banner.
+  // (not-yet-built) webhook, asynchronously, hence the transitional banner.
   const [checkoutStatus, setCheckoutStatus] = useState<'success' | 'failed' | null>(null)
   useEffect(() => {
     const onPaddle = (e: Event) => {
@@ -593,21 +593,20 @@ export default function DashboardClient({
                    <>
                      <div className="hidden sm:block h-4 w-px bg-white/10" />
                      <div className="flex items-center gap-2">
-                       {/* NOTE(d): placeholder labels; final copy + i18n in commit (d).
-                           Both CTAs reuse openCheckout from lib/checkout.ts. */}
+                       {/* Both CTAs reuse openCheckout from lib/checkout.ts. */}
                        <button
                          type="button"
                          onClick={() => handlePaid('pack')}
                          className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
                        >
-                         Credit Pack $4.99
+                         {t('dash.cta.pack')}
                        </button>
                        <button
                          type="button"
                          onClick={() => handlePaid('sub')}
                          className="bg-violet-600/10 border border-violet-500/30 text-violet-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg hover:bg-violet-600 hover:text-white transition-all"
                        >
-                         Subscribe $9.99 ↗
+                         {t('dash.cta.sub')}
                        </button>
                      </div>
                    </>
@@ -627,10 +626,7 @@ export default function DashboardClient({
                 : 'border-red-500/30 bg-red-500/10 text-red-200'
             }`}
           >
-            {/* TODO(d): move to i18n (EN + AR). Transitional internal-test copy. */}
-            {checkoutStatus === 'success'
-              ? 'Payment received, your credits will appear shortly.'
-              : "Payment didn't go through. Please try again."}
+            {checkoutStatus === 'success' ? t('pricing.banner.success') : t('pricing.banner.failed')}
           </div>
         )}
 
