@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useEffect, type ReactNode } from "react";
 import {
   Card,
   CardContent,
@@ -15,6 +16,8 @@ import { Check, Sparkles, Zap, Shield, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLang } from "@/lib/i18n/LanguageContext";
 import { useIsNative } from "@/hooks/useIsNative";
+import { openCheckout } from "@/lib/checkout";
+import { PADDLE_EVENT } from "@/lib/paddle";
 
 export default function PricingClient() {
   const { t } = useLang();
@@ -23,7 +26,9 @@ export default function PricingClient() {
   // client confirms it is web. No native flash of paid plans / Paddle links.
   const { isNative, resolved } = useIsNative();
   const showPaid = resolved && !isNative;
+  const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
+  const [status, setStatus] = useState<'success' | 'failed' | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -41,7 +46,36 @@ export default function PricingClient() {
     fetchUser()
   }, []);
 
-  const tiers = [
+  // Surface the Paddle checkout lifecycle (re-broadcast as PADDLE_EVENT by
+  // lib/paddle.ts). The overlay stays in-page; we show a transitional banner.
+  // Real credit/ad-free changes are applied by the (not-yet-built) webhook,
+  // asynchronously — hence the "appear shortly" copy.
+  useEffect(() => {
+    const onPaddle = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { name?: string } | undefined;
+      // CheckoutEventNames: 'checkout.completed' | 'checkout.payment.failed' | 'checkout.error'
+      if (detail?.name === 'checkout.completed') setStatus('success');
+      else if (detail?.name === 'checkout.payment.failed' || detail?.name === 'checkout.error') setStatus('failed');
+    };
+    window.addEventListener(PADDLE_EVENT, onPaddle);
+    return () => window.removeEventListener(PADDLE_EVENT, onPaddle);
+  }, []);
+
+  const handlePaid = (kind: 'sub' | 'pack') => {
+    void openCheckout({ kind, userId, navigate: (path) => router.push(path) });
+  };
+
+  // NOTE(d): All PAID-tier display copy below (names, prices, periods, features,
+  // CTAs) is provisional/neutral placeholder text pending the gated EN+AR copy
+  // rewrite in commit (d) — do not treat it as final. Prices reflect the locked
+  // model ($9.99/mo subscription, $4.99 one-time pack). Free-tier strings stay
+  // sourced from LanguageContext. The old stale Starter/Pro $9/$29 tiers and the
+  // hardcoded pri_01kpnqr5df47ce3nvfh92qmxc9 link are removed here.
+  const tiers: {
+    name: string; price: string; period: string; description: string;
+    features: string[]; cta: string; featured: boolean;
+    href?: string; checkoutKind?: 'sub' | 'pack'; icon: ReactNode;
+  }[] = [
     {
       name: t('pricing.free'),
       price: "$0",
@@ -59,41 +93,36 @@ export default function PricingClient() {
       icon: <Shield className="w-6 h-6 text-slate-400" />
     },
     {
-      name: t('pricing.starter'),
-      price: "$9",
-      period: t('period.month'),
-      description: t('pricing.starter.desc'),
+      // PLACEHOLDER copy — finalized + translated in commit (d).
+      name: "Subscription",
+      price: "$9.99",
+      period: "/mo",
+      description: "100 credits every month, ad-free.",
       features: [
-        t('pricing.f.gen50'),
-        t('pricing.f.vision.core'),
-        t('pricing.f.csv'),
-        t('pricing.f.queue.std'),
-        t('pricing.f.history'),
+        "100 credits per month",
+        "Ad-free experience",
+        "All AI generation features",
       ],
-      cta: t('pricing.cta.starter'),
-      featured: false,
-      href: "/login",
-      checkoutUrl: `https://buy.paddle.com/product/pri_01kpnqr5df47ce3nvfh92qmxc9?user_id=${userId || ''}`,
-      icon: <Zap className="w-6 h-6 text-amber-400" />
+      cta: "Subscribe",
+      featured: true,
+      checkoutKind: 'sub',
+      icon: <Sparkles className="w-6 h-6 text-violet-400" />
     },
     {
-      name: t('pricing.pro'),
-      price: "$29",
-      period: t('period.month'),
-      description: t('pricing.pro.desc'),
+      // PLACEHOLDER copy — finalized + translated in commit (d).
+      name: "Credit Pack",
+      price: "$4.99",
+      period: "one-time",
+      description: "30 credits, one-time. Ads stay on.",
       features: [
-        t('pricing.f.gen500'),
-        t('pricing.f.vision.priority'),
-        t('pricing.f.csv.bulk'),
-        t('pricing.f.social'),
-        t('pricing.f.refine'),
-        t('pricing.f.support'),
+        "30 credits",
+        "One-time purchase",
+        "All AI generation features",
       ],
-      cta: t('pricing.cta.pro'),
-      featured: true,
-      href: "/login",
-      checkoutUrl: `https://buy.paddle.com/product/pri_01kpnqr5df47ce3nvfh92qmxc9?user_id=${userId || ''}`,
-      icon: <Sparkles className="w-6 h-6 text-violet-400" />
+      cta: "Buy credits",
+      featured: false,
+      checkoutKind: 'pack',
+      icon: <Zap className="w-6 h-6 text-amber-400" />
     },
   ];
 
@@ -149,13 +178,28 @@ export default function PricingClient() {
           </motion.p>
         </motion.div>
 
-        <motion.div 
+        {status && (
+          <div
+            className={`max-w-2xl mx-auto mb-12 rounded-2xl border px-6 py-4 text-center text-sm font-medium ${
+              status === 'success'
+                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+                : 'border-red-500/30 bg-red-500/10 text-red-200'
+            }`}
+          >
+            {/* TODO(d): move to i18n (EN + AR). Transitional internal-test copy. */}
+            {status === 'success'
+              ? 'Payment received, your credits will appear shortly.'
+              : "Payment didn't go through. Please try again."}
+          </div>
+        )}
+
+        <motion.div
           initial="hidden"
           animate="visible"
           variants={containerVariants}
           className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto"
         >
-          {(showPaid ? tiers : tiers.filter((tier) => !tier.checkoutUrl)).map((tier, idx) => (
+          {(showPaid ? tiers : tiers.filter((tier) => !tier.checkoutKind)).map((tier) => (
             <motion.div key={tier.name} variants={itemVariants} className="h-full">
               <Card
                 className={`flex flex-col h-full relative transition-all duration-500 bg-white/5 backdrop-blur-3xl border-white/10 group ${
@@ -203,9 +247,13 @@ export default function PricingClient() {
                 </CardContent>
 
                 <CardFooter className="px-10 pb-12 pt-4">
-                  {showPaid && tier.checkoutUrl ? (
-                    <a href={tier.checkoutUrl} target="_blank" rel="noopener noreferrer" className="w-full">
+                  {tier.checkoutKind ? (
+                    // Paid action. Only reachable on web (showPaid filters the
+                    // tier out on native); openCheckout() is a further no-op on
+                    // native via getPaddle(). Null userId redirects to /login.
+                    showPaid && (
                       <Button
+                        onClick={() => handlePaid(tier.checkoutKind!)}
                         className={`w-full h-16 text-xs font-black uppercase tracking-[0.2em] rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${
                           tier.featured
                             ? "bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_30px_rgba(124,58,237,0.4)]"
@@ -214,9 +262,9 @@ export default function PricingClient() {
                       >
                         {tier.cta}
                       </Button>
-                    </a>
+                    )
                   ) : (
-                    <Link href={tier.href} className="w-full">
+                    <Link href={tier.href!} className="w-full">
                       <Button
                         className={`w-full h-16 text-xs font-black uppercase tracking-[0.2em] rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${
                           tier.featured
