@@ -13,5 +13,7 @@ android/app/*.jks
 # Local clutter (not part of the app)
 /scratch
 /out
-# Build artifacts — keep AABs out of the repo
+# TypeScript incremental build info (created by manual `tsc` runs)
+*.tsbuildinfo
+# Build artifacts ï¿½ keep AABs out of the repo
 *.aab
