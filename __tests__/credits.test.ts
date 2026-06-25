@@ -2,6 +2,7 @@ import { POST as generatePOST } from '../src/app/api/generate/route'
 import { POST as webhookPOST } from '../src/app/api/webhooks/paddle/route'
 import { NextRequest } from 'next/server'
 import crypto from 'crypto'
+import { createSupabaseMock } from './helpers/supabaseMock'
 
 // Mock the dependencies
 jest.mock('../src/lib/supabase/server', () => ({
@@ -107,19 +108,35 @@ describe('Credit Logic', () => {
     expect(mockSupabase.update).not.toHaveBeenCalled();
   })
 
-  it('adds credits via Paddle webhook on transaction.completed', async () => {
-    // single() call #1 -> webhook dedup check (event not seen before)
-    // single() call #2 -> addCredits() reads current profile balance (2 credits)
-    mockSupabase.single
-      .mockResolvedValueOnce({ data: null, error: null })
-      .mockResolvedValueOnce({ data: { credits: 2 }, error: null });
+  it('adds credits via Paddle webhook on transaction.completed (price-derived, ledger-guarded)', async () => {
+    // Piece 2: the grant is derived SERVER-SIDE from the PACK price id
+    // (creditsForPrice('pri_pack_test') -> 30), NOT from custom_data, and fires
+    // only when the purchases ledger row is newly inserted. addCredits is the
+    // REAL implementation here (credits.ts is not mocked in this suite), so this
+    // asserts the end-to-end profile write. The hand-rolled mockSupabase above
+    // can't express the upsert().select() terminal, so use createSupabaseMock,
+    // which lets us queue each awaited DB result in order.
+    const mock = createSupabaseMock();
+    (createClientJS as jest.Mock).mockReturnValue(mock.client);
+
+    mock.queue(
+      { data: null }, // dedup .single(): event not seen
+      { data: [{ id: 'pur_1' }] }, // purchases upsert .select(): newly inserted -> grant
+      { data: { credits: 2 } }, // addCredits reads current balance
+      { data: [{ credits: 32 }] }, // addCredits update tail (route ignores result)
+      { data: [{ id: 'row' }] }, // processed_webhook_events insert
+    );
 
     const payload = {
       event_type: 'transaction.completed',
       event_id: 'evt_test_1',
       data: {
-        custom_data: { user_id: 'user-123', credits_to_add: 50 }
-      }
+        id: 'txn_test_1',
+        subscription_id: null,
+        custom_data: { user_id: 'user-123' },
+        items: [{ price: { id: 'pri_pack_test' }, quantity: 1 }],
+        details: { totals: { grand_total: '1900', currency_code: 'USD' } },
+      },
     };
 
     const bodyText = JSON.stringify(payload);
@@ -144,7 +161,8 @@ describe('Credit Logic', () => {
     const res = await webhookPOST(req);
     expect(res.status).toBe(200);
 
-    // 2 existing + 50 new = 52 credits
-    expect(mockSupabase.update).toHaveBeenCalledWith({ credits: 52 });
+    // 2 existing + 30 from the pack price = 32 (custom_data carries no amount now).
+    const updates = mock.callsTo('update').map((c) => c.args[0]);
+    expect(updates).toContainEqual({ credits: 32 });
   })
 })

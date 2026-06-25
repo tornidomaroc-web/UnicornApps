@@ -14,6 +14,10 @@ const createJestConfig = nextJest({ dir: './' })
 const config = {
   // Route handlers + crypto + Request/NextRequest — Node globals, no DOM.
   testEnvironment: 'node',
+  // Set deterministic Paddle price-id env BEFORE any module loads, because
+  // src/lib/billing.ts reads them at module-init (not call) time. Runs ahead of
+  // each test file's imports. See jest.setup.env.js.
+  setupFiles: ['<rootDir>/jest.setup.env.js'],
   // Only treat *.test.* / *.spec.* as suites. Jest's default ALSO globs every
   // __tests__/**/*.ts, which would try to run helpers/fixtures (e.g.
   // __tests__/helpers/supabaseMock.ts) as empty suites and fail. Existing tests
