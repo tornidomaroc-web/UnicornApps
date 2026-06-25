@@ -1,0 +1,36 @@
+{
+  "_fixture_meta": {
+    "source": "DOCS-DERIVED — official Paddle Billing adjustment.created payload shape (developer.paddle.com), per the 8-field docs pass. NOT a real captured payload.",
+    "reconcile": "Reconcile byte-for-byte against a REAL captured payload during live verification (see ./README.md two-layer plan). OPEN QUESTIONS for Layer 2: (1) the data.action enum in practice — confirm refund/chargeback vs the *_reverse/credit/credit_reverse undo actions (Correction C allowlist); (2) the status lifecycle — does adjustment.created ever arrive already 'approved', or always 'pending' first then adjustment.updated -> 'approved' (Correction B)?; (3) the transaction_id path (data.transaction_id) and that adjustments carry NO custom_data.user_id (Correction 8a); (4) totals are STRINGS.",
+    "locks": "data.action='refund', data.status='approved', data.transaction_id links to a purchases row, totals.total is a STRING, no custom_data.user_id"
+  },
+  "event_id": "evt_01docs_adj_created",
+  "event_type": "adjustment.created",
+  "occurred_at": "2026-06-24T10:00:00.000000Z",
+  "notification_id": "ntf_01docs_adj_created",
+  "data": {
+    "id": "adj_01docs",
+    "action": "refund",
+    "status": "approved",
+    "transaction_id": "txn_01docs_pack",
+    "subscription_id": null,
+    "customer_id": "ctm_01docs",
+    "reason": "requested_by_customer",
+    "items": [
+      {
+        "id": "adjitm_01docs",
+        "item_id": "txnitm_01docs_pack",
+        "type": "full",
+        "amount": "1900"
+      }
+    ],
+    "totals": {
+      "subtotal": "1810",
+      "tax": "90",
+      "total": "1900",
+      "fee": "0",
+      "earnings": "1900",
+      "currency_code": "USD"
+    }
+  }
+}

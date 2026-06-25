@@ -1,0 +1,36 @@
+{
+  "_fixture_meta": {
+    "source": "DOCS-DERIVED — official Paddle Billing adjustment payload shape for a CHARGEBACK (developer.paddle.com), per the 8-field docs pass. NOT a real captured payload.",
+    "reconcile": "Reconcile byte-for-byte against a REAL captured payload during live verification (see ./README.md two-layer plan). Layer 2: confirm the chargeback action value and its status lifecycle — a chargeback is a forced bank reversal, so confirm whether it arrives already 'approved' or transitions like a refund.",
+    "locks": "data.action='chargeback' (allowlisted alongside 'refund'), data.status='approved', data.transaction_id links to a purchases row"
+  },
+  "event_id": "evt_01docs_adj_chargeback",
+  "event_type": "adjustment.created",
+  "occurred_at": "2026-06-24T11:00:00.000000Z",
+  "notification_id": "ntf_01docs_adj_chargeback",
+  "data": {
+    "id": "adj_01docs_cb",
+    "action": "chargeback",
+    "status": "approved",
+    "transaction_id": "txn_01docs_sub",
+    "subscription_id": "sub_01docs",
+    "customer_id": "ctm_01docs",
+    "reason": "fraud",
+    "items": [
+      {
+        "id": "adjitm_01docs_cb",
+        "item_id": "txnitm_01docs_sub",
+        "type": "full",
+        "amount": "900"
+      }
+    ],
+    "totals": {
+      "subtotal": "857",
+      "tax": "43",
+      "total": "900",
+      "fee": "0",
+      "earnings": "900",
+      "currency_code": "USD"
+    }
+  }
+}

@@ -8,7 +8,7 @@ CREATE TABLE public.processed_webhook_events (
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { addCredits } from '@/lib/credits'
+import { addCredits, deductCredits } from '@/lib/credits'
 import { creditsForPrice, planForPrice } from '@/lib/billing'
 
 export async function POST(req: NextRequest) {
@@ -89,6 +89,8 @@ export async function POST(req: NextRequest) {
       await handleTransactionCompleted(supabase, data, customData)
     } else if (typeof eventType === 'string' && eventType.startsWith('subscription.')) {
       await handleSubscriptionLifecycle(supabase, eventType, data, customData)
+    } else if (eventType === 'adjustment.created' || eventType === 'adjustment.updated') {
+      await handleRefundAdjustment(supabase, data)
     } else {
       // Unknown / not-yet-handled event type: intentionally ignored.
       console.log(`Webhook event ignored (no handler): ${eventType}`)
@@ -350,4 +352,90 @@ async function handleSubscriptionLifecycle(
 
   await supabase.from('profiles').update(update).eq('id', userId)
   console.log(`Updated profile ${userId} from ${eventType}:`, update)
+}
+
+// adjustment.created / adjustment.updated — refunds & chargebacks. Reverses the
+// credits granted for the refunded transaction, exactly once, linking through the
+// purchases LEDGER (adjustments carry no custom_data.user_id — Correction 8a).
+//
+// Non-retryable conditions (disallowed action, not-yet-approved, unledgered txn,
+// already-refunded) just `return`: the caller records the event and returns 200.
+async function handleRefundAdjustment(supabase: any, data: any): Promise<void> {
+  const action = data?.action
+
+  // Correction C — ALLOWLIST. Only money-returning adjustments claw back credits.
+  // The *_reverse / credit / credit_reverse actions UNDO a prior adjustment;
+  // reversing on them would double-claw. Anything outside {refund,chargeback} is
+  // safely ignored.
+  if (action !== 'refund' && action !== 'chargeback') {
+    console.log(`Webhook: adjustment action "${action}" not in {refund,chargeback} — ignoring.`)
+    return
+  }
+
+  // Correction B — STATUS GATE. Only an APPROVED adjustment actually moves money.
+  // created-already-approved reverses here; created 'pending' then updated
+  // 'approved' reverses on the updated delivery. pending/rejected: ignore.
+  if (data?.status !== 'approved') {
+    console.log(`Webhook: adjustment status "${data?.status}" not approved — ignoring (no reversal yet).`)
+    return
+  }
+
+  const transactionId = data?.transaction_id
+  if (!transactionId) {
+    console.error('Webhook: adjustment missing transaction_id — cannot link to a purchase.')
+    return
+  }
+
+  // Link via the ledger — the only place a refund's user + grant amount live.
+  const { data: purchase } = await supabase
+    .from('purchases')
+    .select('id, user_id, credits_granted, type, status')
+    .eq('paddle_transaction_id', transactionId)
+    .single()
+
+  if (!purchase) {
+    console.warn(`Webhook: refund for unledgered txn ${transactionId} — nothing to reverse.`)
+    return
+  }
+
+  // flip-then-deduct CAS. Flip status completed->refunded atomically; only the
+  // CAS winner proceeds. Two concurrent approved events (created + updated both
+  // 'approved') therefore can't double-deduct — the loser flips no row.
+  const nowIso = new Date().toISOString()
+  const { data: flipped } = await supabase
+    .from('purchases')
+    .update({ status: 'refunded', refunded_at: nowIso })
+    .eq('id', purchase.id)
+    .eq('status', 'completed') // CAS guard
+    .select()
+
+  if (!Array.isArray(flipped) || flipped.length === 0) {
+    // Already refunded (or a concurrent delivery won the CAS). Do NOT double-deduct.
+    console.log(`Webhook: txn ${transactionId} already refunded — skipping reversal.`)
+    return
+  }
+
+  // Full reversal of the granted credits. We INTENTIONALLY do not inspect the
+  // refund amount (data.totals.total stays unused): any approved refund/chargeback
+  // reverses the FULL credits_granted, because credits are all-or-nothing per
+  // transaction in the ledger and full reversal is the safer error direction
+  // (clawing back nothing on a partial refund would invite buy/consume/partial-
+  // refund abuse). Partial-credit logic is deferred until real refund patterns
+  // warrant it. deductCredits clamps at 0, so a since-spent balance can't go negative.
+  const credits = Number(purchase.credits_granted) || 0
+  if (purchase.user_id && credits > 0) {
+    await deductCredits(supabase, purchase.user_id, credits)
+    console.log(`Reversed ${credits} credits from ${purchase.user_id} (refund of txn ${transactionId}).`)
+  }
+
+  // A refunded subscription cycle also ENDS Pro immediately: force status
+  // canceled + current_period_end=now() so computeIsPro flips false at once. This
+  // is Correction A's deliberate EXCEPTION — unlike a scheduled cancel, a refund
+  // DOES write current_period_end (to now), revoking the paid-through entitlement.
+  if (purchase.type === 'subscription_cycle' && purchase.user_id) {
+    await supabase
+      .from('profiles')
+      .update({ subscription_status: 'canceled', current_period_end: nowIso })
+      .eq('id', purchase.user_id)
+  }
 }
