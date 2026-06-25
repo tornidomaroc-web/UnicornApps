@@ -1,0 +1,36 @@
+{
+  "_fixture_meta": {
+    "source": "DOCS-DERIVED — official Paddle Billing adjustment.updated payload shape (developer.paddle.com), per the 8-field docs pass. NOT a real captured payload.",
+    "reconcile": "Reconcile byte-for-byte against a REAL captured payload during live verification (see ./README.md two-layer plan). Layer 2: confirm the created(pending)->updated(approved) lifecycle and that adjustment.updated carries the same data.action / data.transaction_id as the created event. Same open questions as adjustment.created.json.",
+    "locks": "data.action='refund', data.status='approved' (this is the delivery that authorizes reversal), data.transaction_id links to a purchases row, totals are STRINGS"
+  },
+  "event_id": "evt_01docs_adj_updated",
+  "event_type": "adjustment.updated",
+  "occurred_at": "2026-06-24T10:05:00.000000Z",
+  "notification_id": "ntf_01docs_adj_updated",
+  "data": {
+    "id": "adj_01docs",
+    "action": "refund",
+    "status": "approved",
+    "transaction_id": "txn_01docs_pack",
+    "subscription_id": null,
+    "customer_id": "ctm_01docs",
+    "reason": "requested_by_customer",
+    "items": [
+      {
+        "id": "adjitm_01docs",
+        "item_id": "txnitm_01docs_pack",
+        "type": "full",
+        "amount": "1900"
+      }
+    ],
+    "totals": {
+      "subtotal": "1810",
+      "tax": "90",
+      "total": "1900",
+      "fee": "0",
+      "earnings": "1900",
+      "currency_code": "USD"
+    }
+  }
+}
