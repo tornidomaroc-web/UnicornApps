@@ -36,9 +36,10 @@ reconcile against reality later. Every docs-derived fixture carries a
 
 Fixtures land **with the Piece that consumes them**, not all up front: Piece 1
 (control-flow scaffold) shipped only `transaction.completed.pack.json`; Piece 2
-(transaction.completed split) adds `transaction.completed.subscription.json`; the
-remaining `subscription.*` and `adjustment.*` fixtures arrive with Pieces 3–4 so
-each piece's diff stays self-contained.
+(transaction.completed split) added `transaction.completed.subscription.json`;
+Piece 3 (subscription lifecycle) adds `subscription.activated/canceled/past_due/
+paused.json`; the remaining `adjustment.*` fixtures arrive with Piece 4 so each
+piece's diff stays self-contained.
 
 ## The decisive field
 

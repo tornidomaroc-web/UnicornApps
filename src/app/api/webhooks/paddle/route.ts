@@ -9,7 +9,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { addCredits } from '@/lib/credits'
-import { creditsForPrice } from '@/lib/billing'
+import { creditsForPrice, planForPrice } from '@/lib/billing'
 
 export async function POST(req: NextRequest) {
   try {
@@ -87,6 +87,8 @@ export async function POST(req: NextRequest) {
     //     user) must `return` from its helper, not throw, so it still records.
     if (eventType === 'transaction.completed') {
       await handleTransactionCompleted(supabase, data, customData)
+    } else if (typeof eventType === 'string' && eventType.startsWith('subscription.')) {
+      await handleSubscriptionLifecycle(supabase, eventType, data, customData)
     } else {
       // Unknown / not-yet-handled event type: intentionally ignored.
       console.log(`Webhook event ignored (no handler): ${eventType}`)
@@ -216,4 +218,136 @@ async function handleTransactionCompleted(
   if (isSubscriptionCycle && subscriptionId) {
     await supabase.from('profiles').update({ subscription_id: subscriptionId }).eq('id', userId)
   }
+}
+
+// subscription.* lifecycle. One DRY handler driven by a per-event rule. Each
+// rule writes ONLY the profile columns that event authoritatively owns, so
+// out-of-order delivery converges (a later 'updated' can't clobber a field a
+// different event owns; see Part 4 of the plan). The webhook only WRITES
+// subscription_status / subscription_id / current_period_end / plan — it never
+// reads entitlement (computeIsPro is derived elsewhere at read time).
+//
+//   status:        fixed subscription_status to write (omit if fromDataStatus)
+//   fromDataStatus: take subscription_status from the payload's data.status
+//   setSubscriptionId: store subscription_id (= data.id) — the resolution key
+//   setPlan:       refresh plan from planForPrice(price id), when a price is present
+//   setPeriodEnd:  write current_period_end from current_billing_period.ends_at,
+//                  NULL-GUARDED (only when present)
+const SUBSCRIPTION_LIFECYCLE: Record<
+  string,
+  {
+    status?: string
+    fromDataStatus?: boolean
+    setSubscriptionId?: boolean
+    setPlan?: boolean
+    setPeriodEnd?: boolean
+  }
+> = {
+  // First activation (and 'created', treated identically): seed the full row.
+  'subscription.activated': { status: 'active', setSubscriptionId: true, setPlan: true, setPeriodEnd: true },
+  'subscription.created': { status: 'active', setSubscriptionId: true, setPlan: true, setPeriodEnd: true },
+  // Generic mutation: trust the payload's own status, refresh period + plan.
+  'subscription.updated': { fromDataStatus: true, setPlan: true, setPeriodEnd: true },
+  // Scheduled cancel: status only. current_billing_period is NULL on canceled
+  // (Correction A), so we must NOT touch current_period_end — the paid-through
+  // value already stored keeps the user Pro until it elapses.
+  'subscription.canceled': { status: 'canceled' },
+  // Dunning grace: still has a paid-through period.
+  'subscription.past_due': { status: 'past_due', setPeriodEnd: true },
+  // Paused: status only (no active billing period to write).
+  'subscription.paused': { status: 'paused' },
+  // Resume after pause: back to active with a fresh period.
+  'subscription.resumed': { status: 'active', setPeriodEnd: true },
+}
+
+// Statuses subscription.updated is allowed to write. This is the subset of
+// profiles_subscription_status_chk (active/past_due/canceled/paused/expired) that
+// we actually MODEL — 'expired' is excluded because Paddle Billing never emits it
+// (see billing.ts: expiry is timestamp-driven, not a status). Keeping this list
+// strict means 'updated' can never hand the DB a value its CHECK constraint would
+// reject and throw on. 'trialing' is intentionally absent: we don't offer trials,
+// so it's IGNORED (see handler) rather than mapped to 'active' — that entitlement
+// call belongs in computeIsPro, not the webhook.
+const UPDATED_STATUS_WHITELIST = new Set(['active', 'past_due', 'canceled', 'paused'])
+
+async function handleSubscriptionLifecycle(
+  supabase: any,
+  eventType: string,
+  data: any,
+  customData: any
+): Promise<void> {
+  const rule = SUBSCRIPTION_LIFECYCLE[eventType]
+  if (!rule) {
+    // A subscription.* event we don't model yet — intentionally ignored.
+    console.log(`Webhook subscription event ignored (no handler): ${eventType}`)
+    return
+  }
+
+  // For subscription.* the object IS the subscription, so data.id is its id.
+  const subscriptionId = data?.id ?? null
+
+  // User resolution: custom_data first, then the profile that owns this
+  // subscription_id (seeded by activated — this is what lets later renewals and
+  // lifecycle events resolve, closing Piece 2's first-cycle chicken/egg).
+  let userId: string | null = customData?.user_id ?? null
+  if (!userId && subscriptionId) {
+    const { data: owner } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('subscription_id', subscriptionId)
+      .single()
+    userId = owner?.id ?? null
+  }
+  if (!userId) {
+    // Not retryable (a retry won't add identity); record + 200.
+    console.error(`Webhook: could not resolve user for ${eventType} (subscription_id=${subscriptionId}).`)
+    return
+  }
+
+  // Build a FIELD-SCOPED update: only the columns this event owns.
+  const update: Record<string, any> = {}
+
+  if (rule.fromDataStatus) {
+    // subscription.updated trusts the payload's own status — but ONLY for statuses
+    // we model. An unmapped status (e.g. 'trialing', or anything outside the CHECK
+    // set) written verbatim would be wrong or be rejected by
+    // profiles_subscription_status_chk, throwing → 500 → infinite retry (the status
+    // never changes on retry). So we gate here and keep the DB CHECK strict:
+    // unmapped status → ignore the WHOLE event (write nothing), warn, and let the
+    // caller record it + return 200 as a safely-ignored event.
+    const incoming = data?.status
+    if (typeof incoming !== 'string' || !UPDATED_STATUS_WHITELIST.has(incoming)) {
+      console.warn(`Webhook: ${eventType} with unmapped status "${incoming}" — ignoring (no fields written).`)
+      return
+    }
+    update.subscription_status = incoming
+  } else if (rule.status) {
+    update.subscription_status = rule.status
+  }
+
+  if (rule.setSubscriptionId && subscriptionId) {
+    update.subscription_id = subscriptionId
+  }
+
+  if (rule.setPlan) {
+    const priceId = data?.items?.[0]?.price?.id ?? null
+    // Null-guard: only refresh plan when a price is present, so a payload that
+    // omits items can't clobber the stored plan label.
+    if (priceId) update.plan = planForPrice(priceId)
+  }
+
+  if (rule.setPeriodEnd) {
+    const endsAt = data?.current_billing_period?.ends_at
+    // NULL-GUARD: only write current_period_end when actually present, so a null
+    // period (e.g. an unexpected shape) never erases the paid-through value.
+    if (endsAt != null) update.current_period_end = endsAt
+  }
+
+  if (Object.keys(update).length === 0) {
+    console.warn(`Webhook: ${eventType} produced no fields to write (subscription_id=${subscriptionId}).`)
+    return
+  }
+
+  await supabase.from('profiles').update(update).eq('id', userId)
+  console.log(`Updated profile ${userId} from ${eventType}:`, update)
 }

@@ -1,0 +1,34 @@
+{
+  "_fixture_meta": {
+    "source": "DOCS-DERIVED — official Paddle Billing subscription.activated payload shape (developer.paddle.com), per the 8-field docs pass. NOT a real captured payload.",
+    "reconcile": "Reconcile byte-for-byte against a REAL captured payload during live verification (see ./README.md two-layer plan). OPEN QUESTIONS for Layer 2: (1) does subscription.* carry custom_data.user_id (#6)? assumed present here; (2) does subscription.activated arrive BEFORE the first transaction.completed (ordering that closes Piece 2's first-cycle chicken/egg)?; (3) exact current_billing_period.ends_at format.",
+    "locks": "data.id is the SUBSCRIPTION id (resolution key), data.status='active', current_billing_period.ends_at present, items[0].price.id = SUB price"
+  },
+  "event_id": "evt_01docs_sub_activated",
+  "event_type": "subscription.activated",
+  "occurred_at": "2026-06-22T12:00:01.000000Z",
+  "notification_id": "ntf_01docs_sub_activated",
+  "data": {
+    "id": "sub_01docs",
+    "status": "active",
+    "customer_id": "ctm_01docs",
+    "custom_data": {
+      "user_id": "user-123",
+      "plan": "pro"
+    },
+    "current_billing_period": {
+      "starts_at": "2026-06-22T12:00:00.000000Z",
+      "ends_at": "2026-07-22T12:00:00.000000Z"
+    },
+    "items": [
+      {
+        "status": "active",
+        "quantity": 1,
+        "price": {
+          "id": "pri_sub_test",
+          "product_id": "pro_01docs_sub"
+        }
+      }
+    ]
+  }
+}
