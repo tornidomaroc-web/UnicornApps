@@ -8,7 +8,7 @@ CREATE TABLE public.processed_webhook_events (
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { addCredits, deductCredits } from '@/lib/credits'
+import { addCredits } from '@/lib/credits'
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,6 +57,10 @@ export async function POST(req: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
 
+    // 4. Idempotency fast-path: if this event_id was already processed
+    // successfully, skip and acknowledge. The matching INSERT is deferred to
+    // AFTER the handler succeeds (below), so a mid-handler failure is NOT
+    // recorded as processed and Paddle's retry can re-run the handler.
     if (eventId) {
       const { data: existingEvent } = await supabase
         .from('processed_webhook_events')
@@ -68,45 +72,42 @@ export async function POST(req: NextRequest) {
         console.log(`Duplicate event ignored: ${eventId}`)
         return NextResponse.json({ received: true }, { status: 200 })
       }
-      await supabase.from('processed_webhook_events').insert({ event_id: eventId })
     }
 
     console.log(`Webhook Received: ${eventType}`, { customData })
 
+    // 5. Dispatch. Contract for Pieces 2-4 to slot into:
+    //   - A handler that needs Paddle to RETRY must THROW; the catch below
+    //     turns that into a 500 and the event is left unrecorded.
+    //   - Reaching the end of dispatch normally — whether the event was handled
+    //     or intentionally ignored (unknown type, non-actionable payload) — is a
+    //     success: the event is recorded as processed and we return 200.
     if (eventType === 'transaction.completed') {
       const userId = customData?.user_id
       const creditsToAdd = Number(customData?.credits_to_add || 0)
 
       if (!userId) {
+        // Not retryable — custom_data won't change on retry. Ignore + record.
         console.error('Webhook Error: Missing user_id in custom_data')
-        return new NextResponse('Missing User ID', { status: 200 })
-      }
-
-      if (creditsToAdd > 0) {
+      } else if (creditsToAdd > 0) {
         await addCredits(supabase, userId, creditsToAdd)
         console.log(`Successfully added ${creditsToAdd} credits to user ${userId}.`)
       }
-    } else if (eventType === 'transaction.refunded') {
-      const userId = customData?.user_id
-      const creditsToDeduct = Number(customData?.credits_to_add || 0)
-
-      if (!userId) {
-        console.error('Webhook Error: Missing user_id for refund')
-        return new NextResponse('Missing User ID', { status: 200 })
-      }
-
-      if (creditsToDeduct > 0) {
-        await deductCredits(supabase, userId, creditsToDeduct)
-        console.log(`Successfully deducted ${creditsToDeduct} credits from user ${userId}.`)
-      }
-    } else if (eventType === 'subscription.expired') {
-      console.log(`Webhook Event Logged: subscription.expired for user ${customData?.user_id}`)
+    } else {
+      // Unknown / not-yet-handled event type: intentionally ignored.
+      console.log(`Webhook event ignored (no handler): ${eventType}`)
     }
 
-    // 6. Return 200 OK to acknowledge receipt
+    // 6. Handler completed without throwing → record as processed, then ack.
+    if (eventId) {
+      await supabase.from('processed_webhook_events').insert({ event_id: eventId })
+    }
+
     return NextResponse.json({ received: true }, { status: 200 })
   } catch (error: any) {
+    // Genuine handler failure: do NOT record the event as processed. Return 500
+    // so Paddle retries and the handler gets another chance to succeed.
     console.error('Webhook Exception:', error.message)
-    return new NextResponse('Internal Server Error', { status: 200 }) // Acknowledge even on error to stop Paddle retries
+    return new NextResponse('Internal Server Error', { status: 500 })
   }
 }

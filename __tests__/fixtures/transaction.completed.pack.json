@@ -1,0 +1,37 @@
+{
+  "_fixture_meta": {
+    "source": "DOCS-DERIVED — built from the official Paddle Billing transaction.completed payload shape (developer.paddle.com), per the 8-field docs pass. NOT a real captured payload.",
+    "reconcile": "Must be reconciled byte-for-byte against a REAL captured payload during live verification after the webhook ships (see ./README.md two-layer plan).",
+    "locks": "subscription_id: null (one-time pack), items[0].price.id, details.totals.grand_total is a STRING, custom_data carries user_id"
+  },
+  "event_id": "evt_01docs_pack_completed",
+  "event_type": "transaction.completed",
+  "occurred_at": "2026-06-22T12:00:00.000000Z",
+  "notification_id": "ntf_01docs_pack",
+  "data": {
+    "id": "txn_01docs_pack",
+    "status": "completed",
+    "customer_id": "ctm_01docs",
+    "subscription_id": null,
+    "custom_data": {
+      "user_id": "user-123",
+      "type": "pack",
+      "credits_to_add": 50
+    },
+    "items": [
+      {
+        "price": {
+          "id": "pri_pack_test",
+          "product_id": "pro_01docs_pack"
+        },
+        "quantity": 1
+      }
+    ],
+    "details": {
+      "totals": {
+        "grand_total": "1900",
+        "currency_code": "USD"
+      }
+    }
+  }
+}
