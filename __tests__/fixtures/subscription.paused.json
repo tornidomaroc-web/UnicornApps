@@ -1,0 +1,31 @@
+{
+  "_fixture_meta": {
+    "source": "DOCS-DERIVED — official Paddle Billing subscription.paused payload shape (developer.paddle.com), per the 8-field docs pass. NOT a real captured payload.",
+    "reconcile": "Reconcile byte-for-byte against a REAL captured payload during live verification (see ./README.md two-layer plan). Layer 2: confirm current_billing_period is null on paused (assumed here). The handler writes status only for paused, so this field is non-load-bearing for paused — but worth confirming alongside the canceled shape.",
+    "locks": "data.status='paused', current_billing_period null; handler writes subscription_status only"
+  },
+  "event_id": "evt_01docs_sub_paused",
+  "event_type": "subscription.paused",
+  "occurred_at": "2026-07-22T12:10:00.000000Z",
+  "notification_id": "ntf_01docs_sub_paused",
+  "data": {
+    "id": "sub_01docs",
+    "status": "paused",
+    "customer_id": "ctm_01docs",
+    "custom_data": {
+      "user_id": "user-123",
+      "plan": "pro"
+    },
+    "current_billing_period": null,
+    "items": [
+      {
+        "status": "active",
+        "quantity": 1,
+        "price": {
+          "id": "pri_sub_test",
+          "product_id": "pro_01docs_sub"
+        }
+      }
+    ]
+  }
+}

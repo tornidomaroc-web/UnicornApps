@@ -238,7 +238,8 @@ describe('Paddle webhook — transaction.completed split (Piece 2)', () => {
 
   it('unknown event type: ignored, still recorded, returns 200', async () => {
     mock.queue({ data: null }, { data: [{ id: 'row' }] })
-    const payload = { event_type: 'subscription.created', event_id: 'evt_unknown_1', data: {} }
+    // A type with no handler (not transaction.completed, not subscription.*).
+    const payload = { event_type: 'customer.updated', event_id: 'evt_unknown_1', data: {} }
 
     const res = await webhookPOST(makeReq(payload))
 

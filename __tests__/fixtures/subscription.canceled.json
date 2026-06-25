@@ -1,0 +1,31 @@
+{
+  "_fixture_meta": {
+    "source": "DOCS-DERIVED — official Paddle Billing subscription.canceled payload shape (developer.paddle.com), per the 8-field docs pass. NOT a real captured payload.",
+    "reconcile": "Reconcile byte-for-byte against a REAL captured payload during live verification (see ./README.md two-layer plan). LOAD-BEARING for Correction A — Layer 2 MUST confirm current_billing_period is null on canceled; if a real capture shows a non-null period here, the 'do not touch current_period_end' rule needs revisiting.",
+    "locks": "data.status='canceled', current_billing_period is NULL (Correction A) — handler must NOT write current_period_end"
+  },
+  "event_id": "evt_01docs_sub_canceled",
+  "event_type": "subscription.canceled",
+  "occurred_at": "2026-06-23T09:00:00.000000Z",
+  "notification_id": "ntf_01docs_sub_canceled",
+  "data": {
+    "id": "sub_01docs",
+    "status": "canceled",
+    "customer_id": "ctm_01docs",
+    "custom_data": {
+      "user_id": "user-123",
+      "plan": "pro"
+    },
+    "current_billing_period": null,
+    "items": [
+      {
+        "status": "canceled",
+        "quantity": 1,
+        "price": {
+          "id": "pri_sub_test",
+          "product_id": "pro_01docs_sub"
+        }
+      }
+    ]
+  }
+}
