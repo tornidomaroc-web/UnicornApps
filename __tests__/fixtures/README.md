@@ -35,9 +35,10 @@ reconcile against reality later. Every docs-derived fixture carries a
 | `adjustment.created.json` / `adjustment.updated.json` | Docs: full refund | `action` enum (#8b), `status` pending→approved lifecycle (#8d), `transaction_id` join | Real sandbox full refund |
 
 Fixtures land **with the Piece that consumes them**, not all up front: Piece 1
-(control-flow scaffold) ships only `transaction.completed.pack.json`; the
-`subscription.*` and `adjustment.*` fixtures arrive with Pieces 2–4 so each
-piece's diff stays self-contained.
+(control-flow scaffold) shipped only `transaction.completed.pack.json`; Piece 2
+(transaction.completed split) adds `transaction.completed.subscription.json`; the
+remaining `subscription.*` and `adjustment.*` fixtures arrive with Pieces 3–4 so
+each piece's diff stays self-contained.
 
 ## The decisive field
 

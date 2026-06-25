@@ -9,6 +9,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { addCredits } from '@/lib/credits'
+import { creditsForPrice } from '@/lib/billing'
 
 export async function POST(req: NextRequest) {
   try {
@@ -81,18 +82,11 @@ export async function POST(req: NextRequest) {
     //     turns that into a 500 and the event is left unrecorded.
     //   - Reaching the end of dispatch normally — whether the event was handled
     //     or intentionally ignored (unknown type, non-actionable payload) — is a
-    //     success: the event is recorded as processed and we return 200.
+    //     success: the event is recorded as processed and we return 200. A
+    //     handler that hits a NON-retryable condition (unknown price, unresolved
+    //     user) must `return` from its helper, not throw, so it still records.
     if (eventType === 'transaction.completed') {
-      const userId = customData?.user_id
-      const creditsToAdd = Number(customData?.credits_to_add || 0)
-
-      if (!userId) {
-        // Not retryable — custom_data won't change on retry. Ignore + record.
-        console.error('Webhook Error: Missing user_id in custom_data')
-      } else if (creditsToAdd > 0) {
-        await addCredits(supabase, userId, creditsToAdd)
-        console.log(`Successfully added ${creditsToAdd} credits to user ${userId}.`)
-      }
+      await handleTransactionCompleted(supabase, data, customData)
     } else {
       // Unknown / not-yet-handled event type: intentionally ignored.
       console.log(`Webhook event ignored (no handler): ${eventType}`)
@@ -109,5 +103,117 @@ export async function POST(req: NextRequest) {
     // so Paddle retries and the handler gets another chance to succeed.
     console.error('Webhook Exception:', error.message)
     return new NextResponse('Internal Server Error', { status: 500 })
+  }
+}
+
+// transaction.completed — fires for both a one-time credit pack and every
+// subscription billing cycle (first charge + each renewal). Grants credits
+// exactly once per Paddle transaction.
+//
+// THROW only on RETRYABLE failures (a DB/grant call rejects) so the POST catch
+// returns 500 and Paddle retries. For NON-retryable conditions (unknown price,
+// unresolved user) just `return`: the caller records the event and returns 200,
+// because retrying would not change the outcome.
+async function handleTransactionCompleted(
+  supabase: any,
+  data: any,
+  customData: any
+): Promise<void> {
+  const transactionId = data?.id
+  // Distinguisher: a non-null subscription_id means this charge belongs to a
+  // subscription cycle; null means a one-time pack. This is the SOLE decider.
+  const subscriptionId = data?.subscription_id ?? null
+  const isSubscriptionCycle = subscriptionId != null
+  const type = isSubscriptionCycle ? 'subscription_cycle' : 'pack'
+
+  // data.origin only CORROBORATES — it never decides. Warn (don't act) if it
+  // disagrees with subscription_id, so a docs/live shape mismatch surfaces.
+  const origin = data?.origin
+  if (typeof origin === 'string' && origin.startsWith('subscription_') !== isSubscriptionCycle) {
+    console.warn(
+      `Webhook: origin "${origin}" disagrees with subscription_id (${subscriptionId}) on txn ${transactionId}; trusting subscription_id.`
+    )
+  }
+
+  // Credits are derived SERVER-SIDE from the price id — NEVER from custom_data,
+  // so a tampered checkout cannot inflate a grant.
+  const priceId = data?.items?.[0]?.price?.id ?? null
+  const credits = creditsForPrice(priceId)
+  if (credits <= 0) {
+    // Unknown/misconfigured price id. Not retryable — fail safe, grant nothing.
+    console.warn(
+      `Webhook: unknown/misconfigured price id "${priceId}" on txn ${transactionId} — granting nothing.`
+    )
+    return
+  }
+
+  // amount_cents: Paddle sends grand_total as a STRING of minor units (USD
+  // cents). Coerce to Number; null-guard so a missing/garbage total stores null
+  // rather than 0 or NaN.
+  const rawTotal = data?.details?.totals?.grand_total
+  const parsedTotal = rawTotal == null ? null : Number(rawTotal)
+  const amountCents = parsedTotal != null && Number.isFinite(parsedTotal) ? parsedTotal : null
+
+  // User resolution: custom_data first; for a subscription cycle, fall back to
+  // the profile that already owns this subscription_id.
+  let userId: string | null = customData?.user_id ?? null
+  if (!userId && isSubscriptionCycle && subscriptionId) {
+    const { data: owner } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('subscription_id', subscriptionId)
+      .single()
+    userId = owner?.id ?? null
+  }
+
+  if (!userId) {
+    // First-cycle chicken/egg: the profile may not carry subscription_id until
+    // subscription.activated (Piece 3) writes it, so the fallback can miss the
+    // very first charge if custom_data is also absent there. Not retryable here
+    // (a retry won't add custom_data); record + 200. Piece 3 closes this gap by
+    // persisting subscription_id on activation.
+    console.error(
+      `Webhook: could not resolve user for txn ${transactionId} (subscription_id=${subscriptionId}).`
+    )
+    return
+  }
+
+  if (!transactionId) {
+    // Without data.id we can't ledger-guard, so we can't grant exactly once.
+    console.error('Webhook: transaction.completed missing data.id — cannot ledger-guard a grant.')
+    return
+  }
+
+  // Ledger-guarded, exactly-once grant. paddle_transaction_id is UNIQUE and we
+  // ignoreDuplicates, so only the FIRST delivery inserts a row; .select()
+  // returns that row only to the inserter. addCredits therefore runs at most
+  // once per transaction, even if Paddle delivers it more than once.
+  const { data: inserted } = await supabase
+    .from('purchases')
+    .upsert(
+      {
+        user_id: userId,
+        paddle_transaction_id: transactionId,
+        type,
+        credits_granted: credits,
+        amount_cents: amountCents,
+        status: 'completed',
+      },
+      { onConflict: 'paddle_transaction_id', ignoreDuplicates: true }
+    )
+    .select()
+
+  if (Array.isArray(inserted) && inserted.length > 0) {
+    await addCredits(supabase, userId, credits)
+    console.log(`Granted ${credits} credits to ${userId} (txn ${transactionId}, ${type}).`)
+  } else {
+    console.log(`Duplicate transaction ${transactionId} — credits already granted; skipping.`)
+  }
+
+  // Opportunistically persist subscription_id on the profile so future cycles
+  // resolve via the fallback above even if custom_data is dropped on renewals.
+  // Idempotent (same value), so it's safe on retries and duplicate deliveries.
+  if (isSubscriptionCycle && subscriptionId) {
+    await supabase.from('profiles').update({ subscription_id: subscriptionId }).eq('id', userId)
   }
 }
