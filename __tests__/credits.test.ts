@@ -149,7 +149,7 @@ describe('Credit Logic', () => {
       method: 'POST',
       body: bodyText,
       headers: {
-        'x-signature': 'present',
+        // Real Paddle Billing auth: a valid `Paddle-Signature` HMAC only.
         'paddle-signature': `ts=${ts};h1=${digest}`
       }
     });
