@@ -1,8 +1,8 @@
 {
   "_fixture_meta": {
-    "source": "DOCS-DERIVED — official Paddle Billing adjustment.updated payload shape (developer.paddle.com), per the 8-field docs pass. NOT a real captured payload.",
-    "reconcile": "Reconcile byte-for-byte against a REAL captured payload during live verification (see ./README.md two-layer plan). Layer 2: confirm the created(pending)->updated(approved) lifecycle and that adjustment.updated carries the same data.action / data.transaction_id as the created event. Same open questions as adjustment.created.json.",
-    "locks": "data.action='refund', data.status='approved' (this is the delivery that authorizes reversal), data.transaction_id links to a purchases row, totals are STRINGS"
+    "source": "DOCS-DERIVED, LAYER-2 RECONCILED (2026-06-26). Field shapes captured from the Paddle webhook simulator; the 'approved' status literal verified against Paddle docs + paddle-go-sdk constants. Holds the APPROVED state of the updated delivery.",
+    "reconcile": "RESOLVED: created(pending_approval)->updated(approved) is the live lifecycle; adjustment.updated carries the same data.action / data.transaction_id as the created event. NOTE: the simulator emits BOTH created and updated as pending_approval (it does not simulate Paddle's approval), so the approved transition is verified from docs, not the simulator. Same enums as adjustment.created.json.",
+    "locks": "data.action='refund', data.status='approved' (verified literal — the delivery that authorizes reversal), data.transaction_id links to a purchases row, totals are STRINGS"
   },
   "event_id": "evt_01docs_adj_updated",
   "event_type": "adjustment.updated",

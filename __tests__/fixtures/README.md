@@ -32,7 +32,8 @@ reconcile against reality later. Every docs-derived fixture carries a
 | `subscription.created.json` / `subscription.activated.json` | Docs: sub lifecycle | whether `subscription.*` carries `custom_data.user_id` (#6), `current_billing_period.ends_at` | Same real sub flow |
 | `subscription.canceled.json` | Docs: sub cancel | `current_billing_period` is **null** when canceled (correction A) | Cancel the sandbox sub |
 | `subscription.paused.json` | Docs: sub pause | status path + `current_billing_period` null | Pause the sandbox sub |
-| `adjustment.created.json` / `adjustment.updated.json` | Docs: full refund | `action` enum (#8b), `status` pending→approved lifecycle (#8d), `transaction_id` join | Real sandbox full refund |
+| `adjustment.created.json` / `adjustment.updated.json` | Docs: full refund | `action` enum (#8b), `status` pending_approval→approved lifecycle (#8d), `transaction_id` join | Real sandbox full refund |
+| `adjustment.pending_approval.json` | Simulator-captured initial refund state | `status='pending_approval'` → handler IGNORES (Correction B gate) | Live refund before Paddle approval |
 
 Fixtures land **with the Piece that consumes them**, not all up front: Piece 1
 (control-flow scaffold) shipped only `transaction.completed.pack.json`; Piece 2

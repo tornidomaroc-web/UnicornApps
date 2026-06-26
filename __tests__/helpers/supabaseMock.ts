@@ -8,6 +8,7 @@
 //   - update(...).eq().eq().select('credits')   -> [{...}] (CAS won) vs [] (CAS lost)
 //   - select(...).eq().single()                 -> { data: {...} } (one row)
 //   - update(...).eq('id', userId)              -> resolves on await of the chain tail
+//   - rpc(fn, params)                            -> { data: true/false } or { error } (Piece 5)
 //
 // This builder lets a test QUEUE the exact { data, error } each terminal await
 // should resolve to — in the order the handler awaits them — and RECORDS every
@@ -100,6 +101,14 @@ export function createSupabaseMock(): SupabaseMock {
     from: (table: string) => {
       calls.push({ table, method: 'from', args: [table] })
       return makeBuilder(table)
+    },
+    // Postgres RPC (Piece 5: atomic grant/reversal). Recorded as a single call
+    // with args [fnName, paramsObject]; the result is dequeued at AWAIT time, so
+    // a test queues e.g. { data: true } (granted), { data: false } (duplicate /
+    // no-op), or { data: null, error: {...} } (DB failure -> handler throws 500).
+    rpc: (fn: string, params?: any) => {
+      calls.push({ table: `rpc:${fn}`, method: 'rpc', args: [fn, params] })
+      return lazyResult()
     },
     auth: {
       // Tests drive these with mockResolvedValue(...).

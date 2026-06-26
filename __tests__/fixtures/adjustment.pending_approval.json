@@ -1,0 +1,36 @@
+{
+  "_fixture_meta": {
+    "source": "LIVE-RECONCILED (2026-06-26) — shape captured from the Paddle webhook simulator, which delivers a refund adjustment in its INITIAL state. Status literal verified against Paddle docs + paddle-go-sdk constants.",
+    "reconcile": "Status lifecycle CONFIRMED: pending_approval -> (approved | rejected | reversed). The exact approved literal is 'approved' (AdjustmentStatusApproved). Most live refunds enter as 'pending_approval' and require Paddle approval before money moves; the simulator emits both adjustment.created and adjustment.updated as 'pending_approval' (it does not simulate the approval transition).",
+    "locks": "data.status='pending_approval' -> handler MUST IGNORE (Correction B status gate: reverse only on === 'approved'). No ledger touch, no deduct, record + 200."
+  },
+  "event_id": "evt_01live_adj_pending",
+  "event_type": "adjustment.created",
+  "occurred_at": "2026-06-26T10:00:00.000000Z",
+  "notification_id": "ntf_01live_adj_pending",
+  "data": {
+    "id": "adj_01live_pending",
+    "action": "refund",
+    "status": "pending_approval",
+    "transaction_id": "txn_01docs_pack",
+    "subscription_id": null,
+    "customer_id": "ctm_01docs",
+    "reason": "requested_by_customer",
+    "items": [
+      {
+        "id": "adjitm_01live",
+        "item_id": "txnitm_01docs_pack",
+        "type": "full",
+        "amount": "1900"
+      }
+    ],
+    "totals": {
+      "subtotal": "1810",
+      "tax": "90",
+      "total": "1900",
+      "fee": "0",
+      "earnings": "1900",
+      "currency_code": "USD"
+    }
+  }
+}

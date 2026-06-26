@@ -1,8 +1,8 @@
 {
   "_fixture_meta": {
-    "source": "DOCS-DERIVED — built from the official Paddle Billing transaction.completed payload shape for a SUBSCRIPTION cycle (developer.paddle.com), per the 8-field docs pass. NOT a real captured payload.",
-    "reconcile": "Must be reconciled byte-for-byte against a REAL captured payload during live verification after the webhook ships (see ./README.md two-layer plan). OPEN QUESTIONS for Layer 2: (1) does the FIRST charge carry custom_data.user_id, or only the checkout's web origin? (2) do RENEWALS carry custom_data at all (#4)? (3) exact data.origin enum for first-charge vs renewal — used only to corroborate, never to decide.",
-    "locks": "subscription_id NON-null (distinguishes from pack), items[0].price.id = SUB price, details.totals.grand_total is a STRING, custom_data carries user_id, data.origin is corroboration-only"
+    "source": "DOCS-DERIVED, LAYER-2 RECONCILED (2026-06-26) against the Paddle webhook simulator. This fixture models a RENEWAL (origin 'subscription_recurring', custom_data present for the resolution-path test). NOTE: the simulator captured a FIRST charge — see reconcile.",
+    "reconcile": "RESOLVED: subscription_id NON-null CONFIRMED, details.totals.grand_total is a STRING ('65215' in capture) CONFIRMED. ORIGIN: a subscription's FIRST charge arrives with origin 'web' (NOT 'subscription_*') while subscription_id IS present; renewals carry 'subscription_recurring'. The handler's origin warning was refined (route.ts) so this legitimate first-charge pairing no longer false-warns. STILL DEFERRED (not provable via simulator): custom_data.user_id propagation — the simulator sends custom_data:null (it doesn't run our real checkout). Whether user_id survives onto the recurring charge is confirmed only at the first PRODUCTION event.",
+    "locks": "subscription_id NON-null (distinguishes from pack), items[0].price.id = SUB price, details.totals.grand_total is a STRING, data.origin is corroboration-only (first-charge='web', renewal='subscription_recurring'); custom_data.user_id propagation NOT YET PROVEN"
   },
   "event_id": "evt_01docs_sub_cycle",
   "event_type": "transaction.completed",

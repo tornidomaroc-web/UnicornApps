@@ -1,7 +1,7 @@
 {
   "_fixture_meta": {
-    "source": "DOCS-DERIVED — official Paddle Billing subscription.canceled payload shape (developer.paddle.com), per the 8-field docs pass. NOT a real captured payload.",
-    "reconcile": "Reconcile byte-for-byte against a REAL captured payload during live verification (see ./README.md two-layer plan). LOAD-BEARING for Correction A — Layer 2 MUST confirm current_billing_period is null on canceled; if a real capture shows a non-null period here, the 'do not touch current_period_end' rule needs revisiting.",
+    "source": "DOCS-DERIVED, LAYER-2 RECONCILED (2026-06-26) against the Paddle webhook simulator.",
+    "reconcile": "RESOLVED — Correction A LOCKED: the captured subscription.canceled has current_billing_period: null, so the canceled rule correctly writes status only and must NOT touch current_period_end (the stored paid-through value keeps the user Pro until it elapses). data.status='canceled' CONFIRMED.",
     "locks": "data.status='canceled', current_billing_period is NULL (Correction A) — handler must NOT write current_period_end"
   },
   "event_id": "evt_01docs_sub_canceled",
