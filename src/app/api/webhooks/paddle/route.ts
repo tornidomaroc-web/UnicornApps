@@ -14,14 +14,14 @@ export async function POST(req: NextRequest) {
   try {
     // 1. Get raw body for signature verification
     const rawBody = await req.text()
-    const signature = req.headers.get('x-signature')
 
-    if (!signature) {
-      console.error('Webhook Error: Missing x-signature header')
-      return new NextResponse('Unauthorized', { status: 401 })
-    }
-
-    // 2. Verify signature
+    // 2. Verify signature. Paddle Billing authenticates webhooks with the
+    // `Paddle-Signature` header (HMAC-SHA256 over `${ts}:${rawBody}`), verified
+    // below — that HMAC is the SOLE authenticator. (A previous `x-signature`
+    // presence gate here was dead Lemon Squeezy convention: Paddle never sends
+    // that header, so it 401'd every real Paddle event before this real check
+    // ran. Removed. It checked only header presence, never any secret, so it
+    // added no security.)
     const secret = process.env.PADDLE_WEBHOOK_SECRET
     if (!secret) {
       console.error('Webhook Error: PADDLE_WEBHOOK_SECRET is not configured')

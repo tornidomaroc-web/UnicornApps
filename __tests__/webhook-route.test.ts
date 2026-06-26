@@ -54,7 +54,20 @@ function makeReq(payload: unknown): NextRequest {
   return new NextRequest('http://localhost/api/webhooks/paddle', {
     method: 'POST',
     body: bodyText,
-    headers: { 'x-signature': 'present', 'paddle-signature': sign(bodyText) },
+    // Real Paddle Billing auth: a valid `Paddle-Signature` HMAC is the SOLE
+    // verifier (no `x-signature` — Paddle never sends that; it was dead Lemon
+    // Squeezy convention that 401'd every real event).
+    headers: { 'paddle-signature': sign(bodyText) },
+  })
+}
+
+// Build a request with an arbitrary (or absent) Paddle-Signature, for the
+// signature-rejection tests below.
+function makeReqWithHeaders(payload: unknown, headers: Record<string, string>): NextRequest {
+  return new NextRequest('http://localhost/api/webhooks/paddle', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers,
   })
 }
 
@@ -264,5 +277,53 @@ describe('Paddle webhook — transaction.completed split (Piece 2)', () => {
     expect(res.status).toBe(200) // no retry — custom_data won't change
     expect(rpcCalls(mock)).toHaveLength(0) // no grant attempted (user unresolved)
     expect(insertedEventIds(mock)).toEqual([{ event_id: 'evt_no_user_1' }])
+  })
+
+  // --- Signature verification (regression lock) -----------------------------
+  // The Paddle-Signature HMAC is the SOLE authenticator. These lock in that an
+  // unsigned or wrongly-signed request is rejected BEFORE any handling, so the
+  // removed x-signature gate can never be "restored" as the thing standing
+  // between an attacker and the credit RPCs.
+
+  it('missing Paddle-Signature header: rejected 401, nothing handled', async () => {
+    // No paddle-signature at all -> ts/h1 empty -> HMAC mismatch -> 401.
+    const res = await webhookPOST(makeReqWithHeaders(completedPack, {}))
+
+    expect(res.status).toBe(401)
+    expect(mock.callsTo('from')).toHaveLength(0) // never reached Supabase
+    expect(rpcCalls(mock)).toHaveLength(0)
+    expect(insertedEventIds(mock)).toHaveLength(0)
+  })
+
+  it('invalid Paddle-Signature (wrong HMAC): rejected 401, nothing handled', async () => {
+    // Well-formed header but h1 is not the real HMAC of `${ts}:${rawBody}`.
+    const res = await webhookPOST(
+      makeReqWithHeaders(completedPack, {
+        'paddle-signature': 'ts=1700000000;h1=deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+      }),
+    )
+
+    expect(res.status).toBe(401)
+    expect(mock.callsTo('from')).toHaveLength(0)
+    expect(rpcCalls(mock)).toHaveLength(0)
+    expect(insertedEventIds(mock)).toHaveLength(0)
+  })
+
+  it('tampered body under a signature for the ORIGINAL body: rejected 401', async () => {
+    // Sign one body, then send a different body with that signature — the HMAC
+    // is over the raw body, so any tamper invalidates it.
+    const signedFor = JSON.stringify(completedPack)
+    const tampered = JSON.stringify({ ...completedPack, event_id: 'evt_tampered' })
+    const res = await webhookPOST(
+      new NextRequest('http://localhost/api/webhooks/paddle', {
+        method: 'POST',
+        body: tampered,
+        headers: { 'paddle-signature': sign(signedFor) },
+      }),
+    )
+
+    expect(res.status).toBe(401)
+    expect(rpcCalls(mock)).toHaveLength(0)
+    expect(insertedEventIds(mock)).toHaveLength(0)
   })
 })

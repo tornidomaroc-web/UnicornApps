@@ -44,7 +44,9 @@ function makeReq(payload: unknown): NextRequest {
   return new NextRequest('http://localhost/api/webhooks/paddle', {
     method: 'POST',
     body: bodyText,
-    headers: { 'x-signature': 'present', 'paddle-signature': sign(bodyText) },
+    // Real Paddle Billing auth: a valid `Paddle-Signature` HMAC only (no
+    // `x-signature` — Paddle never sends it).
+    headers: { 'paddle-signature': sign(bodyText) },
   })
 }
 
