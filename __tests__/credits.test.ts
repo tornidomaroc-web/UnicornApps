@@ -108,22 +108,18 @@ describe('Credit Logic', () => {
     expect(mockSupabase.update).not.toHaveBeenCalled();
   })
 
-  it('adds credits via Paddle webhook on transaction.completed (price-derived, ledger-guarded)', async () => {
-    // Piece 2: the grant is derived SERVER-SIDE from the PACK price id
-    // (creditsForPrice('pri_pack_test') -> 30), NOT from custom_data, and fires
-    // only when the purchases ledger row is newly inserted. addCredits is the
-    // REAL implementation here (credits.ts is not mocked in this suite), so this
-    // asserts the end-to-end profile write. The hand-rolled mockSupabase above
-    // can't express the upsert().select() terminal, so use createSupabaseMock,
-    // which lets us queue each awaited DB result in order.
+  it('adds credits via Paddle webhook on transaction.completed (price-derived, atomic grant RPC)', async () => {
+    // Piece 2 + Piece 5: the grant is derived SERVER-SIDE from the PACK price id
+    // (creditsForPrice('pri_pack_test') -> 30), NOT from custom_data, and is now
+    // committed atomically by the grant_credits_for_purchase RPC (ledger INSERT +
+    // credits increment in one txn). This asserts the handler delegates to that
+    // RPC with the server-derived amount; the credit math + clamp live in SQL.
     const mock = createSupabaseMock();
     (createClientJS as jest.Mock).mockReturnValue(mock.client);
 
     mock.queue(
       { data: null }, // dedup .single(): event not seen
-      { data: [{ id: 'pur_1' }] }, // purchases upsert .select(): newly inserted -> grant
-      { data: { credits: 2 } }, // addCredits reads current balance
-      { data: [{ credits: 32 }] }, // addCredits update tail (route ignores result)
+      { data: true }, // grant rpc(): newly inserted -> granted
       { data: [{ id: 'row' }] }, // processed_webhook_events insert
     );
 
@@ -161,8 +157,19 @@ describe('Credit Logic', () => {
     const res = await webhookPOST(req);
     expect(res.status).toBe(200);
 
-    // 2 existing + 30 from the pack price = 32 (custom_data carries no amount now).
-    const updates = mock.callsTo('update').map((c) => c.args[0]);
-    expect(updates).toContainEqual({ credits: 32 });
+    // Delegated to the grant RPC with the price-derived 30 credits (not custom_data).
+    const rpcCalls = mock.callsTo('rpc').map((c) => ({ fn: c.args[0], params: c.args[1] }));
+    expect(rpcCalls).toEqual([
+      {
+        fn: 'grant_credits_for_purchase',
+        params: {
+          p_user_id: 'user-123',
+          p_paddle_transaction_id: 'txn_test_1',
+          p_type: 'pack',
+          p_credits: 30,
+          p_amount_cents: 1900,
+        },
+      },
+    ]);
   })
 })

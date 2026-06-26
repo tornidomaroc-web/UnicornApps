@@ -1,7 +1,7 @@
 {
   "_fixture_meta": {
-    "source": "DOCS-DERIVED — official Paddle Billing adjustment payload shape for a CHARGEBACK (developer.paddle.com), per the 8-field docs pass. NOT a real captured payload.",
-    "reconcile": "Reconcile byte-for-byte against a REAL captured payload during live verification (see ./README.md two-layer plan). Layer 2: confirm the chargeback action value and its status lifecycle — a chargeback is a forced bank reversal, so confirm whether it arrives already 'approved' or transitions like a refund.",
+    "source": "DOCS-DERIVED, LAYER-2 RECONCILED (2026-06-26). 'chargeback' is a verified action literal (Paddle docs + paddle-go-sdk AdjustmentActionChargeback). The single-event simulator only offered a generic refund adjustment, so the chargeback ACTION string is docs-verified rather than simulator-captured.",
+    "reconcile": "RESOLVED (docs): action='chargeback' is a real enum value; a chargeback is a forced bank reversal so it is created already 'approved' (no pending_approval gate, unlike a customer-requested refund). NOTE the related-but-EXCLUDED actions 'chargeback_reverse' and 'chargeback_warning'/'chargeback_warning_reverse' must NOT claw back — only {refund, chargeback} are allowlisted.",
     "locks": "data.action='chargeback' (allowlisted alongside 'refund'), data.status='approved', data.transaction_id links to a purchases row"
   },
   "event_id": "evt_01docs_adj_chargeback",

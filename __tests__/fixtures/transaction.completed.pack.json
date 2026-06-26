@@ -1,8 +1,8 @@
 {
   "_fixture_meta": {
     "source": "DOCS-DERIVED — built from the official Paddle Billing transaction.completed payload shape (developer.paddle.com), per the 8-field docs pass. NOT a real captured payload.",
-    "reconcile": "Must be reconciled byte-for-byte against a REAL captured payload during live verification after the webhook ships (see ./README.md two-layer plan).",
-    "locks": "subscription_id: null (one-time pack), items[0].price.id, details.totals.grand_total is a STRING, custom_data carries user_id"
+    "reconcile": "PARTIAL (2026-06-26): grand_total-as-STRING and items[0].price.id paths CONFIRMED via the captured transaction.completed (sub-cycle). subscription_id:null for a pack is by-construction. The 'subscription from checkout' simulator scenario does not emit a one-time pack, so byte-level pack reconciliation is DEFERRED to the first live pack purchase. custom_data.user_id propagation also DEFERRED (simulator sends custom_data:null).",
+    "locks": "subscription_id: null (one-time pack), items[0].price.id, details.totals.grand_total is a STRING; custom_data.user_id propagation NOT YET PROVEN"
   },
   "event_id": "evt_01docs_pack_completed",
   "event_type": "transaction.completed",

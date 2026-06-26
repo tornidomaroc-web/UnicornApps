@@ -5,15 +5,17 @@
 //   - credits derived SERVER-SIDE from the price id (billing.creditsForPrice),
 //     NEVER from custom_data.credits_to_add
 //   - subscription_id presence is the SOLE pack-vs-cycle distinguisher
-//   - ledger-guarded exactly-once grant via purchases.upsert(ignoreDuplicates)
+//   - exactly-once grant via the atomic grant_credits_for_purchase RPC (Piece 5:
+//     ledger INSERT + credits increment in one txn; returns granted=false on a
+//     duplicate). These JS tests assert the handler DELEGATES correctly (right RPC,
+//     right args) and threads granted/duplicate/error; the ledger+credit atomicity
+//     and clamp math live in SQL (reviewed + run live).
 //   - user resolution: custom_data first, then profiles.subscription_id fallback
 //   - unknown price -> fail-safe (grant nothing, still record + 200)
 //
-// addCredits is mocked: we assert WHETHER it ran and with WHAT amount, not the
-// credit math itself (that's credits.ts's own suite). The Supabase client is the
-// chainable createSupabaseMock; each test QUEUES the DB results the handler awaits
-// in order (dedup .single() -> purchases upsert .select() -> [grant] -> optional
-// profile update -> processed_webhook_events insert).
+// The Supabase client is the chainable createSupabaseMock; each test QUEUES the DB
+// results the handler awaits in order (dedup .single() -> grant rpc() -> optional
+// profile subscription_id update -> processed_webhook_events insert).
 //
 // Fixtures are DOCS-DERIVED (see __tests__/fixtures/README.md, two-layer plan):
 // real shapes from the Paddle Billing docs now, reconciled against captured
@@ -27,15 +29,9 @@ import subscriptionCycle from './fixtures/transaction.completed.subscription.jso
 
 // Service-role client the route builds via @supabase/supabase-js.createClient.
 jest.mock('@supabase/supabase-js', () => ({ createClient: jest.fn() }))
-// Credit mutation is exercised by its own suite; here it's a spy we can assert on
-// (amount) and make throw (to prove failure -> 500).
-jest.mock('../src/lib/credits', () => ({ addCredits: jest.fn() }))
 
 import { createClient as createClientJS } from '@supabase/supabase-js'
-import { addCredits } from '../src/lib/credits'
 import { POST as webhookPOST } from '../src/app/api/webhooks/paddle/route'
-
-const mockAddCredits = addCredits as jest.Mock
 
 process.env.PADDLE_WEBHOOK_SECRET = 'mock_secret'
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://mock-url'
@@ -66,8 +62,10 @@ function makeReq(payload: unknown): NextRequest {
 // the purchases ledger uses .upsert(), so these never collide).
 const insertedEventIds = (mock: SupabaseMock): unknown[] =>
   mock.callsTo('insert').map((c) => c.args[0])
-const upserts = (mock: SupabaseMock) => mock.callsTo('upsert')
 const profileUpdates = (mock: SupabaseMock) => mock.callsTo('update').map((c) => c.args[0])
+// Piece 5: grant goes through supabase.rpc('grant_credits_for_purchase', params).
+const rpcCalls = (mock: SupabaseMock) =>
+  mock.callsTo('rpc').map((c) => ({ fn: c.args[0], params: c.args[1] }))
 
 describe('Paddle webhook — transaction.completed split (Piece 2)', () => {
   let mock: SupabaseMock
@@ -80,10 +78,10 @@ describe('Paddle webhook — transaction.completed split (Piece 2)', () => {
 
   // --- Grant behavior -------------------------------------------------------
 
-  it('pack: grants creditsForPrice (NOT custom_data), ledgers type=pack, records, 200', async () => {
+  it('pack: grants creditsForPrice (NOT custom_data) via grant RPC, type=pack, records, 200', async () => {
     mock.queue(
       { data: null }, // dedup .single(): not seen
-      { data: [{ id: 'pur_1' }] }, // purchases upsert .select(): newly inserted
+      { data: true }, // grant rpc(): newly inserted -> granted
       { data: [{ id: 'row' }] }, // processed_webhook_events insert
     )
 
@@ -92,30 +90,30 @@ describe('Paddle webhook — transaction.completed split (Piece 2)', () => {
     expect(res.status).toBe(200)
     // 30 from the PACK price id — NOT the 50 in custom_data.credits_to_add.
     expect(completedPack.data.custom_data.credits_to_add).toBe(50)
-    expect(mockAddCredits).toHaveBeenCalledWith(mock.client, 'user-123', 30)
 
-    expect(upserts(mock)).toHaveLength(1)
-    const [row, opts] = upserts(mock)[0].args
-    expect(row).toEqual({
-      user_id: 'user-123',
-      paddle_transaction_id: 'txn_01docs_pack',
-      type: 'pack',
-      credits_granted: 30,
-      amount_cents: 1900, // grand_total "1900" (string) -> Number
-      status: 'completed',
+    // One atomic grant RPC with server-derived credits + the parsed amount.
+    expect(rpcCalls(mock)).toHaveLength(1)
+    expect(rpcCalls(mock)[0]).toEqual({
+      fn: 'grant_credits_for_purchase',
+      params: {
+        p_user_id: 'user-123',
+        p_paddle_transaction_id: 'txn_01docs_pack',
+        p_type: 'pack',
+        p_credits: 30,
+        p_amount_cents: 1900, // grand_total "1900" (string) -> Number
+      },
     })
-    expect(typeof row.amount_cents).toBe('number')
-    expect(opts).toEqual({ onConflict: 'paddle_transaction_id', ignoreDuplicates: true })
+    expect(typeof rpcCalls(mock)[0].params.p_amount_cents).toBe('number')
 
     // A pack is not a subscription cycle: no subscription_id persisted.
     expect(profileUpdates(mock)).toHaveLength(0)
     expect(insertedEventIds(mock)).toEqual([{ event_id: completedPack.event_id }])
   })
 
-  it('subscription cycle: grants SUB credits, ledgers type=subscription_cycle, persists subscription_id', async () => {
+  it('subscription cycle: grants SUB credits via RPC (type=subscription_cycle), persists subscription_id', async () => {
     mock.queue(
       { data: null }, // dedup .single()
-      { data: [{ id: 'pur_2' }] }, // purchases upsert .select(): inserted
+      { data: true }, // grant rpc(): inserted -> granted
       { data: [{ id: 'user-123' }] }, // profiles update (persist subscription_id)
       { data: [{ id: 'row' }] }, // processed insert
     )
@@ -123,16 +121,18 @@ describe('Paddle webhook — transaction.completed split (Piece 2)', () => {
     const res = await webhookPOST(makeReq(subscriptionCycle))
 
     expect(res.status).toBe(200)
-    expect(mockAddCredits).toHaveBeenCalledWith(mock.client, 'user-123', 100)
-
-    const [row] = upserts(mock)[0].args
-    expect(row).toMatchObject({
-      paddle_transaction_id: 'txn_01docs_sub',
-      type: 'subscription_cycle',
-      credits_granted: 100,
-      amount_cents: 900,
+    expect(rpcCalls(mock)[0]).toEqual({
+      fn: 'grant_credits_for_purchase',
+      params: {
+        p_user_id: 'user-123',
+        p_paddle_transaction_id: 'txn_01docs_sub',
+        p_type: 'subscription_cycle',
+        p_credits: 100,
+        p_amount_cents: 900,
+      },
     })
-    // subscription_id opportunistically stored so future cycles resolve.
+    // subscription_id opportunistically stored so future cycles resolve (this
+    // stays a plain idempotent profile write, outside the atomic grant).
     expect(profileUpdates(mock)).toEqual([{ subscription_id: 'sub_01docs' }])
     expect(insertedEventIds(mock)).toEqual([{ event_id: subscriptionCycle.event_id }])
   })
@@ -147,7 +147,7 @@ describe('Paddle webhook — transaction.completed split (Piece 2)', () => {
     mock.queue(
       { data: null }, // dedup .single()
       { data: { id: 'user-xyz' } }, // profiles fallback .single(): owner found
-      { data: [{ id: 'pur_3' }] }, // purchases upsert .select(): inserted
+      { data: true }, // grant rpc(): inserted -> granted
       { data: [{ id: 'user-xyz' }] }, // profiles update (persist subscription_id)
       { data: [{ id: 'row' }] }, // processed insert
     )
@@ -155,7 +155,8 @@ describe('Paddle webhook — transaction.completed split (Piece 2)', () => {
     const res = await webhookPOST(makeReq(payload))
 
     expect(res.status).toBe(200)
-    expect(mockAddCredits).toHaveBeenCalledWith(mock.client, 'user-xyz', 100)
+    // Grant RPC resolved the user via the subscription_id fallback.
+    expect(rpcCalls(mock)[0].params.p_user_id).toBe('user-xyz')
     // The fallback queried profiles by subscription_id.
     expect(
       mock.callsTo('eq').some((c) => c.args[0] === 'subscription_id' && c.args[1] === 'sub_01docs'),
@@ -165,15 +166,15 @@ describe('Paddle webhook — transaction.completed split (Piece 2)', () => {
 
   // --- Idempotency / fail-safe ---------------------------------------------
 
-  it('same transaction delivered twice (new event_id each): grants exactly once via ledger guard', async () => {
+  it('same transaction delivered twice (new event_id each): grant RPC enforces exactly-once', async () => {
     mock.queue(
       // delivery 1
       { data: null }, // dedup .single(): event 1 not seen
-      { data: [{ id: 'pur_4' }] }, // upsert .select(): inserted -> grant
+      { data: true }, // grant rpc(): inserted -> granted
       { data: [{ id: 'row1' }] }, // processed insert (event 1)
       // delivery 2 — same data.id, fresh event_id
       { data: null }, // dedup .single(): event 2 not seen
-      { data: [] }, // upsert .select(): CONFLICT (ignoreDuplicates) -> no grant
+      { data: false }, // grant rpc(): ON CONFLICT -> already granted -> false
       { data: [{ id: 'row2' }] }, // processed insert (event 2)
     )
 
@@ -182,9 +183,13 @@ describe('Paddle webhook — transaction.completed split (Piece 2)', () => {
 
     expect(res1.status).toBe(200)
     expect(res2.status).toBe(200)
-    // Two deliveries of the same transaction -> credits granted ONCE.
-    expect(mockAddCredits).toHaveBeenCalledTimes(1)
-    expect(mockAddCredits).toHaveBeenCalledWith(mock.client, 'user-123', 30)
+    // Both deliveries call the grant RPC with the SAME transaction id; the RPC
+    // (ON CONFLICT DO NOTHING) is what makes the grant happen exactly once —
+    // delivery 2 returns granted=false. (Once-only credit math is the SQL's job.)
+    const calls = rpcCalls(mock)
+    expect(calls).toHaveLength(2)
+    expect(calls[0].params.p_paddle_transaction_id).toBe('txn_01docs_pack')
+    expect(calls[1].params.p_paddle_transaction_id).toBe('txn_01docs_pack')
     expect(insertedEventIds(mock)).toEqual([
       { event_id: completedPack.event_id },
       { event_id: 'evt_pack_redelivery' },
@@ -205,19 +210,17 @@ describe('Paddle webhook — transaction.completed split (Piece 2)', () => {
     const res = await webhookPOST(makeReq(payload))
 
     expect(res.status).toBe(200) // fail-safe: not retryable
-    expect(mockAddCredits).not.toHaveBeenCalled()
-    expect(upserts(mock)).toHaveLength(0) // no ledger write attempted
+    expect(rpcCalls(mock)).toHaveLength(0) // grant RPC never called
     expect(insertedEventIds(mock)).toEqual([{ event_id: 'evt_unknown_price' }])
   })
 
   // --- Structural contract carried over from Piece 1 ------------------------
 
-  it('handler failure (grant throws): does NOT record event_id and returns 500', async () => {
+  it('grant RPC returns a DB error: handler throws -> does NOT record event_id, returns 500', async () => {
     mock.queue(
       { data: null }, // dedup .single()
-      { data: [{ id: 'pur_x' }] }, // upsert .select(): inserted -> grant attempted
+      { data: null, error: { message: 'db unavailable' } }, // grant rpc(): DB failure
     )
-    mockAddCredits.mockRejectedValueOnce(new Error('db unavailable'))
 
     const res = await webhookPOST(makeReq(completedPack))
 
@@ -231,8 +234,7 @@ describe('Paddle webhook — transaction.completed split (Piece 2)', () => {
     const res = await webhookPOST(makeReq(completedPack))
 
     expect(res.status).toBe(200)
-    expect(mockAddCredits).not.toHaveBeenCalled()
-    expect(upserts(mock)).toHaveLength(0)
+    expect(rpcCalls(mock)).toHaveLength(0)
     expect(mock.callsTo('insert')).toHaveLength(0)
   })
 
@@ -244,8 +246,7 @@ describe('Paddle webhook — transaction.completed split (Piece 2)', () => {
     const res = await webhookPOST(makeReq(payload))
 
     expect(res.status).toBe(200)
-    expect(mockAddCredits).not.toHaveBeenCalled()
-    expect(upserts(mock)).toHaveLength(0)
+    expect(rpcCalls(mock)).toHaveLength(0)
     expect(insertedEventIds(mock)).toEqual([{ event_id: 'evt_unknown_1' }])
   })
 
@@ -261,8 +262,7 @@ describe('Paddle webhook — transaction.completed split (Piece 2)', () => {
     const res = await webhookPOST(makeReq(payload))
 
     expect(res.status).toBe(200) // no retry — custom_data won't change
-    expect(mockAddCredits).not.toHaveBeenCalled()
-    expect(upserts(mock)).toHaveLength(0) // no grant attempted (user unresolved)
+    expect(rpcCalls(mock)).toHaveLength(0) // no grant attempted (user unresolved)
     expect(insertedEventIds(mock)).toEqual([{ event_id: 'evt_no_user_1' }])
   })
 })

@@ -120,3 +120,115 @@ CREATE INDEX purchases_user_id_idx ON public.purchases (user_id);
 -- financial ledger (transaction IDs, amounts) is never exposed via the Data API.
 -- Add a "SELECT own" policy ONLY when a purchase-history UI ships.
 ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
+
+-- 12. Atomic money-path RPCs (added 2026-06-26, Piece 5). ===================
+-- Mirror of the live migration. These close three non-atomic defects from
+-- Pieces 2 & 4 by committing the ledger mutation and the credit delta (and the
+-- subscription entitlement write, on reversal) in ONE transaction each:
+--   * grant_credits_for_purchase : ledger INSERT + credits increment together
+--     (was: upsert .select() then a SEPARATE addCredits that could throw after
+--     the ledger row committed -> lost grant).
+--   * reverse_credits_for_refund : ledger CAS flip + credits decrement + Pro
+--     revoke together (was: flip then a SEPARATE deductCredits that could throw
+--     -> lost reversal).
+-- Both use `SET credits = <expr over credits>` so the increment/decrement runs
+-- under the row lock (READ COMMITTED re-reads the latest committed value) and a
+-- concurrent generate-spend can never lose-update profiles.credits.
+-- Clamps live in SQL: grant ceilings at 500 (= CREDIT_BALANCE_CAP in
+-- src/lib/credits.ts — keep the literal in sync), reversal floors at 0.
+-- Called ONLY by the Paddle webhook via the service-role key; EXECUTE is locked
+-- to service_role (see grants below) so no anon/authenticated client can invoke.
+
+CREATE OR REPLACE FUNCTION public.grant_credits_for_purchase(
+  p_user_id               uuid,
+  p_paddle_transaction_id text,
+  p_type                  text,
+  p_credits               integer,
+  p_amount_cents          integer
+) RETURNS boolean
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  -- Exactly-once ledger guard. The UNIQUE index on paddle_transaction_id
+  -- serializes concurrent/duplicate deliveries of the SAME transaction: only
+  -- the first INSERT succeeds; the rest hit ON CONFLICT DO NOTHING.
+  INSERT INTO public.purchases (
+    user_id, paddle_transaction_id, type, credits_granted, amount_cents, status
+  ) VALUES (
+    p_user_id, p_paddle_transaction_id, p_type, p_credits, p_amount_cents, 'completed'
+  )
+  ON CONFLICT (paddle_transaction_id) DO NOTHING;
+
+  -- FOUND is false when ON CONFLICT skipped the insert -> already granted.
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+
+  -- Newly inserted -> grant once, in the SAME transaction as the ledger row.
+  -- Ceiling = 500 (CREDIT_BALANCE_CAP). GREATEST(0, ...) is defensive.
+  UPDATE public.profiles
+  SET credits = LEAST(500, GREATEST(0, COALESCE(credits, 0) + p_credits))
+  WHERE id = p_user_id;
+
+  RETURN true;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.reverse_credits_for_refund(
+  p_paddle_transaction_id text
+) RETURNS boolean
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+DECLARE
+  v_user_id uuid;
+  v_credits integer;
+  v_type    text;
+BEGIN
+  -- CAS flip completed->refunded. The `status = 'completed'` predicate is the
+  -- guard: of two concurrent approved deliveries (adjustment.created +
+  -- adjustment.updated), only one matches the row; the other waits on the row
+  -- lock, then re-checks and finds status already 'refunded' -> matches nothing.
+  -- An unledgered txn also matches nothing. Either way -> no double-deduct.
+  UPDATE public.purchases
+  SET status = 'refunded', refunded_at = NOW()
+  WHERE paddle_transaction_id = p_paddle_transaction_id
+    AND status = 'completed'
+  RETURNING user_id, credits_granted, type
+  INTO v_user_id, v_credits, v_type;
+
+  IF NOT FOUND THEN
+    RETURN false;  -- unledgered OR already refunded
+  END IF;
+
+  -- Full reversal of the granted credits, floored at 0, in the SAME transaction
+  -- as the flip. v_user_id may be NULL (account deleted -> FK ON DELETE SET NULL).
+  IF v_user_id IS NOT NULL AND v_credits > 0 THEN
+    UPDATE public.profiles
+    SET credits = GREATEST(0, COALESCE(credits, 0) - v_credits)
+    WHERE id = v_user_id;
+  END IF;
+
+  -- A refunded subscription cycle ends Pro immediately (Correction A's
+  -- deliberate exception: unlike a scheduled cancel, a refund DOES write
+  -- current_period_end = now, revoking the paid-through entitlement).
+  IF v_type = 'subscription_cycle' AND v_user_id IS NOT NULL THEN
+    UPDATE public.profiles
+    SET subscription_status = 'canceled', current_period_end = NOW()
+    WHERE id = v_user_id;
+  END IF;
+
+  RETURN true;
+END;
+$$;
+
+-- CRITICAL lock-down: new public-schema functions default to EXECUTE for PUBLIC,
+-- which PostgREST exposes to the anon & authenticated roles. Without these
+-- revokes, any client could call grant_credits_for_purchase and self-grant
+-- credits — a hole worse than the profiles UPDATE policy we dropped. Only the
+-- service-role webhook may call these.
+REVOKE ALL ON FUNCTION public.grant_credits_for_purchase(uuid, text, text, integer, integer) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.reverse_credits_for_refund(text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.grant_credits_for_purchase(uuid, text, text, integer, integer) TO service_role;
+GRANT EXECUTE ON FUNCTION public.reverse_credits_for_refund(text) TO service_role;

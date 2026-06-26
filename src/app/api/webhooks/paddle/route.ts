@@ -8,7 +8,6 @@ CREATE TABLE public.processed_webhook_events (
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { addCredits, deductCredits } from '@/lib/credits'
 import { creditsForPrice, planForPrice } from '@/lib/billing'
 
 export async function POST(req: NextRequest) {
@@ -130,12 +129,17 @@ async function handleTransactionCompleted(
   const isSubscriptionCycle = subscriptionId != null
   const type = isSubscriptionCycle ? 'subscription_cycle' : 'pack'
 
-  // data.origin only CORROBORATES — it never decides. Warn (don't act) if it
-  // disagrees with subscription_id, so a docs/live shape mismatch surfaces.
+  // data.origin only CORROBORATES — it never decides. We warn (don't act) ONLY on
+  // the genuinely contradictory direction: a charge that CLAIMS a subscription
+  // origin yet carries no subscription_id. Layer-2 capture (2026-06-26) confirmed a
+  // subscription's FIRST charge arrives with origin "web" (not "subscription_*")
+  // while subscription_id IS present — that pairing is legitimate (renewals carry
+  // "subscription_recurring"), so it must NOT warn. The old symmetric check fired a
+  // false alarm on every real first subscription purchase.
   const origin = data?.origin
-  if (typeof origin === 'string' && origin.startsWith('subscription_') !== isSubscriptionCycle) {
+  if (typeof origin === 'string' && origin.startsWith('subscription_') && !isSubscriptionCycle) {
     console.warn(
-      `Webhook: origin "${origin}" disagrees with subscription_id (${subscriptionId}) on txn ${transactionId}; trusting subscription_id.`
+      `Webhook: origin "${origin}" claims a subscription charge but subscription_id is null on txn ${transactionId}; trusting subscription_id (treating as pack).`
     )
   }
 
@@ -188,27 +192,30 @@ async function handleTransactionCompleted(
     return
   }
 
-  // Ledger-guarded, exactly-once grant. paddle_transaction_id is UNIQUE and we
-  // ignoreDuplicates, so only the FIRST delivery inserts a row; .select()
-  // returns that row only to the inserter. addCredits therefore runs at most
-  // once per transaction, even if Paddle delivers it more than once.
-  const { data: inserted } = await supabase
-    .from('purchases')
-    .upsert(
-      {
-        user_id: userId,
-        paddle_transaction_id: transactionId,
-        type,
-        credits_granted: credits,
-        amount_cents: amountCents,
-        status: 'completed',
-      },
-      { onConflict: 'paddle_transaction_id', ignoreDuplicates: true }
-    )
-    .select()
+  // Atomic, ledger-guarded, exactly-once grant (Piece 5). The ledger INSERT and
+  // the profiles.credits increment commit-or-fail TOGETHER inside one Postgres
+  // transaction (grant_credits_for_purchase), closing the Piece-2 lost-grant
+  // window where the upsert committed but a separate addCredits then threw.
+  // paddle_transaction_id is UNIQUE with ON CONFLICT DO NOTHING, so only the
+  // FIRST delivery grants; the RPC returns false for duplicates.
+  const { data: granted, error: grantError } = await supabase.rpc('grant_credits_for_purchase', {
+    p_user_id: userId,
+    p_paddle_transaction_id: transactionId,
+    p_type: type,
+    p_credits: credits,
+    p_amount_cents: amountCents,
+  })
 
-  if (Array.isArray(inserted) && inserted.length > 0) {
-    await addCredits(supabase, userId, credits)
+  // rpc() surfaces DB failures as { error } (it does not throw on its own). A DB
+  // failure here IS retryable — throw so the POST catch returns 500, the event
+  // is left unrecorded, and Paddle retries.
+  if (grantError) {
+    throw new Error(
+      `grant_credits_for_purchase failed for txn ${transactionId}: ${grantError.message}`
+    )
+  }
+
+  if (granted) {
     console.log(`Granted ${credits} credits to ${userId} (txn ${transactionId}, ${type}).`)
   } else {
     console.log(`Duplicate transaction ${transactionId} — credits already granted; skipping.`)
@@ -386,56 +393,36 @@ async function handleRefundAdjustment(supabase: any, data: any): Promise<void> {
     return
   }
 
-  // Link via the ledger — the only place a refund's user + grant amount live.
-  const { data: purchase } = await supabase
-    .from('purchases')
-    .select('id, user_id, credits_granted, type, status')
-    .eq('paddle_transaction_id', transactionId)
-    .single()
+  // Atomic flip-then-deduct-then-revoke (Piece 5). In ONE Postgres transaction
+  // (reverse_credits_for_refund) the ledger row is CAS-flipped completed->refunded
+  // (guarded so only ONE of two concurrent approved deliveries wins), the FULL
+  // credits_granted is decremented (clamped at 0), and — for a subscription cycle
+  // — Pro is revoked (status=canceled, current_period_end=now, Correction A's
+  // exception). This closes the Piece-4 lost-reversal window where the CAS flip
+  // committed but a separate deductCredits then threw.
+  //
+  // We INTENTIONALLY do not inspect the refund amount (data.totals.total stays
+  // unused): any approved refund/chargeback reverses the FULL grant, the safer
+  // error direction (partial-refund clawback abuse is the worse failure). Partial
+  // logic is deferred until real refund patterns warrant it.
+  const { data: reversed, error: reverseError } = await supabase.rpc(
+    'reverse_credits_for_refund',
+    { p_paddle_transaction_id: transactionId }
+  )
 
-  if (!purchase) {
-    console.warn(`Webhook: refund for unledgered txn ${transactionId} — nothing to reverse.`)
-    return
+  // DB failure is retryable — throw so the POST catch returns 500 and Paddle
+  // retries (rpc() returns { error } rather than throwing).
+  if (reverseError) {
+    throw new Error(
+      `reverse_credits_for_refund failed for txn ${transactionId}: ${reverseError.message}`
+    )
   }
 
-  // flip-then-deduct CAS. Flip status completed->refunded atomically; only the
-  // CAS winner proceeds. Two concurrent approved events (created + updated both
-  // 'approved') therefore can't double-deduct — the loser flips no row.
-  const nowIso = new Date().toISOString()
-  const { data: flipped } = await supabase
-    .from('purchases')
-    .update({ status: 'refunded', refunded_at: nowIso })
-    .eq('id', purchase.id)
-    .eq('status', 'completed') // CAS guard
-    .select()
-
-  if (!Array.isArray(flipped) || flipped.length === 0) {
-    // Already refunded (or a concurrent delivery won the CAS). Do NOT double-deduct.
-    console.log(`Webhook: txn ${transactionId} already refunded — skipping reversal.`)
-    return
-  }
-
-  // Full reversal of the granted credits. We INTENTIONALLY do not inspect the
-  // refund amount (data.totals.total stays unused): any approved refund/chargeback
-  // reverses the FULL credits_granted, because credits are all-or-nothing per
-  // transaction in the ledger and full reversal is the safer error direction
-  // (clawing back nothing on a partial refund would invite buy/consume/partial-
-  // refund abuse). Partial-credit logic is deferred until real refund patterns
-  // warrant it. deductCredits clamps at 0, so a since-spent balance can't go negative.
-  const credits = Number(purchase.credits_granted) || 0
-  if (purchase.user_id && credits > 0) {
-    await deductCredits(supabase, purchase.user_id, credits)
-    console.log(`Reversed ${credits} credits from ${purchase.user_id} (refund of txn ${transactionId}).`)
-  }
-
-  // A refunded subscription cycle also ENDS Pro immediately: force status
-  // canceled + current_period_end=now() so computeIsPro flips false at once. This
-  // is Correction A's deliberate EXCEPTION — unlike a scheduled cancel, a refund
-  // DOES write current_period_end (to now), revoking the paid-through entitlement.
-  if (purchase.type === 'subscription_cycle' && purchase.user_id) {
-    await supabase
-      .from('profiles')
-      .update({ subscription_status: 'canceled', current_period_end: nowIso })
-      .eq('id', purchase.user_id)
+  if (reversed) {
+    console.log(`Reversed credits for txn ${transactionId} (approved ${action}).`)
+  } else {
+    // CAS matched no row: unledgered txn OR already refunded (a concurrent
+    // delivery won, or this is a redelivery). Non-actionable — no double-deduct.
+    console.log(`Webhook: txn ${transactionId} not reversed (unledgered or already refunded).`)
   }
 }

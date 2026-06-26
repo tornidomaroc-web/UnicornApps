@@ -1,8 +1,8 @@
 {
   "_fixture_meta": {
-    "source": "DOCS-DERIVED — official Paddle Billing subscription.activated payload shape (developer.paddle.com), per the 8-field docs pass. NOT a real captured payload.",
-    "reconcile": "Reconcile byte-for-byte against a REAL captured payload during live verification (see ./README.md two-layer plan). OPEN QUESTIONS for Layer 2: (1) does subscription.* carry custom_data.user_id (#6)? assumed present here; (2) does subscription.activated arrive BEFORE the first transaction.completed (ordering that closes Piece 2's first-cycle chicken/egg)?; (3) exact current_billing_period.ends_at format.",
-    "locks": "data.id is the SUBSCRIPTION id (resolution key), data.status='active', current_billing_period.ends_at present, items[0].price.id = SUB price"
+    "source": "DOCS-DERIVED, LAYER-2 RECONCILED (2026-06-26) against the Paddle webhook simulator ('subscription from checkout' scenario emitted subscription.created + subscription.activated).",
+    "reconcile": "RESOLVED: data.id='sub_...' CONFIRMED, data.status='active' CONFIRMED, items[0].price.id present CONFIRMED, current_billing_period present with ends_at CONFIRMED. ORDERING: subscription.created (…18.675Z) and subscription.activated (…18.682Z) arrived BEFORE the first transaction.completed (…18.706Z), so profiles.subscription_id is seeded before the first charge's fallback resolution runs — Piece 2's chicken/egg is comfortably fine (the handler doesn't depend on ordering anyway). STILL DEFERRED: custom_data.user_id propagation onto subscription.* (simulator sends custom_data:null).",
+    "locks": "data.id is the SUBSCRIPTION id (resolution key), data.status='active', current_billing_period.ends_at present, items[0].price.id = SUB price; custom_data.user_id propagation NOT YET PROVEN"
   },
   "event_id": "evt_01docs_sub_activated",
   "event_type": "subscription.activated",
