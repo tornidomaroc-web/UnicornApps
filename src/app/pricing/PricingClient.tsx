@@ -291,7 +291,7 @@ export default function PricingClient() {
               </div>
             </div>
             <div className="h-px md:h-12 w-full md:w-px bg-white/10" />
-            <Link href="mailto:support@unicornapps.com">
+            <Link href="mailto:support@unicornapps.app">
               <Button variant="ghost" className="text-xs font-black uppercase tracking-[0.2em] text-violet-400 hover:text-violet-300 hover:bg-white/5 px-8">
                 {t('pricing.enterprise.cta')} →
               </Button>

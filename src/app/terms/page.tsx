@@ -52,7 +52,7 @@ export default function TermsPage() {
     {
       id: "09",
       title: "Contact",
-      content: "For questions about these Terms, contact us at: support@unicornapps.com"
+      content: "For questions about these Terms, contact us at: support@unicornapps.app"
     }
   ];
 
@@ -126,7 +126,7 @@ export default function TermsPage() {
              </div>
              
              <div className="flex gap-4">
-                <Link href="mailto:support@unicornapps.com">
+                <Link href="mailto:support@unicornapps.app">
                    <Button size="sm" className="h-12 px-6 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-violet-600/20 group">
                       <Mail className="mr-2 h-3.5 w-3.5" />
                       Contact Legal

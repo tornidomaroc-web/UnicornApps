@@ -305,7 +305,7 @@ I can generate the **icon and feature graphic** via the Canva tool in a follow-u
 turn if you want — just say so. **Screenshots must come from the real app** on a
 device or emulator (login screen, camera capture, a generated result, history).
 
-**App category:** Business. **Contact details:** `support@unicornapps.com` +
+**App category:** Business. **Contact details:** `support@unicornapps.app` +
 website `https://unicorn-apps.vercel.app`.
 
 ---
@@ -348,7 +348,7 @@ you must answer the Console "AI-generated content" question, and ideally add a
 report affordance. I did **not** edit the 1,200-line `DashboardClient.tsx` for a P1
 under time pressure. Minimal fix — add near the generated result:
 ```tsx
-<a href="mailto:support@unicornapps.com?subject=Report%20AI%20content"
+<a href="mailto:support@unicornapps.app?subject=Report%20AI%20content"
    className="text-[10px] text-slate-500 hover:text-white underline">
   Report this content
 </a>

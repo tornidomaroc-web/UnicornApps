@@ -25,7 +25,7 @@ export default function RefundPage() {
       id: "03",
       title: "How to Request",
       icon: <Mail className="w-4 h-4 text-violet-400" />,
-      content: "To request a refund, simply contact us at support@unicorn-apps.com. Please include the email address associated with your account and your order number to help us process your request quickly."
+      content: "To request a refund, simply contact us at support@unicornapps.app. Please include the email address associated with your account and your order number to help us process your request quickly."
     },
     {
       id: "04",
@@ -105,7 +105,7 @@ export default function RefundPage() {
              </div>
              
              <div className="flex gap-4">
-                <Link href="mailto:support@unicorn-apps.com">
+                <Link href="mailto:support@unicornapps.app">
                    <Button size="sm" className="h-12 px-6 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-violet-600/20 group">
                       <Mail className="mr-2 h-3.5 w-3.5" />
                       Email Support
