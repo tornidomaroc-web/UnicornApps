@@ -47,7 +47,7 @@ export default function PrivacyPage() {
     {
       id: "08",
       title: "Contact",
-      content: "If you have any questions or concerns regarding this Privacy Policy, please reach out to our legal and support team at support@unicornapps.com. We aim to respond to all privacy-related inquiries within 48 business hours."
+      content: "If you have any questions or concerns regarding this Privacy Policy, please reach out to our legal and support team at support@unicornapps.app. We aim to respond to all privacy-related inquiries within 48 business hours."
     },
     {
       id: "09",
@@ -126,7 +126,7 @@ export default function PrivacyPage() {
              </div>
              
              <div className="flex gap-4">
-                <Link href="mailto:support@unicornapps.com">
+                <Link href="mailto:support@unicornapps.app">
                    <Button size="sm" className="h-12 px-6 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-violet-600/20 group">
                       <Mail className="mr-2 h-3.5 w-3.5" />
                       Contact Legal
