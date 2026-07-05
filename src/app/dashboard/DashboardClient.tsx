@@ -348,7 +348,9 @@ export default function DashboardClient({
       if (response.status === 403) {
         setChatHistory(prev => [...prev, {
           role: 'ai',
-          message: t('dash.noCredits'),
+          // Native surface must not steer to upgrade/website (Play policy);
+          // web keeps the existing steering copy. isNative is server-seeded.
+          message: isNative ? t('dash.noCreditsNeutral') : t('dash.noCredits'),
           timestamp: new Date()
         }])
         return
@@ -828,7 +830,11 @@ export default function DashboardClient({
                                <div className="flex flex-col items-center gap-3">
                                   <AlertCircle className="w-5 h-5 text-red-500/50" />
                                   <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest text-center px-2">
-                                    You&apos;ve reached your free limit. More features are available on the official UnicornApps website.
+                                    {/* Native surface: neutral, translated, steers nowhere (Play policy).
+                                        Web surface: unchanged steering copy. isNative is server-seeded. */}
+                                    {isNative
+                                      ? t('dash.limitReached')
+                                      : "You've reached your free limit. More features are available on the official UnicornApps website."}
                                   </p>
                                </div>
                             ) : (

@@ -97,6 +97,11 @@ const translations = {
     'dash.copyCode': 'Copy Code',
     'dash.analysisComplete': 'Analysis complete for {platform}. Your content is ready.',
     'dash.noCredits': 'No Credits. Upgrade to Continue',
+    // Neutral, non-steering limit copy shown ONLY on the native Android surface
+    // (Google Play payments policy: no price, no external checkout, no website
+    // steering). Web keeps the steering strings above.
+    'dash.limitReached': "You've reached your free limit.",
+    'dash.noCreditsNeutral': 'You have no free credit remaining.',
     'dash.consuming': '(Consumes 1 Credit)',
     'dash.aboutItem': 'About this item',
     'dash.addToCart': 'Add to Cart',
@@ -397,6 +402,9 @@ const translations = {
     'dash.copyCode': 'نسخ الكود',
     'dash.analysisComplete': 'اكتمل التحليل لمنصة {platform}. المحتوى جاهز.',
     'dash.noCredits': 'لا يوجد رصيد. قم بالتطوير للمتابعة',
+    // Native-only neutral limit copy (see English block) — no steering.
+    'dash.limitReached': 'لقد بلغتَ الحدّ المجاني.',
+    'dash.noCreditsNeutral': 'لم يتبقّ لديك رصيد مجاني.',
     'dash.consuming': '(يستهلك 1 رصيد)',
     'dash.aboutItem': 'حول هذا المنتج',
     'dash.addToCart': 'أضف إلى السلة',
