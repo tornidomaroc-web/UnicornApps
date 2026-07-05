@@ -110,7 +110,14 @@ ${languageInstruction}
     let lastError: any = null
     for (const modelName of candidates) {
       try {
-        const model = genAI.getGenerativeModel({ model: modelName })
+        // Cap output tokens to bound per-call cost. 8192 matches the value
+        // /api/refine already uses and validated against JSON truncation on
+        // thinking models (2048 truncated mid-array there); both routes return
+        // essentially the same schema.
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: { maxOutputTokens: 8192 },
+        })
         result = await model.generateContent([prompt, imagePart])
         break
       } catch (e: any) {
