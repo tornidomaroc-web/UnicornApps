@@ -232,3 +232,79 @@ REVOKE ALL ON FUNCTION public.grant_credits_for_purchase(uuid, text, text, integ
 REVOKE ALL ON FUNCTION public.reverse_credits_for_refund(text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.grant_credits_for_purchase(uuid, text, text, integer, integer) TO service_role;
 GRANT EXECUTE ON FUNCTION public.reverse_credits_for_refund(text) TO service_role;
+
+-- 13. Reserve-before-spend credit RPCs (added 2026-07-06). ===================
+-- Mirror of migrations/2026-07-06_reserve_before_spend_rpcs.sql (function bodies
+-- byte-identical). Close the generation concurrency amplification: /api/generate
+-- and /api/refine now atomically DECREMENT the credit BEFORE calling Gemini
+-- (reserve_credit) and refund it only if the billable call fails (refund_credit).
+-- The reserve is a single decrement-if-sufficient under the row lock, so N
+-- parallel requests on a 1-credit balance can't all pass an unlocked pre-check
+-- and each call Gemini.
+--
+-- Security: both are SECURITY INVOKER (the default; deliberately NO SECURITY
+-- DEFINER), EXECUTE revoked from PUBLIC/anon/authenticated and granted only to
+-- service_role — same lockdown as the money-path RPCs above. The inner UPDATE
+-- works because the service_role caller bypasses RLS (BYPASSRLS), NOT via
+-- SECURITY DEFINER; INVOKER is safer if EXECUTE is ever mis-granted (RLS then
+-- still blocks the UPDATE). NOTE: the standalone migration file wraps these in
+-- BEGIN/COMMIT so CREATE and REVOKE commit atomically; this schema mirror stays
+-- bare DDL to match the convention of the sections above (Section 12 is
+-- unwrapped too).
+
+CREATE OR REPLACE FUNCTION public.reserve_credit(
+  p_user_id uuid,
+  p_cost    integer
+) RETURNS boolean
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  -- Defense in depth: a non-positive cost must never mutate credits (a negative
+  -- cost would invert the arithmetic into a grant). Reserve nothing.
+  IF p_cost <= 0 THEN
+    RETURN false;
+  END IF;
+
+  -- Atomic decrement-if-sufficient. FOUND is TRUE only when a row matched
+  -- (credits >= p_cost). The row lock serializes concurrent reserves: of N
+  -- parallel calls on a 1-credit balance exactly one succeeds; the rest re-read
+  -- the decremented value and match nothing -> reject WITHOUT calling Gemini.
+  UPDATE public.profiles
+  SET credits = credits - p_cost
+  WHERE id = p_user_id
+    AND credits >= p_cost;
+  RETURN FOUND;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.refund_credit(
+  p_user_id uuid,
+  p_cost    integer
+) RETURNS void
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  -- Defense in depth: a non-positive cost must never mutate credits. No-op.
+  IF p_cost <= 0 THEN
+    RETURN;
+  END IF;
+
+  -- Compensating increment for a reserved-but-failed generation. Clamp = 500
+  -- (= CREDIT_BALANCE_CAP in src/lib/credits.ts — keep in sync). Route gates
+  -- this behind a `settled` flag: at most once per request, never on success.
+  UPDATE public.profiles
+  SET credits = LEAST(500, credits + p_cost)
+  WHERE id = p_user_id;
+END;
+$$;
+
+-- Lock down EXECUTE: new public functions default to EXECUTE for PUBLIC, which
+-- PostgREST exposes to the anon & authenticated roles. Without these revokes,
+-- any client could call reserve/refund directly (self-refund = free credits).
+-- Only the service-role generation routes may invoke them.
+REVOKE ALL ON FUNCTION public.reserve_credit(uuid, integer) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.refund_credit(uuid, integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.reserve_credit(uuid, integer) TO service_role;
+GRANT EXECUTE ON FUNCTION public.refund_credit(uuid, integer) TO service_role;

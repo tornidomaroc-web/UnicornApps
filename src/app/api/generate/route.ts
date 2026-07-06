@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { GENERATE_CREDIT_COST, createServiceClient, tryDeductCredits } from '@/lib/credits'
+import { GENERATE_CREDIT_COST, createServiceClient } from '@/lib/credits'
 import { isRetryableGeminiError, resolveGeminiModels } from '@/lib/gemini'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { NextResponse } from 'next/server'
@@ -24,33 +24,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 1. Check user credits
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('credits')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || !profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
-    }
-
-    if (profile.credits < GENERATE_CREDIT_COST) {
-      return NextResponse.json({ error: 'Insufficient credits' }, { status: 403 })
-    }
-
-    // 2. Parse request body
+    // 1. Cheap validation BEFORE touching credits — a malformed request must
+    //    never reserve (and then have to refund) a credit.
     const { image, lang } = await req.json()
     if (!image) {
       return NextResponse.json({ error: 'Image is required' }, { status: 400 })
     }
 
     const isArabic = lang === 'ar'
-    const languageInstruction = isArabic 
-      ? "\nGENERATE ALL CONTENT IN ARABIC LANGUAGE. All titles, descriptions, bullet points, hashtags and hooks must be in Arabic." 
+    const languageInstruction = isArabic
+      ? "\nGENERATE ALL CONTENT IN ARABIC LANGUAGE. All titles, descriptions, bullet points, hashtags and hooks must be in Arabic."
       : "\nGENERATE ALL CONTENT IN ENGLISH LANGUAGE."
 
-    // 3. Initialize Gemini DYNAMICALLY
+    // 2. Initialize Gemini DYNAMICALLY
     const geminiApiKey = process.env.GEMINI_API_KEY
 
     if (!geminiApiKey) {
@@ -61,6 +47,8 @@ export async function POST(req: Request) {
       )
     }
 
+    // Model resolution is a cheap list call — do it BEFORE the reserve so a
+    // resolution failure is a 500 with NO credit touched.
     const candidates = (await resolveGeminiModels(geminiApiKey)).slice(0, 3)
     const genAI = new GoogleGenerativeAI(geminiApiKey)
 
@@ -105,71 +93,109 @@ ${languageInstruction}
   ]
 }`
 
-    // Try candidates in order; fall back when a model is over capacity.
-    let result: Awaited<ReturnType<ReturnType<typeof genAI.getGenerativeModel>['generateContent']>> | null = null
-    let lastError: any = null
-    for (const modelName of candidates) {
+    // 3. Reserve the credit BEFORE the billable Gemini call. reserve_credit is a
+    //    single atomic decrement-if-sufficient (row-locked RPC): of N parallel
+    //    requests on a 1-credit balance, exactly one wins the reserve; the rest
+    //    get `false` and are rejected WITHOUT calling Gemini. This replaces the
+    //    old unlocked read-then-check, which let all N through and each call
+    //    Gemini for a single credit. The reserved credit is refunded in the
+    //    `finally` below if the billable call fails.
+    const creditClient = createServiceClient() ?? supabase
+    const { data: reserved, error: reserveError } = await creditClient.rpc('reserve_credit', {
+      p_user_id: user.id,
+      p_cost: GENERATE_CREDIT_COST,
+    })
+    if (reserveError) {
+      // Reserve never committed -> nothing to refund. Fail closed (deny) rather
+      // than risk a free generation. This is also the path when the service-role
+      // key is absent: EXECUTE on reserve_credit is locked to service_role.
+      console.error('Credit reserve failed for user', user.id, reserveError)
+      return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 })
+    }
+    if (!reserved) {
+      return NextResponse.json({ error: 'Insufficient credits' }, { status: 403 })
+    }
+
+    // From here the credit is spent. Every exit path must either RETURN content
+    // (credit earned -> set settled=true) or leave settled=false so `finally`
+    // refunds. Content is NEVER returned on a Gemini/parse failure.
+    let settled = false
+    try {
+      // Try candidates in order; fall back when a model is over capacity.
+      let result: Awaited<ReturnType<ReturnType<typeof genAI.getGenerativeModel>['generateContent']>> | null = null
+      let lastError: any = null
+      for (const modelName of candidates) {
+        try {
+          // Cap output tokens to bound per-call cost. 8192 matches the value
+          // /api/refine already uses and validated against JSON truncation on
+          // thinking models (2048 truncated mid-array there); both routes return
+          // essentially the same schema.
+          const model = genAI.getGenerativeModel({
+            model: modelName,
+            generationConfig: { maxOutputTokens: 8192 },
+          })
+          result = await model.generateContent([prompt, imagePart])
+          break
+        } catch (e: any) {
+          lastError = e
+          const status = e?.status ?? e?.response?.status ?? 0
+          if (!isRetryableGeminiError(status, String(e?.message ?? ''))) throw e
+          console.warn(`Gemini ${modelName} over capacity, trying next model`)
+        }
+      }
+      if (!result) throw lastError ?? new Error('All Gemini models are over capacity.')
+
+      const response = await result.response
+      const text = response.text()
+
+      // Clean response text to ensure it's valid JSON (Gemini sometimes adds markdown blocks)
+      const cleanedText = text.replace(/```json|```/gi, '').trim()
+      let generatedContent;
       try {
-        // Cap output tokens to bound per-call cost. 8192 matches the value
-        // /api/refine already uses and validated against JSON truncation on
-        // thinking models (2048 truncated mid-array there); both routes return
-        // essentially the same schema.
-        const model = genAI.getGenerativeModel({
-          model: modelName,
-          generationConfig: { maxOutputTokens: 8192 },
+        generatedContent = JSON.parse(cleanedText)
+      } catch (parseError) {
+        console.error('SERVER ERROR: AI returned malformed JSON.', cleanedText)
+        // settled stays false -> `finally` refunds the reserved credit.
+        return NextResponse.json(
+          { error: 'AI generation failed due to formatting issues. Please try again.' },
+          { status: 422 }
+        )
+      }
+
+      // Content earned -> the reserved credit stays spent (no refund).
+      settled = true
+
+      // Save generation to database. Best-effort and OUTSIDE the refund window:
+      // a failed insert must NOT refund, because the content was already earned.
+      const { error: insertError } = await supabase
+        .from('generations')
+        .insert({
+          user_id: user.id,
+          content: generatedContent,
+          image_url: image, // base64 string
         })
-        result = await model.generateContent([prompt, imagePart])
-        break
-      } catch (e: any) {
-        lastError = e
-        const status = e?.status ?? e?.response?.status ?? 0
-        if (!isRetryableGeminiError(status, String(e?.message ?? ''))) throw e
-        console.warn(`Gemini ${modelName} over capacity, trying next model`)
+
+      if (insertError) {
+        console.error('Error saving generation:', insertError)
+      }
+
+      return NextResponse.json(generatedContent)
+    } finally {
+      // Refund the reserved credit on any failure between reserve and a valid
+      // result (Gemini threw/exhausted, empty/blocked text, or JSON parse
+      // failed). Gated by `settled`: at most once, never on success. Residual:
+      // a hard function timeout/SIGKILL here skips `finally` and leaves the user
+      // down one credit (unrecoverable without manual/periodic intervention).
+      if (!settled) {
+        const { error: refundError } = await creditClient.rpc('refund_credit', {
+          p_user_id: user.id,
+          p_cost: GENERATE_CREDIT_COST,
+        })
+        if (refundError) {
+          console.error('CRITICAL: credit refund failed after failed generation for user', user.id, refundError)
+        }
       }
     }
-    if (!result) throw lastError ?? new Error('All Gemini models are over capacity.')
-
-    const response = await result.response
-    const text = response.text()
-
-    // Clean response text to ensure it's valid JSON (Gemini sometimes adds markdown blocks)
-    const cleanedText = text.replace(/```json|```/gi, '').trim()
-    let generatedContent;
-    try {
-      generatedContent = JSON.parse(cleanedText)
-    } catch (parseError) {
-      console.error('SERVER ERROR: AI returned malformed JSON.', cleanedText)
-      return NextResponse.json(
-        { error: 'AI generation failed due to formatting issues. Please try again.' },
-        { status: 422 }
-      )
-    }
-
-    // 4. Deduct credits (compare-and-swap so parallel calls can't write a
-    // stale balance; service client so it doesn't lean on the user-update
-    // RLS policy)
-    const creditClient = createServiceClient() ?? supabase
-    const deducted = await tryDeductCredits(creditClient, user.id, GENERATE_CREDIT_COST)
-    if (!deducted) {
-      console.error('Credit deduction failed after successful generation for user', user.id)
-      // We still return the content even if credit deduction fails,
-      // but in production, you might want to handle this more strictly.
-    }
-
-    // 5. Save generation to database
-    const { error: insertError } = await supabase
-      .from('generations')
-      .insert({
-        user_id: user.id,
-        content: generatedContent,
-        image_url: image, // base64 string
-      })
-
-    if (insertError) {
-      console.error('Error saving generation:', insertError)
-    }
-
-    return NextResponse.json(generatedContent)
   } catch (error: any) {
     console.error('Generation error:', error)
     return NextResponse.json(
