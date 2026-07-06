@@ -1,8 +1,11 @@
 -- Migration: reserve-before-spend credit RPCs (branch feat/reserve-before-spend).
 --
--- STATUS: PENDING — apply deliberately to the live Supabase database; NOT yet
--- applied by this PR. The reserve_credit / refund_credit function bodies here
--- are byte-identical to Section 13 of supabase_schema.sql.
+-- STATUS: APPLIED — applied to the live Supabase database on 2026-07-06 and
+-- verified present (both functions exist, SECURITY INVOKER, EXECUTE locked to
+-- service_role). Retained for provenance; the bodies are idempotent (CREATE OR
+-- REPLACE), so re-running is harmless (see the re-run note below). The
+-- reserve_credit / refund_credit function bodies here are byte-identical to
+-- Section 13 of supabase_schema.sql.
 --
 -- Purpose: close the generation concurrency amplification. /api/generate and
 -- /api/refine now atomically DECREMENT the credit BEFORE calling Gemini
