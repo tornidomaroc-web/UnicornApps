@@ -232,3 +232,54 @@ REVOKE ALL ON FUNCTION public.grant_credits_for_purchase(uuid, text, text, integ
 REVOKE ALL ON FUNCTION public.reverse_credits_for_refund(text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.grant_credits_for_purchase(uuid, text, text, integer, integer) TO service_role;
 GRANT EXECUTE ON FUNCTION public.reverse_credits_for_refund(text) TO service_role;
+
+-- 13. Reserve-before-spend credit RPCs (added 2026-07-06). ===================
+-- Mirror of migrations/2026-07-06_reserve_before_spend_rpcs.sql. Close the
+-- generation concurrency amplification: /api/generate and /api/refine now
+-- atomically DECREMENT the credit BEFORE calling Gemini (reserve_credit) and
+-- refund it only if the billable call fails (refund_credit). The reserve is a
+-- single decrement-if-sufficient under the row lock, so N parallel requests on
+-- a 1-credit balance can't all pass an unlocked pre-check and each call Gemini.
+-- Same service-role-only lockdown as the money-path RPCs above.
+
+CREATE OR REPLACE FUNCTION public.reserve_credit(
+  p_user_id uuid,
+  p_cost    integer
+) RETURNS boolean
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  -- Atomic decrement-if-sufficient. FOUND is TRUE only when a row matched
+  -- (credits >= p_cost). The row lock serializes concurrent reserves: of N
+  -- parallel calls on a 1-credit balance exactly one succeeds; the rest re-read
+  -- the decremented value and match nothing -> reject WITHOUT calling Gemini.
+  UPDATE public.profiles
+  SET credits = credits - p_cost
+  WHERE id = p_user_id
+    AND credits >= p_cost;
+  RETURN FOUND;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.refund_credit(
+  p_user_id uuid,
+  p_cost    integer
+) RETURNS void
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  -- Compensating increment for a reserved-but-failed generation. Clamp = 500
+  -- (= CREDIT_BALANCE_CAP in src/lib/credits.ts — keep in sync). Route gates
+  -- this behind a `settled` flag: at most once per request, never on success.
+  UPDATE public.profiles
+  SET credits = LEAST(500, credits + p_cost)
+  WHERE id = p_user_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.reserve_credit(uuid, integer) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.refund_credit(uuid, integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.reserve_credit(uuid, integer) TO service_role;
+GRANT EXECUTE ON FUNCTION public.refund_credit(uuid, integer) TO service_role;
