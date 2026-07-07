@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import Link from 'next/link'
 import { login, signup, requestPasswordReset, signInWithGoogle } from './actions'
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Eye, EyeOff, Loader2, Sparkles } from 'lucide-react'
+import { Eye, EyeOff, Loader2, MailCheck, Sparkles } from 'lucide-react'
 
 type Mode = 'signin' | 'signup' | 'reset'
 
@@ -53,6 +53,22 @@ export default function LoginPage({
   const [signinState, signinAction] = useFormState(login, undefined)
   const [signupState, signupAction] = useFormState(signup, undefined)
   const [resetState, resetAction] = useFormState(requestPasswordReset, undefined)
+
+  // Successful signup with "Confirm email" ON returns { code: 'check_email' } and
+  // no session. Promote that guidance to a full-panel view (replacing the form) so
+  // it can't be missed — a thin inline banner under an unchanged form reads as
+  // "nothing happened". Driven by a local view flag so switching modes afterwards
+  // doesn't re-surface it; a fresh signup submit re-opens it (new state object).
+  const [checkEmailOpen, setCheckEmailOpen] = useState(false)
+  useEffect(() => {
+    if (signupState?.code === 'check_email') setCheckEmailOpen(true)
+  }, [signupState])
+
+  const handleBackToSignin = () => {
+    setCheckEmailOpen(false)
+    setMode('signin')
+    setShowPassword(false)
+  }
 
   const state: AuthResult | undefined =
     mode === 'signin' ? signinState : mode === 'signup' ? signupState : resetState
@@ -121,6 +137,27 @@ export default function LoginPage({
         </CardHeader>
 
         <CardContent className="space-y-5">
+          {checkEmailOpen ? (
+            <div className="flex flex-col items-center text-center space-y-4 py-6">
+              <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 shadow-[0_0_28px_-8px_rgba(16,185,129,0.6)]">
+                <MailCheck className="h-7 w-7" />
+              </span>
+              <h2 className="text-2xl font-bold tracking-tight text-white">
+                {t('login.msg.check_email_title')}
+              </h2>
+              <p role="status" className="text-slate-300 text-[15px] leading-relaxed max-w-xs">
+                {t('login.msg.check_email')}
+              </p>
+              <Button
+                type="button"
+                onClick={handleBackToSignin}
+                className="w-full h-12 bg-violet-600 hover:bg-violet-500 text-white font-semibold text-base rounded-xl shadow-[0_0_24px_-6px_rgba(124,58,237,0.7)] transition-all active:scale-[0.99]"
+              >
+                {t('login.action.back_to_sign_in')}
+              </Button>
+            </div>
+          ) : (
+          <>
           <form action={action} className="space-y-4" noValidate={false}>
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-sm font-medium text-slate-300">
@@ -269,6 +306,8 @@ export default function LoginPage({
                 {mode === 'signin' ? t('login.createOne') : t('login.signinLink')}
               </button>
             </p>
+          )}
+          </>
           )}
         </CardContent>
 
