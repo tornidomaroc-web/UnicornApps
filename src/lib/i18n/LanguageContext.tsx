@@ -47,7 +47,9 @@ const translations = {
     'login.updateTitle': 'Choose a new password',
     'login.updateSub': 'Enter a new password for your account.',
     // Auth status messages
+    'login.msg.check_email_title': 'Check your email',
     'login.msg.check_email': "Almost there, check your inbox and click the link to confirm your account, then sign in.",
+    'login.action.back_to_sign_in': 'Back to sign in',
     'login.msg.reset_sent': "If an account exists for that email, we've sent a reset link. Check your inbox.",
     // Auth error messages
     'login.err.invalid_credentials': 'That email or password is incorrect. Please try again.',
@@ -352,7 +354,9 @@ const translations = {
     'login.updateTitle': 'اختر كلمة مرور جديدة',
     'login.updateSub': 'أدخل كلمة مرور جديدة لحسابك.',
     // Auth status messages
+    'login.msg.check_email_title': 'تحقّق من بريدك',
     'login.msg.check_email': 'اقتربت من الانتهاء، تحقّق من بريدك الإلكتروني واضغط على الرابط لتأكيد حسابك، ثم سجّل الدخول.',
+    'login.action.back_to_sign_in': 'العودة إلى تسجيل الدخول',
     'login.msg.reset_sent': 'إذا كان هناك حساب مرتبط بهذا البريد، فقد أرسلنا إليك رابط إعادة التعيين. تحقّق من بريدك.',
     // Auth error messages
     'login.err.invalid_credentials': 'البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.',
