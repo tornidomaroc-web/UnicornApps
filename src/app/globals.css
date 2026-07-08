@@ -10,6 +10,23 @@
   --violet-glow: rgba(168, 85, 247, 0.35);
   --gold: #e8c87a;
   --silver: #c8cfe0;
+
+  /* ── UnicornApps design tokens (Phase 1 foundation) — see docs/DESIGN-TOKENS.md ──
+     RGB channel triplets, consumed as rgb(var(--x) / <alpha-value>) via
+     tailwind.config.ts (bg-surface / text-brand / border-ink-0 …). Values match
+     the current live UI, so defining them changes nothing on screen. The brand
+     accent is defined but wired to NO existing element this phase. Namespaced
+     --ua-* to avoid colliding with the legacy brand vars above (notably --gold). */
+  --ua-surface: 7 7 16;       /* #070710  canonical dark background */
+  --ua-surface-2: 13 13 26;   /* #0d0d1a  raised panel */
+  --ua-brand: 99 91 255;      /* #635BFF  single brand accent (unwired this phase) */
+  --ua-ink-0: 255 255 255;    /* #ffffff  headings / white overlays */
+  --ua-ink-1: 200 207 224;    /* #c8cfe0  body text */
+  --ua-ink-2: 148 163 184;    /* #94a3b8  secondary text (= slate-400) */
+  --ua-ink-3: 100 116 139;    /* #64748b  muted text (= slate-500) */
+  --ua-ink-4: 71 85 105;      /* #475569  faint text (= slate-600) */
+  --ua-gold: 232 200 122;     /* #e8c87a  rare secondary accent (unwired) */
+
   --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
   --card: 222.2 84% 4.9%;
@@ -66,8 +83,9 @@
 
 body {
   @apply min-h-screen relative overflow-x-hidden;
-  background-color: #070710;
-  color: #c8cfe0;
+  /* Wired to the design tokens; rgb(7 7 16)=#070710, rgb(200 207 224)=#c8cfe0 — pixel-identical. */
+  background-color: rgb(var(--ua-surface));
+  color: rgb(var(--ua-ink-1));
 }
 
 @layer utilities {
@@ -88,7 +106,7 @@ body {
   }
 
   .font-arabic {
-    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-family: var(--font-ibm-arabic), 'IBM Plex Sans Arabic', sans-serif;
   }
 
   /* Scroll containers that hide their scrollbar (tab bars, tables) —
