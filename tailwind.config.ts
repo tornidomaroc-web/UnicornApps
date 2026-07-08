@@ -17,6 +17,22 @@ const config: Config = {
     },
     extend: {
       colors: {
+        // ── UnicornApps design tokens (Phase 1 foundation) ──────────────────
+        // RGB triplets defined in globals.css :root, consumed with alpha support
+        // (bg-surface, text-brand, border-ink-0/10, …). Additive and non-colliding
+        // with the shadcn HSL tokens below; unused classes emit no CSS (Tailwind
+        // JIT), so this block is inert until a page opts in. See docs/DESIGN-TOKENS.md.
+        surface: "rgb(var(--ua-surface) / <alpha-value>)",
+        "surface-2": "rgb(var(--ua-surface-2) / <alpha-value>)",
+        brand: "rgb(var(--ua-brand) / <alpha-value>)",
+        ink: {
+          0: "rgb(var(--ua-ink-0) / <alpha-value>)",
+          1: "rgb(var(--ua-ink-1) / <alpha-value>)",
+          2: "rgb(var(--ua-ink-2) / <alpha-value>)",
+          3: "rgb(var(--ua-ink-3) / <alpha-value>)",
+          4: "rgb(var(--ua-ink-4) / <alpha-value>)",
+        },
+        gold: "rgb(var(--ua-gold) / <alpha-value>)",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
