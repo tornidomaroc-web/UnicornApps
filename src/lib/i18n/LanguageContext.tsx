@@ -315,6 +315,36 @@ const translations = {
     'footer.privacy': 'Privacy Policy',
     'footer.terms': 'Terms of Service',
     'trusted.by': 'Trusted by sellers on',
+
+    // ── Legal pages: shared chrome (reused by privacy / terms / refund) ──
+    'legal.back': 'Back to home',
+    'legal.eyebrow': 'Legal Documentation',
+    'legal.governing': 'This document is provided in multiple languages for your convenience. The English version is the authoritative text; in the event of any discrepancy between translations, the English version prevails.',
+    'legal.contact.heading': 'Have a question about this document?',
+    'legal.contact.sub': 'Reach our team and we usually respond within 48 hours.',
+    'legal.contact.cta': 'Contact us',
+    // ── Privacy Policy: page-specific content ──
+    'privacy.title': 'Privacy Policy',
+    'privacy.version': 'Version 1.2',
+    'privacy.updated': 'Last updated: April 1, 2026',
+    'privacy.s1.title': 'Information We Collect',
+    'privacy.s1.body': 'We collect your email address for account management and authentication. When using the AI analysis features, we process the product images you upload to generate metadata, descriptions, and content. We do not store original raw images longer than necessary for processing.',
+    'privacy.s2.title': 'How We Use Information',
+    'privacy.s2.body': 'Collected data is primarily used to provide our core services. Gemini AI analyzes your images to create Amazon titles, Shopify descriptions, and social media hooks. Analytical data helps us refine our AI models and improve the user experience for global sellers.',
+    'privacy.s3.title': 'Data Storage',
+    'privacy.s3.body': 'Your data is stored securely using industry-standard encryption and cloud infrastructure. We implement temporary caching for faster processing, but our long-term storage is limited to essential account metadata and generated content history.',
+    'privacy.s4.title': 'Third-Party Services',
+    'privacy.s4.body': 'We utilize Google Gemini for image analysis and Supabase for authentication and database management. These third-party services are critical to our infrastructure and have their own privacy standards which we monitor for compliance.',
+    'privacy.s5.title': 'Data Sharing',
+    'privacy.s5.body': 'UnicornApps has a strict policy against selling user data to third parties. Your information is only shared with essential service providers (like payment processors or AI engines) as required to deliver our services, or when legally mandated by law enforcement.',
+    'privacy.s6.title': 'Security',
+    'privacy.s6.body': 'We implement reasonable technical and organizational measures to protect your information from unauthorized access, loss, or alteration. This includes SSL encryption, secure API communication, and regular security audits of our cloud providers.',
+    'privacy.s7.title': 'User Rights',
+    'privacy.s7.body': 'You have the right to access, update, or delete your personal information at any time. You can request a full account deletion, including all history and metadata, by contacting our support team or using the self-service dashboard tools.',
+    'privacy.s8.title': 'Contact',
+    'privacy.s8.body': 'If you have any questions or concerns regarding this Privacy Policy, please reach out to our legal and support team at support@unicornapps.app. We aim to respond to all privacy-related inquiries within 48 business hours.',
+    'privacy.s9.title': 'Updates',
+    'privacy.s9.body': 'This Privacy Policy may change as we introduce new features or respond to legal requirements. We will notify users of significant changes via the email address associated with their account or through a dashboard notification.',
   },
   ar: {
     // Login / Auth
@@ -620,6 +650,40 @@ const translations = {
     'footer.privacy': 'سياسة الخصوصية',
     'footer.terms': 'شروط الخدمة',
     'trusted.by': 'موثوق به من بائعين على',
+
+    // ── Legal pages: shared chrome (reused by privacy / terms / refund) ──
+    // TODO-LEGAL-REVIEW: The Arabic legal strings below (legal.* + privacy.*) are
+    // MACHINE-GENERATED DRAFTS. They must be reviewed by a qualified legal/Arabic
+    // translation professional before being treated as authoritative. Per
+    // legal.governing, the English version prevails in case of any discrepancy.
+    'legal.back': 'العودة إلى الرئيسية',
+    'legal.eyebrow': 'الوثائق القانونية',
+    'legal.governing': 'تُقدَّم هذه الوثيقة بعدّة لغات لتسهيل الاطّلاع عليها. تظلّ النسخة الإنجليزية هي النصّ المُلزِم، وفي حال وجود أي تعارض بين الترجمات تسود النسخة الإنجليزية.',
+    'legal.contact.heading': 'هل لديك سؤال حول هذه الوثيقة؟',
+    'legal.contact.sub': 'تواصل مع فريقنا وعادةً ما نردّ خلال 48 ساعة.',
+    'legal.contact.cta': 'تواصل معنا',
+    // ── Privacy Policy: page-specific content (machine-generated draft, see above) ──
+    'privacy.title': 'سياسة الخصوصية',
+    'privacy.version': 'الإصدار 1.2',
+    'privacy.updated': 'آخر تحديث: 1 أبريل 2026',
+    'privacy.s1.title': 'المعلومات التي نجمعها',
+    'privacy.s1.body': 'نجمع عنوان بريدك الإلكتروني لإدارة الحساب والمصادقة. وعند استخدام ميزات التحليل بالذكاء الاصطناعي، نعالج صور المنتجات التي ترفعها لإنشاء البيانات الوصفية والأوصاف والمحتوى. ولا نحتفظ بالصور الأصلية الخام مدةً أطول مما يلزم للمعالجة.',
+    'privacy.s2.title': 'كيف نستخدم المعلومات',
+    'privacy.s2.body': 'تُستخدم البيانات المجموعة بشكل أساسي لتقديم خدماتنا الجوهرية. يحلّل نظام Gemini صورك لإنشاء عناوين Amazon وأوصاف Shopify ومنشورات وسائل التواصل الاجتماعي. وتساعدنا البيانات التحليلية على تحسين نماذج الذكاء الاصطناعي وتجربة المستخدم للبائعين حول العالم.',
+    'privacy.s3.title': 'تخزين البيانات',
+    'privacy.s3.body': 'تُخزَّن بياناتك بأمان باستخدام تشفير وبنية سحابية وفق معايير الصناعة. ونستخدم تخزينًا مؤقتًا لتسريع المعالجة، لكن تخزيننا طويل الأمد يقتصر على البيانات الوصفية الأساسية للحساب وسجلّ المحتوى المُنشأ.',
+    'privacy.s4.title': 'خدمات الأطراف الثالثة',
+    'privacy.s4.body': 'نستخدم Google Gemini لتحليل الصور وSupabase للمصادقة وإدارة قواعد البيانات. وهذه الخدمات من الأطراف الثالثة أساسية لبنيتنا التحتية ولها معايير خصوصية خاصة بها نراقب الالتزام بها.',
+    'privacy.s5.title': 'مشاركة البيانات',
+    'privacy.s5.body': 'تتّبع UnicornApps سياسة صارمة تمنع بيع بيانات المستخدمين لأطراف ثالثة. ولا تُشارَك معلوماتك إلا مع مزوّدي الخدمات الأساسيين (مثل معالِجات الدفع أو محرّكات الذكاء الاصطناعي) بالقدر اللازم لتقديم خدماتنا، أو عند وجود إلزام قانوني من جهات إنفاذ القانون.',
+    'privacy.s6.title': 'الأمان',
+    'privacy.s6.body': 'نطبّق تدابير تقنية وتنظيمية معقولة لحماية معلوماتك من الوصول غير المصرّح به أو الفقدان أو التغيير. ويشمل ذلك تشفير SSL والاتصال الآمن عبر واجهات البرمجة والمراجعات الأمنية الدورية لمزوّدينا السحابيين.',
+    'privacy.s7.title': 'حقوق المستخدم',
+    'privacy.s7.body': 'يحقّ لك الوصول إلى معلوماتك الشخصية أو تحديثها أو حذفها في أي وقت. ويمكنك طلب حذف حسابك بالكامل، بما في ذلك كل السجلّ والبيانات الوصفية، عبر التواصل مع فريق الدعم أو باستخدام أدوات لوحة التحكم الذاتية.',
+    'privacy.s8.title': 'التواصل',
+    'privacy.s8.body': 'إذا كان لديك أي أسئلة أو مخاوف بخصوص سياسة الخصوصية هذه، يُرجى التواصل مع فريق الشؤون القانونية والدعم على support@unicornapps.app. ونهدف إلى الرد على جميع الاستفسارات المتعلقة بالخصوصية خلال 48 ساعة عمل.',
+    'privacy.s9.title': 'التحديثات',
+    'privacy.s9.body': 'قد تتغيّر سياسة الخصوصية هذه مع إطلاق ميزات جديدة أو استجابةً للمتطلبات القانونية. وسنُخطر المستخدمين بأي تغييرات جوهرية عبر البريد الإلكتروني المرتبط بحساباتهم أو من خلال إشعار في لوحة التحكم.',
   },
 }
 
