@@ -17,3 +17,6 @@ android/app/*.jks
 *.tsbuildinfo
 # Build artifacts � keep AABs out of the repo
 *.aab
+
+# Brand design source master (~15MB raster) � too large to ship; sources live in store-assets/brand/
+store-assets/brand/unicornapps-logo-source.png

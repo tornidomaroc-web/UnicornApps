@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- UnicornApps mark: two concentric U/shield strokes + central unicorn horn. Single color #635BFF, transparent bg. -->
+  <g stroke="#635BFF" stroke-width="22" stroke-linecap="butt">
+    <path d="M106 185 V285 A150 150 0 0 0 406 285 V185"/>
+    <path d="M150 185 V285 A106 106 0 0 0 362 285 V185"/>
+  </g>
+  <path fill="#635BFF" fill-rule="evenodd" d="M256 64 C262 132 306 186 331 192 C318 222 286 268 256 268 C226 268 194 222 181 192 C206 186 250 132 256 64 Z M256 144 L264 200 L256 244 L248 200 Z"/>
+</svg>
