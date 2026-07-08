@@ -56,10 +56,10 @@ export default function Home() {
           variants={containerVariants}
           className="w-full max-w-6xl mx-auto text-center"
         >
-          {/* Badge */}
-          <motion.div variants={itemVariants} className="inline-flex max-w-full items-center gap-2 px-4 py-1.5 rounded-full bg-violet-950/30 border border-violet-500/30 text-violet-300 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-8 backdrop-blur-md">
-            <span className="animate-pulse">🦄</span>
-            {t('hero.badge')}
+          {/* Brand lockup */}
+          <motion.div variants={itemVariants} className="mb-8">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/unicornapps-lockup-white.svg" alt="UnicornApps" className="h-12 sm:h-16 w-auto mx-auto" />
           </motion.div>
 
           {/* Headline */}

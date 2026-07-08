@@ -36,9 +36,8 @@ export default function Navbar() {
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 h-20 flex items-center justify-between">
         <div className="flex items-center gap-12">
           <Link href="/" className="font-black text-2xl tracking-tighter text-white flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-white text-slate-950 flex items-center justify-center rounded-xl text-xl font-black group-hover:bg-violet-600 group-hover:text-white transition-all duration-500 shadow-[0_0_20px_rgba(255,255,255,0.1)] group-hover:shadow-[0_0_30px_rgba(124,58,237,0.5)]">
-              U
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/unicornapps-mark.svg" alt="UnicornApps" width={40} height={40} className="w-10 h-10 transition-transform duration-500 group-hover:scale-105" />
             <span className="hidden sm:block bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 group-hover:to-violet-400 transition-all">
               UnicornApps
             </span>
