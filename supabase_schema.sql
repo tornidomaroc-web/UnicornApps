@@ -134,8 +134,11 @@ ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
 -- Both use `SET credits = <expr over credits>` so the increment/decrement runs
 -- under the row lock (READ COMMITTED re-reads the latest committed value) and a
 -- concurrent generate-spend can never lose-update profiles.credits.
--- Clamps live in SQL: grant ceilings at 500 (= CREDIT_BALANCE_CAP in
--- src/lib/credits.ts — keep the literal in sync), reversal floors at 0.
+-- Clamps live in SQL: the grant has NO ceiling (the 500 cap was removed
+-- 2026-07-09 — see migrations/2026-07-09_remove_purchased_credit_cap.sql), and
+-- the reversal floors at 0. NOTE src/lib/credits.ts still exports a stale
+-- CREDIT_BALANCE_CAP = 500, read ONLY by the dead addCredits helper; it governs
+-- nothing and is removed with that helper under backlog item 8.
 -- Called ONLY by the Paddle webhook via the service-role key; EXECUTE is locked
 -- to service_role (see grants below) so no anon/authenticated client can invoke.
 
@@ -166,9 +169,12 @@ BEGIN
   END IF;
 
   -- Newly inserted -> grant once, in the SAME transaction as the ledger row.
-  -- Ceiling = 500 (CREDIT_BALANCE_CAP). GREATEST(0, ...) is defensive.
+  -- NO CEILING (cap removed 2026-07-09, migration
+  -- 2026-07-09_remove_purchased_credit_cap.sql). The applied delta now always
+  -- equals p_credits, so purchases.credits_granted is exact and the reversal is
+  -- symmetric. GREATEST(0, ...) is defensive against a negative p_credits.
   UPDATE public.profiles
-  SET credits = LEAST(500, GREATEST(0, COALESCE(credits, 0) + p_credits))
+  SET credits = GREATEST(0, COALESCE(credits, 0) + p_credits)
   WHERE id = p_user_id;
 
   RETURN true;
@@ -234,8 +240,12 @@ GRANT EXECUTE ON FUNCTION public.grant_credits_for_purchase(uuid, text, text, in
 GRANT EXECUTE ON FUNCTION public.reverse_credits_for_refund(text) TO service_role;
 
 -- 13. Reserve-before-spend credit RPCs (added 2026-07-06). ===================
--- Mirror of migrations/2026-07-06_reserve_before_spend_rpcs.sql (function bodies
--- byte-identical). Close the generation concurrency amplification: /api/generate
+-- reserve_credit mirrors migrations/2026-07-06_reserve_before_spend_rpcs.sql
+-- byte-identically. refund_credit does NOT: its LEAST(500, ...) clamp was later
+-- removed by migrations/2026-07-09_remove_purchased_credit_cap.sql, which is the
+-- current source of truth for that body. The 07-06 file is an APPLIED migration
+-- and is deliberately left unedited as a historical record.
+-- Close the generation concurrency amplification: /api/generate
 -- and /api/refine now atomically DECREMENT the credit BEFORE calling Gemini
 -- (reserve_credit) and refund it only if the billable call fails (refund_credit).
 -- The reserve is a single decrement-if-sufficient under the row lock, so N
@@ -291,11 +301,14 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Compensating increment for a reserved-but-failed generation. Clamp = 500
-  -- (= CREDIT_BALANCE_CAP in src/lib/credits.ts — keep in sync). Route gates
-  -- this behind a `settled` flag: at most once per request, never on success.
+  -- Compensating increment for a reserved-but-failed generation. NO CEILING
+  -- (clamp removed 2026-07-09 together with the grant cap: with balances >500
+  -- now reachable, LEAST(500, ...) here would DESTROY credits on every failed
+  -- Gemini call). Safe without a clamp because the route gates this behind a
+  -- `settled` flag and it only ever runs after a successful reserve_credit, so
+  -- it can only restore what that reserve took — it can never over-grant.
   UPDATE public.profiles
-  SET credits = LEAST(500, credits + p_cost)
+  SET credits = credits + p_cost
   WHERE id = p_user_id;
 END;
 $$;
