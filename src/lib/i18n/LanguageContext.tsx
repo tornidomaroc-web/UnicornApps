@@ -345,6 +345,44 @@ const translations = {
     'privacy.s8.body': 'If you have any questions or concerns regarding this Privacy Policy, please reach out to our legal and support team at support@unicornapps.app. We aim to respond to all privacy-related inquiries within 48 business hours.',
     'privacy.s9.title': 'Updates',
     'privacy.s9.body': 'This Privacy Policy may change as we introduce new features or respond to legal requirements. We will notify users of significant changes via the email address associated with their account or through a dashboard notification.',
+    // ── Terms of Service: page-specific content ──
+    'terms.title': 'Terms of Service',
+    'terms.version': 'Version 1.2',
+    'terms.updated': 'Effective date: April 1, 2026',
+    'terms.s1.title': 'Acceptance of Terms',
+    'terms.s1.body': 'By using UnicornApps, you agree to these Terms of Service. If you do not agree, please do not use the platform.',
+    'terms.s2.title': 'Use of Service',
+    'terms.s2.body': 'UnicornApps is an AI-powered tool for generating product descriptions from images. You may use it only for lawful purposes.',
+    'terms.s3.title': 'User Accounts',
+    'terms.s3.body': 'You are responsible for maintaining the confidentiality of your account credentials and all activity under your account.',
+    'terms.s4.title': 'Credits & Payments',
+    'terms.s4.body': 'Credits are non-refundable once consumed. Payments are processed securely via Paddle. For more information on our 14-day refund guarantee, please see our Refund Policy. Pricing may change with prior notice.',
+    'terms.s5.title': 'Intellectual Property',
+    'terms.s5.body': 'All generated content belongs to the user. UnicornApps retains no rights over your generated descriptions or uploaded images.',
+    'terms.s6.title': 'Prohibited Use',
+    'terms.s6.body': 'You may not use UnicornApps to process illegal, harmful, or offensive content. Abuse will result in immediate account termination.',
+    'terms.s7.title': 'Limitation of Liability',
+    'terms.s7.body': 'UnicornApps is provided "as is". We are not liable for any indirect or consequential damages arising from use of the service.',
+    'terms.s8.title': 'Termination',
+    'terms.s8.body': 'We reserve the right to suspend or terminate accounts that violate these terms without prior notice.',
+    'terms.s9.title': 'Contact',
+    'terms.s9.body': 'For questions about these Terms, contact us at: support@unicornapps.app',
+    // Terms-specific contact chrome: carries the acceptance acknowledgment, so it
+    // deliberately does NOT reuse the generic legal.contact.heading / .sub.
+    'terms.contact.heading': 'Acceptance agreement',
+    'terms.contact.sub': 'By continuing to use UnicornApps, you acknowledge and agree to these terms.',
+    // ── Refund Policy: page-specific content ──
+    'refund.title': 'Refund Policy',
+    'refund.version': 'Version 1.0',
+    'refund.updated': 'Effective date: April 20, 2026',
+    'refund.s1.title': 'Overview',
+    'refund.s1.body': "At UnicornApps, we stand behind the quality of our AI-powered e-commerce tools. We want you to be completely satisfied with your purchase, and we've designed our refund policy to be as transparent and user-friendly as possible.",
+    'refund.s2.title': 'Eligibility (14 Days)',
+    'refund.s2.body': "We offer a full refund within 14 days of purchase, no questions asked. Whether you've used our services or not, if you are not satisfied within the first 14 days, you are eligible for a complete reimbursement of your payment.",
+    'refund.s3.title': 'How to Request',
+    'refund.s3.body': 'To request a refund, simply contact us at support@unicornapps.app. Please include the email address associated with your account and your order number to help us process your request quickly.',
+    'refund.s4.title': 'Processing Time',
+    'refund.s4.body': 'Once your refund request is received, it will be processed immediately. The funds will typically appear in your original payment method within 5-10 business days, depending on your bank or credit card provider.',
   },
   ar: {
     // Login / Auth
@@ -684,6 +722,52 @@ const translations = {
     'privacy.s8.body': 'إذا كان لديك أي أسئلة أو مخاوف بخصوص سياسة الخصوصية هذه، يُرجى التواصل مع فريق الشؤون القانونية والدعم على support@unicornapps.app. ونهدف إلى الرد على جميع الاستفسارات المتعلقة بالخصوصية خلال 48 ساعة عمل.',
     'privacy.s9.title': 'التحديثات',
     'privacy.s9.body': 'قد تتغيّر سياسة الخصوصية هذه مع إطلاق ميزات جديدة أو استجابةً للمتطلبات القانونية. وسنُخطر المستخدمين بأي تغييرات جوهرية عبر البريد الإلكتروني المرتبط بحساباتهم أو من خلال إشعار في لوحة التحكم.',
+    // ── Terms of Service: page-specific content ──
+    // TODO-LEGAL-REVIEW: The Arabic terms.* strings below are MACHINE-GENERATED
+    // DRAFTS and must be reviewed by a qualified legal/Arabic translation
+    // professional before being treated as authoritative. Per legal.governing,
+    // the English version prevails in case of any discrepancy.
+    'terms.title': 'شروط الخدمة',
+    'terms.version': 'الإصدار 1.2',
+    'terms.updated': 'تاريخ السريان: 1 أبريل 2026',
+    'terms.s1.title': 'قبول الشروط',
+    'terms.s1.body': 'باستخدامك UnicornApps فإنك توافق على شروط الخدمة هذه. وإذا كنت لا توافق عليها، فيُرجى عدم استخدام المنصّة.',
+    'terms.s2.title': 'استخدام الخدمة',
+    'terms.s2.body': 'UnicornApps أداة مدعومة بالذكاء الاصطناعي لإنشاء أوصاف المنتجات من الصور. ولا يجوز لك استخدامها إلا للأغراض المشروعة.',
+    'terms.s3.title': 'حسابات المستخدمين',
+    'terms.s3.body': 'أنت مسؤول عن الحفاظ على سرّية بيانات اعتماد حسابك وعن جميع الأنشطة التي تجري من خلاله.',
+    'terms.s4.title': 'الأرصدة والمدفوعات',
+    'terms.s4.body': 'الأرصدة غير قابلة للاسترداد بعد استهلاكها. وتُعالَج المدفوعات بأمان عبر Paddle. ولمزيد من المعلومات حول ضمان الاسترداد خلال 14 يومًا، يُرجى الاطّلاع على سياسة الاسترداد. وقد تتغيّر الأسعار بعد إشعار مسبق.',
+    'terms.s5.title': 'الملكية الفكرية',
+    'terms.s5.body': 'جميع المحتويات المُنشأة مملوكة للمستخدم. ولا تحتفظ UnicornApps بأي حقوق على الأوصاف التي تنشئها أو الصور التي ترفعها.',
+    'terms.s6.title': 'الاستخدامات المحظورة',
+    'terms.s6.body': 'لا يجوز لك استخدام UnicornApps لمعالجة أي محتوى غير قانوني أو ضارّ أو مسيء. وستؤدّي إساءة الاستخدام إلى إنهاء الحساب فورًا.',
+    'terms.s7.title': 'حدود المسؤولية',
+    'terms.s7.body': 'تُقدَّم خدمة UnicornApps «كما هي». ولسنا مسؤولين عن أي أضرار غير مباشرة أو تبعية تنشأ عن استخدام الخدمة.',
+    'terms.s8.title': 'إنهاء الحساب',
+    'terms.s8.body': 'نحتفظ بالحق في تعليق أو إنهاء الحسابات التي تخالف هذه الشروط دون إشعار مسبق.',
+    'terms.s9.title': 'التواصل',
+    'terms.s9.body': 'للاستفسار عن هذه الشروط، تواصل معنا على: support@unicornapps.app',
+    // Terms-specific contact chrome: carries the acceptance acknowledgment, so it
+    // deliberately does NOT reuse the generic legal.contact.heading / .sub.
+    'terms.contact.heading': 'إقرار بالموافقة',
+    'terms.contact.sub': 'باستمرارك في استخدام UnicornApps، فإنك تُقرّ بهذه الشروط وتوافق عليها.',
+    // ── Refund Policy: page-specific content ──
+    // TODO-LEGAL-REVIEW: The Arabic refund.* strings below are MACHINE-GENERATED
+    // DRAFTS and must be reviewed by a qualified legal/Arabic translation
+    // professional before being treated as authoritative. Per legal.governing,
+    // the English version prevails in case of any discrepancy.
+    'refund.title': 'سياسة الاسترداد',
+    'refund.version': 'الإصدار 1.0',
+    'refund.updated': 'تاريخ السريان: 20 أبريل 2026',
+    'refund.s1.title': 'نظرة عامة',
+    'refund.s1.body': 'في UnicornApps نقف خلف جودة أدواتنا للتجارة الإلكترونية المدعومة بالذكاء الاصطناعي. ونريدك أن تكون راضيًا تمامًا عن عملية الشراء، ولذلك صمّمنا سياسة الاسترداد لتكون شفافة وسهلة الاستخدام قدر الإمكان.',
+    'refund.s2.title': 'أحقّية الاسترداد (14 يومًا)',
+    'refund.s2.body': 'نوفّر استردادًا كاملًا خلال 14 يومًا من تاريخ الشراء، دون أي أسئلة. وسواء استخدمت خدماتنا أم لم تستخدمها، إذا لم تكن راضيًا خلال الأيام الأربعة عشر الأولى فأنت مؤهّل لاسترداد كامل المبلغ الذي دفعته.',
+    'refund.s3.title': 'كيفية تقديم الطلب',
+    'refund.s3.body': 'لطلب الاسترداد، تواصل معنا ببساطة على support@unicornapps.app. ويُرجى تضمين عنوان البريد الإلكتروني المرتبط بحسابك ورقم طلبك لمساعدتنا على معالجة طلبك بسرعة.',
+    'refund.s4.title': 'مدّة المعالجة',
+    'refund.s4.body': 'بمجرّد استلام طلب الاسترداد ستتم معالجته على الفور. وتظهر الأموال عادةً في وسيلة الدفع الأصلية خلال 5 إلى 10 أيام عمل، تبعًا للبنك أو مُصدِر بطاقة الائتمان.',
   },
 }
 
