@@ -1,11 +1,21 @@
 -- Migration: remove the 500-credit balance cap from the purchase grant path
 -- (branch fix/remove-purchased-credit-cap). Backlog item 5.
 --
--- STATUS: NOT YET APPLIED. This file is a PLAN, not a fact. It must be run
--- against the live Supabase database by hand (SQL Editor). See the verification
--- queries at the bottom: confirm the CURRENT live definitions BEFORE running,
--- and confirm the new ones AFTER. Do not assume the live DB matches
--- supabase_schema.sql.
+-- STATUS: APPLIED — applied by hand to the live Supabase database on 2026-07-09
+-- (SQL Editor, in a transaction) and verified with the queries at the bottom of
+-- this file:
+--   * has_cap FALSE on both grant_credits_for_purchase and refund_credit
+--     (before: TRUE on both — the LEAST(500, ...) clamp was present).
+--   * EXECUTE privilege: service_role ONLY on both. No anon, no authenticated,
+--     no PUBLIC.
+--   * purchases table: ZERO rows — so no customer was ever affected by the cap.
+--     This retires the one forensic gap the cap left behind: purchases records
+--     only the INTENDED grant (credits_granted), never the applied delta, so a
+--     historical under-grant would have been undetectable. There was none.
+-- Retained for provenance. The bodies are idempotent (CREATE OR REPLACE), so
+-- re-running is harmless. The verification queries at the bottom still apply;
+-- note the "VERIFY BEFORE RUNNING" block describes the pre-migration state and
+-- will no longer match a live database that has this migration applied.
 --
 -- WHY. The cap (`LEAST(500, ...)`) was introduced in d1fc5d6 with a single
 -- stated rationale, in a code comment (src/lib/credits.ts:8-10): it clamps the
