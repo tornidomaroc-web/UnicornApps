@@ -1,151 +1,45 @@
-import { Shield, Mail, ArrowRight, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import type { Metadata } from 'next'
+import LegalDoc, { type LegalSection } from '@/components/legal/LegalDoc'
 
-export const metadata = {
-  title: "Terms of Service | UnicornApps",
-  description: "Official terms and conditions governing the use of UnicornApps services.",
-};
+export const metadata: Metadata = {
+  title: 'Terms of Service | UnicornApps',
+  description: 'Official terms and conditions governing the use of UnicornApps services.',
+}
+
+// Content is a list of i18n key references; LegalDoc resolves them via t() so the
+// page renders fully in EN or AR (see LanguageContext terms.* keys). Update the
+// version / effective-date strings via the terms.version / terms.updated keys.
+const SECTIONS: LegalSection[] = [
+  { id: '01', titleKey: 'terms.s1.title', bodyKey: 'terms.s1.body' },
+  { id: '02', titleKey: 'terms.s2.title', bodyKey: 'terms.s2.body' },
+  { id: '03', titleKey: 'terms.s3.title', bodyKey: 'terms.s3.body' },
+  { id: '04', titleKey: 'terms.s4.title', bodyKey: 'terms.s4.body' },
+  { id: '05', titleKey: 'terms.s5.title', bodyKey: 'terms.s5.body' },
+  { id: '06', titleKey: 'terms.s6.title', bodyKey: 'terms.s6.body' },
+  { id: '07', titleKey: 'terms.s7.title', bodyKey: 'terms.s7.body' },
+  { id: '08', titleKey: 'terms.s8.title', bodyKey: 'terms.s8.body' },
+  { id: '09', titleKey: 'terms.s9.title', bodyKey: 'terms.s9.body' },
+]
 
 export default function TermsPage() {
-  const sections = [
-    {
-      id: "01",
-      title: "Acceptance of Terms",
-      content: "By using UnicornApps, you agree to these Terms of Service. If you do not agree, please do not use the platform."
-    },
-    {
-      id: "02",
-      title: "Use of Service",
-      content: "UnicornApps is an AI-powered tool for generating product descriptions from images. You may use it only for lawful purposes."
-    },
-    {
-      id: "03",
-      title: "User Accounts",
-      content: "You are responsible for maintaining the confidentiality of your account credentials and all activity under your account."
-    },
-    {
-      id: "04",
-      title: "Credits & Payments",
-      content: "Credits are non-refundable once consumed. Payments are processed securely via Paddle. For more information on our 14-day refund guarantee, please see our Refund Policy. Pricing may change with prior notice."
-    },
-    {
-      id: "05",
-      title: "Intellectual Property",
-      content: "All generated content belongs to the user. UnicornApps retains no rights over your generated descriptions or uploaded images."
-    },
-    {
-      id: "06",
-      title: "Prohibited Use",
-      content: "You may not use UnicornApps to process illegal, harmful, or offensive content. Abuse will result in immediate account termination."
-    },
-    {
-      id: "07",
-      title: "Limitation of Liability",
-      content: "UnicornApps is provided \"as is\". We are not liable for any indirect or consequential damages arising from use of the service."
-    },
-    {
-      id: "08",
-      title: "Termination",
-      content: "We reserve the right to suspend or terminate accounts that violate these terms without prior notice."
-    },
-    {
-      id: "09",
-      title: "Contact",
-      content: "For questions about these Terms, contact us at: support@unicornapps.app"
-    }
-  ];
-
   return (
-    <main className="min-h-screen bg-[#070710] text-[#c8cfe0] pt-40 pb-24 px-4 relative overflow-hidden">
-      {/* 1. BACKGROUND EFFECTS - SUBTLE */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-violet-600/5 rounded-full blur-[160px]" />
-        <div className="absolute inset-0 opacity-[0.02]" 
-             style={{ backgroundImage: `linear-gradient(#c8cfe0 1px, transparent 1px), linear-gradient(90deg, #c8cfe0 1px, transparent 1px)`, backgroundSize: '80px 80px' }} 
-        />
-      </div>
-
-      <div className="max-w-3xl mx-auto relative z-10">
-        {/* 2. HEADER SECTION - OFFICIAL & COMPACT */}
-        <div className="border-b border-white/5 pb-12 mb-16 text-center md:text-left">
-          <div className="inline-flex items-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-violet-600/20 flex items-center justify-center border border-violet-500/20">
-               <FileText className="w-4 h-4 text-violet-400" />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-400">Legal & Terms</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-4 uppercase">
-             Terms of Service
-          </h1>
-          <div className="flex flex-col md:flex-row md:items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-500">
-             <span>Version 1.2</span>
-             <span className="hidden md:inline text-white/10">•</span>
-             <span>Effective Date: April 1, 2026</span>
-          </div>
-        </div>
-
-        {/* 3. POLICY SECTIONS - SINGLE COLUMN READABILITY */}
-        <div className="space-y-12 mb-24">
-          {sections.map((section) => (
-            <section key={section.id} className="relative group">
-              <div className="flex gap-6 md:gap-10">
-                 {/* Sidebar Numbering */}
-                 <div className="hidden md:flex flex-col items-center">
-                    <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-[10px] font-black text-slate-500 group-hover:border-violet-500/50 group-hover:text-violet-400 transition-all">
-                       {section.id}
-                    </div>
-                    <div className="flex-1 w-px bg-white/5 my-4" />
-                 </div>
-
-                 {/* Content */}
-                 <div className="flex-1 space-y-4">
-                    <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                       <span className="md:hidden text-violet-500/50 text-xs">{section.id}.</span>
-                       {section.title}
-                    </h2>
-                    <div className="p-8 bg-white/[0.03] border border-white/5 rounded-3xl hover:bg-white/[0.05] transition-all">
-                       <p className="text-slate-400 text-sm font-medium leading-relaxed">
-                          {section.content}
-                       </p>
-                    </div>
-                 </div>
-              </div>
-            </section>
-          ))}
-        </div>
-
-        {/* 4. CONTACT & EXPORT FOOTER */}
-        <div className="bg-white/5 border border-white/10 p-10 rounded-[2.5rem] backdrop-blur-xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/10 rounded-full blur-3xl -tr-16 -mt-16" />
-          
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-             <div className="space-y-2 text-center md:text-left">
-                <h3 className="text-lg font-black text-white uppercase tracking-tight">Acceptance agreement</h3>
-                <p className="text-xs text-slate-500 font-medium tracking-wide">By continuing to use UnicornApps, you acknowledge and agree to these terms.</p>
-             </div>
-             
-             <div className="flex gap-4">
-                <Link href="mailto:support@unicornapps.app">
-                   <Button size="sm" className="h-12 px-6 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-violet-600/20 group">
-                      <Mail className="mr-2 h-3.5 w-3.5" />
-                      Contact Legal
-                      <ArrowRight className="ml-2 h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
-                   </Button>
-                </Link>
-             </div>
-          </div>
-        </div>
-
-        {/* 5. OFFICIAL FOOTER */}
-        <div className="mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 opacity-40">
-           <div className="flex items-center gap-4">
-              <div className="w-6 h-6 bg-white text-black text-[12px] font-black rounded flex items-center justify-center">U</div>
-              <span className="text-[10px] font-black uppercase tracking-widest">UnicornApps Global</span>
-           </div>
-           <p className="text-[10px] font-black uppercase tracking-[0.2em]">Last Updated • 2026</p>
-        </div>
-      </div>
-    </main>
-  );
+    <LegalDoc
+      backHref="/"
+      backLabelKey="legal.back"
+      eyebrowKey="legal.eyebrow"
+      titleKey="terms.title"
+      versionKey="terms.version"
+      updatedKey="terms.updated"
+      sections={SECTIONS}
+      governingKey="legal.governing"
+      contact={{
+        // Terms-specific: this block carries the acceptance acknowledgment, so it
+        // does not reuse the generic legal.contact.heading / legal.contact.sub.
+        headingKey: 'terms.contact.heading',
+        subKey: 'terms.contact.sub',
+        ctaKey: 'legal.contact.cta',
+        email: 'support@unicornapps.app',
+      }}
+    />
+  )
 }
