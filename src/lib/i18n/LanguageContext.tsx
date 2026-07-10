@@ -120,6 +120,11 @@ const translations = {
     'dash.enterVector': 'Tell the AI what to change…',
     'dash.processing': 'Working on it…',
     'dash.error': 'Error: {error}. Please try a different instruction.',
+    // Shown on a 503/429 from /api/generate or /api/refine: the AI did not
+    // answer in time. Deliberately NOT dash.error (its "try a different
+    // instruction" advice is wrong here) nor dash.limitReached (that means the
+    // user is out of credits, which is the opposite of what happened).
+    'dash.aiBusy': 'Our AI is unusually busy right now. Your credit was not used — please try again in a moment.',
     'dash.id': 'ID',
     'dash.asset': 'Asset',
     'dash.platformName': 'Platform',
@@ -493,6 +498,8 @@ const translations = {
     'dash.enterVector': 'أخبر المساعد بما تريد تعديله…',
     'dash.processing': 'جارٍ المعالجة…',
     'dash.error': 'خطأ: {error}. يرجى تجربة تعليمات مختلفة.',
+    // Counterpart of the EN 'dash.aiBusy' note above.
+    'dash.aiBusy': 'الذكاء الاصطناعي مزدحم بشكل غير معتاد حالياً. لم يُخصم رصيدك — يرجى المحاولة مرة أخرى بعد قليل.',
     'dash.id': 'المعرف',
     'dash.asset': 'الأصل',
     'dash.platformName': 'المنصة',
