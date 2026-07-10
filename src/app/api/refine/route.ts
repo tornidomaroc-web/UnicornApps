@@ -1,9 +1,23 @@
 import { createClient } from '@/lib/supabase/server'
 import { REFINE_CREDIT_COST, createServiceClient } from '@/lib/credits'
 import { isRetryableGeminiError, resolveGeminiModels } from '@/lib/gemini'
+import {
+  createDeadline,
+  DeadlineExceededError,
+  SINGLE_ATTEMPT_FLOOR_MS,
+} from '@/lib/deadline'
 import { NextResponse } from 'next/server'
 
+// Must stay in sync with FUNCTION_MAX_DURATION_S in @/lib/deadline, which the
+// deadline arithmetic is derived from. Next.js requires a literal here, so the
+// two cannot share a symbol; a unit test asserts they match.
+export const maxDuration = 60
+
 export async function POST(req: Request) {
+  // Start the clock before ANY awaited work — the model-list call below is an
+  // unbounded network round-trip and spends this budget too.
+  const deadline = createDeadline()
+
   try {
     const supabase = createClient()
 
@@ -142,15 +156,34 @@ export async function POST(req: Request) {
       let apiResponse: Response | null = null
       let data: any = null
       for (const modelName of candidates) {
-        apiResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiApiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          }
-        )
-        data = await apiResponse.json()
+        // Never START an attempt we cannot finish inside the wall. Throws
+        // DeadlineExceededError, which unwinds through the `finally` below and
+        // refunds the credit. This can cut the fallback loop short when time
+        // runs out — a consequence of the budget, not a change to the fan-out
+        // policy.
+        deadline.assertBudget(SINGLE_ATTEMPT_FLOOR_MS)
+        const attempt = deadline.attemptSignal()
+        try {
+          apiResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiApiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+              signal: attempt.signal
+            }
+          )
+          data = await apiResponse.json()
+        } catch (e: any) {
+          // Our deadline timer is the ONLY thing that aborts this signal, so
+          // this is an exact test. Rethrown as DeadlineExceededError so the
+          // outer catch can answer 503. Any other fetch/JSON error propagates
+          // exactly as it did before this change.
+          if (attempt.signal.aborted) throw new DeadlineExceededError()
+          throw e
+        } finally {
+          attempt.cancel()
+        }
         if (apiResponse.ok) break
         const message = data.error?.message || ''
         if (!isRetryableGeminiError(apiResponse.status, message)) break
@@ -188,10 +221,14 @@ export async function POST(req: Request) {
       return NextResponse.json(refinedContent)
     } finally {
       // Refund the reserved credit on any failure between reserve and a valid
-      // result (Gemini failed/exhausted, empty response, or JSON parse failed).
-      // Gated by `settled`: at most once, never on success. Residual: a hard
-      // function timeout/SIGKILL here skips `finally` and leaves the user down
-      // one credit (unrecoverable without manual/periodic intervention).
+      // result (Gemini failed/exhausted, hit our deadline, empty response, or
+      // JSON parse failed). Gated by `settled`: at most once, never on success.
+      //
+      // The deadline above is what makes this block reachable on a hung Gemini
+      // call: we abort before the platform kills the function, so the failure
+      // is a normal rejection rather than a SIGKILL that skips `finally`.
+      // Residual: a platform kill during THIS refund RPC (see DEADLINE_MARGIN_MS),
+      // or a Supabase call that itself hangs — neither is bounded here.
       if (!settled) {
         const { error: refundError } = await creditClient.rpc('refund_credit', {
           p_user_id: user.id,
@@ -203,6 +240,14 @@ export async function POST(req: Request) {
       }
     }
   } catch (error: any) {
+    // Reached only AFTER the inner `finally` has refunded the reserved credit.
+    if (error instanceof DeadlineExceededError) {
+      console.error('Refinement deadline exceeded:', error.message)
+      return NextResponse.json(
+        { error: 'AI service is busy', code: 'DEADLINE_EXCEEDED' },
+        { status: 503, headers: { 'Retry-After': '30' } }
+      )
+    }
     console.error('Refinement error:', error)
     return NextResponse.json(
       { error: 'Failed to refine content: ' + error.message },

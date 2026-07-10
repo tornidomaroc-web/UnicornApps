@@ -296,6 +296,12 @@ export default function DashboardClient({
       const data = await response.json()
 
       if (!response.ok) {
+        // The AI timed out or is rate-limited. The server already refunded the
+        // reserved credit; data.error is an untranslated English string, so
+        // show the localized message instead of surfacing it raw.
+        if (response.status === 503 || response.status === 429) {
+          throw new Error(t('dash.aiBusy'))
+        }
         throw new Error(data.error || t('dash.error').replace('{error}', 'Generation failed'))
       }
 
@@ -357,6 +363,12 @@ export default function DashboardClient({
       }
 
       if (!response.ok) {
+        // The AI timed out or is rate-limited. The server already refunded the
+        // reserved credit; data.error is an untranslated English string, so
+        // show the localized message instead of surfacing it raw.
+        if (response.status === 503 || response.status === 429) {
+          throw new Error(t('dash.aiBusy'))
+        }
         throw new Error(data.error || 'Failed to refine content')
       }
 
