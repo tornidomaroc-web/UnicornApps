@@ -46,6 +46,7 @@ import { Button } from '@/components/ui/button'
 import { useLang } from '@/lib/i18n/LanguageContext'
 import { takePicture } from '@/lib/capacitor'
 import { openCheckout } from '@/lib/checkout'
+import { resolveApiError } from '@/lib/api-error'
 import { PADDLE_EVENT } from '@/lib/paddle'
 import {
   Card,
@@ -293,17 +294,14 @@ export default function DashboardClient({
         }),
       })
 
-      const data = await response.json()
-
+      // Check the status BEFORE parsing. Vercel's platform errors (413, 502, …)
+      // are text/plain, so parsing first turned them into a raw SyntaxError and
+      // hid the real status. See @/lib/api-error.
       if (!response.ok) {
-        // The AI timed out or is rate-limited. The server already refunded the
-        // reserved credit; data.error is an untranslated English string, so
-        // show the localized message instead of surfacing it raw.
-        if (response.status === 503 || response.status === 429) {
-          throw new Error(t('dash.aiBusy'))
-        }
-        throw new Error(data.error || t('dash.error').replace('{error}', 'Generation failed'))
+        throw new Error(await resolveApiError(response, t))
       }
+
+      const data = await response.json()
 
       setResults(data)
       
@@ -349,28 +347,26 @@ export default function DashboardClient({
         }),
       })
 
-      const data = await response.json()
-
-      if (response.status === 403) {
-        setChatHistory(prev => [...prev, {
-          role: 'ai',
-          // Native surface must not steer to upgrade/website (Play policy);
-          // web keeps the existing steering copy. isNative is server-seeded.
-          message: isNative ? t('dash.noCreditsNeutral') : t('dash.noCredits'),
-          timestamp: new Date()
-        }])
-        return
-      }
-
+      // Check the status BEFORE parsing. Vercel's platform errors (413, 502, …)
+      // are text/plain, so parsing first turned them into a raw SyntaxError and
+      // hid the real status. See @/lib/api-error.
       if (!response.ok) {
-        // The AI timed out or is rate-limited. The server already refunded the
-        // reserved credit; data.error is an untranslated English string, so
-        // show the localized message instead of surfacing it raw.
-        if (response.status === 503 || response.status === 429) {
-          throw new Error(t('dash.aiBusy'))
+        // 403 keeps its bespoke chat-message UI rather than raising. (403 is
+        // never `ok`, so this branch is reached exactly as often as before.)
+        if (response.status === 403) {
+          setChatHistory(prev => [...prev, {
+            role: 'ai',
+            // Native surface must not steer to upgrade/website (Play policy);
+            // web keeps the existing steering copy. isNative is server-seeded.
+            message: isNative ? t('dash.noCreditsNeutral') : t('dash.noCredits'),
+            timestamp: new Date()
+          }])
+          return
         }
-        throw new Error(data.error || 'Failed to refine content')
+        throw new Error(await resolveApiError(response, t))
       }
+
+      const data = await response.json()
 
       setResults(data)
       setRefineInput('')

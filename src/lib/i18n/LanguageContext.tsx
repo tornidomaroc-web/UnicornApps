@@ -136,7 +136,14 @@ const translations = {
     'dash.noSignatures': 'Nothing here yet, generate your first listing',
     'dash.vectorSent': 'Sent',
     'dash.matrixRefined': 'Updated',
-    'dash.filesizeError': 'File size too large. Please use an image under 4MB.',
+    // Deliberately states NO number. The real ceiling is not a fixed file size:
+    // the image is base64-encoded (+33%) and the request limit counts headers,
+    // so auth-cookie size shifts it per session. Naming "4MB" was a false claim.
+    'dash.filesizeError': 'This image is too large to upload. Please try a smaller image.',
+    // Any other failure whose body is not JSON (502, 504, an HTML error page).
+    // Previously surfaced as a raw English SyntaxError. Deliberately NOT
+    // dash.error, whose "try a different instruction" is wrong advice here.
+    'dash.requestFailed': 'Something went wrong. Please try again.',
     'dash.cameraError': 'Camera access denied. Please allow camera permissions.',
     'dash.visitStore': 'Visit the Store',
     'dash.newArrival': 'New Arrival',
@@ -511,7 +518,9 @@ const translations = {
     'dash.noSignatures': 'لا يوجد شيء هنا بعد، أنشئ أول محتوى لك',
     'dash.vectorSent': 'تم الإرسال',
     'dash.matrixRefined': 'تم التحديث',
-    'dash.filesizeError': 'حجم الملف كبير جداً. يرجى استخدام صورة أقل من 4 ميجابايت.',
+    // Counterparts of the EN 'dash.filesizeError' / 'dash.requestFailed' notes above.
+    'dash.filesizeError': 'هذه الصورة كبيرة جداً للرفع. يرجى تجربة صورة أصغر.',
+    'dash.requestFailed': 'حدث خطأ ما. يرجى المحاولة مرة أخرى.',
     'dash.cameraError': 'تم رفض الوصول إلى الكاميرا. يرجى السماح بأذونات الكاميرا.',
     'dash.visitStore': 'زيارة المتجر',
     'dash.newArrival': 'وصل حديثاً',
