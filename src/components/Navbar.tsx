@@ -74,15 +74,26 @@ export default function Navbar() {
                     {t('nav.dashboard')}
                   </Button>
                 </Link>
-                <Link href="/account">
-                  <Button variant="ghost" size="icon" className="w-8 h-8 rounded-xl text-slate-500 hover:text-violet-400 hover:bg-violet-500/10 transition-all">
-                    <User className="w-3.5 h-3.5" />
+                <Link href="/account" aria-label={t('nav.account')}>
+                  <Button variant="ghost" size="icon" className="w-8 h-8 rounded-xl text-ink-2 hover:text-violet-400 hover:bg-violet-500/10 transition-all">
+                    <User aria-hidden className="w-3.5 h-3.5" />
                   </Button>
                 </Link>
+                {/* Logout is icon-only below `sm` (the pill has no room for a second
+                    label at ~360-390px without clipping under body overflow-x-hidden);
+                    the icon is brighter (ink-1) than the account icon (ink-2) so the two
+                    are no longer indistinguishable, and aria-label names it for AT at
+                    every width. The visible word appears from `sm` up where there is
+                    room. tracking is ltr:-guarded so Arabic letter-joining survives. */}
                 <form action={logout}>
-                  <Button variant="ghost" size="icon" type="submit" className="w-8 h-8 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all">
-                    <LogOut className="w-3.5 h-3.5" />
-                  </Button>
+                  <button
+                    type="submit"
+                    aria-label={t('nav.logout')}
+                    className="h-8 w-8 sm:w-auto sm:px-3 flex items-center justify-center gap-1.5 rounded-xl text-ink-1 hover:text-red-400 hover:bg-red-500/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 text-[9px] font-black uppercase ltr:tracking-widest"
+                  >
+                    <LogOut aria-hidden className="w-3.5 h-3.5 shrink-0" />
+                    <span className="hidden sm:inline">{t('nav.logout')}</span>
+                  </button>
                 </form>
               </div>
             </div>
