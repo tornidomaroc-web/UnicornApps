@@ -7,29 +7,71 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, Zap, LogOut, User } from "lucide-react";
 import { useLang } from '@/lib/i18n/LanguageContext';
 import { useEffect, useState } from "react";
+import type { User as AuthUser } from "@supabase/supabase-js";
 
 export default function Navbar() {
   const { lang, toggleLang, t } = useLang();
-  const [user, setUser] = useState<any>(null);
+  // `undefined` = session still resolving; `null` = confirmed signed-out; an object
+  // = signed-in. The third state exists so the navbar never asserts a definitively
+  // wrong auth state on first paint (SSR renders `undefined` -> a neutral placeholder,
+  // not LOGIN), which is what made a signed-in user see the signed-out navbar.
+  const [user, setUser] = useState<AuthUser | null | undefined>(undefined);
   const [credits, setCredits] = useState(0);
-  const supabase = createClient();
 
+  // Resolve the session and STAY in sync. The old code did a one-shot
+  // getUser() on mount — a network round-trip that ran before the browser
+  // session had hydrated from the cookie, returned null, and never re-checked
+  // (there was no auth subscription anywhere). getSession() reads the session
+  // locally from the cookie (no network) which is correct for a display-only
+  // navbar, and onAuthStateChange keeps it live across sign-in / sign-out /
+  // token-refresh with no full page reload.
   useEffect(() => {
-    const getData = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      setUser(authUser);
-      
-      if (authUser) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('credits')
-          .eq('id', authUser.id)
-          .single();
-        setCredits(profile?.credits || 0);
-      }
+    const supabase = createClient();
+    let active = true;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (active) setUser(session?.user ?? null);
+    });
+
+    // Keep the callback synchronous and free of other supabase calls — awaiting
+    // supabase inside onAuthStateChange can deadlock. Credit loading lives in the
+    // separate effect below, keyed on the user id.
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
     };
-    getData();
-  }, [supabase]);
+  }, []);
+
+  // Credits are a display-only badge. Fetch them whenever the signed-in user
+  // changes (own-row read, permitted by the profiles SELECT RLS policy). Keyed on
+  // the id — a primitive — so a token refresh (same user, new token object) does
+  // not refetch, and so the effect depends only on what it reads.
+  const userId = user?.id;
+  useEffect(() => {
+    if (!userId) {
+      setCredits(0);
+      return;
+    }
+    const supabase = createClient();
+    let active = true;
+    supabase
+      .from('profiles')
+      .select('credits')
+      .eq('id', userId)
+      .single()
+      .then(({ data }) => {
+        if (active) setCredits(data?.credits ?? 0);
+      });
+    return () => {
+      active = false;
+    };
+  }, [userId]);
 
   return (
     <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#070710]/80 backdrop-blur-xl transition-all duration-500 hover:bg-[#070710]/95">
@@ -59,7 +101,15 @@ export default function Navbar() {
             {lang === 'en' ? '🇸🇦 AR' : '🇬🇧 EN'}
           </button>
 
-          {user ? (
+          {user === undefined ? (
+            // Session still resolving. A neutral, non-interactive placeholder that
+            // asserts NEITHER state — sized near the resolved clusters to limit
+            // layout shift. aria-hidden: transient, nothing for AT to announce.
+            <div
+              className="h-10 w-24 rounded-2xl bg-white/5 animate-pulse"
+              aria-hidden="true"
+            />
+          ) : user ? (
             <div className="flex items-center gap-2 sm:gap-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-1.5 sm:pl-4 transition-all hover:border-violet-500/30">
               <div className="hidden sm:flex items-center gap-2">
                 <Zap className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
