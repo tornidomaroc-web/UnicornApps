@@ -1,35 +1,43 @@
 'use client'
 
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { logout } from "@/app/(auth)/login/actions";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Zap, LogOut, User } from "lucide-react";
 import { useLang } from '@/lib/i18n/LanguageContext';
 import { useEffect, useState } from "react";
+import type { User as AuthUser } from "@supabase/supabase-js";
+import { deriveNavView, reconcileNavState } from "./navbar-auth";
 
-export default function Navbar() {
+export default function Navbar({
+  initialUser = null,
+  initialCredits = 0,
+}: {
+  initialUser?: AuthUser | null;
+  initialCredits?: number;
+}) {
   const { lang, toggleLang, t } = useLang();
-  const [user, setUser] = useState<any>(null);
-  const [credits, setCredits] = useState(0);
-  const supabase = createClient();
+  // Seed from the SERVER session (passed down by the root layout). The browser
+  // Supabase client cannot read the auth cookie in this deployment, so we do NOT
+  // resolve auth on the client — a client read returns null and would clobber the
+  // correct server seed (that was the original bug). `undefined` remains a valid
+  // state (neutral placeholder, never LOGIN) purely as a defensive fallback.
+  const [user, setUser] = useState<AuthUser | null | undefined>(initialUser);
+  const [credits, setCredits] = useState(initialCredits);
 
+  // Every auth transition (login/signup/logout/updatePassword) calls
+  // revalidatePath('/', 'layout'), which re-renders this layout and passes a
+  // fresh initialUser/initialCredits. Mirror those into local state so the
+  // persisted navbar instance updates without a full page reload. reconcileNavState
+  // makes "server wins" explicit and test-pinned.
   useEffect(() => {
-    const getData = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      setUser(authUser);
-      
-      if (authUser) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('credits')
-          .eq('id', authUser.id)
-          .single();
-        setCredits(profile?.credits || 0);
-      }
-    };
-    getData();
-  }, [supabase]);
+    setUser((prev) => reconcileNavState(prev, initialUser));
+  }, [initialUser]);
+  useEffect(() => {
+    setCredits(initialCredits);
+  }, [initialCredits]);
+
+  const view = deriveNavView(user);
 
   return (
     <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#070710]/80 backdrop-blur-xl transition-all duration-500 hover:bg-[#070710]/95">
@@ -42,7 +50,7 @@ export default function Navbar() {
               UnicornApps
             </span>
           </Link>
-          
+
           <div className="hidden lg:flex items-center gap-8 text-[10px] uppercase font-black tracking-[0.2em] text-[#c8cfe0]/60">
             <Link href="/" className="hover:text-violet-400 transition-all">{t('nav.home')}</Link>
             <Link href="/features" className="hover:text-violet-400 transition-all">{t('nav.features')}</Link>
@@ -52,14 +60,22 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3 sm:gap-6">
           {/* Language Toggle */}
-          <button 
-            onClick={toggleLang} 
+          <button
+            onClick={toggleLang}
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white hover:border-violet-500/50 transition-all"
           >
             {lang === 'en' ? '🇸🇦 AR' : '🇬🇧 EN'}
           </button>
 
-          {user ? (
+          {view === 'loading' ? (
+            // Session still resolving. A neutral, non-interactive placeholder that
+            // asserts NEITHER state — sized near the resolved clusters to limit
+            // layout shift. aria-hidden: transient, nothing for AT to announce.
+            <div
+              className="h-10 w-24 rounded-2xl bg-white/5 animate-pulse"
+              aria-hidden="true"
+            />
+          ) : view === 'authed' ? (
             <div className="flex items-center gap-2 sm:gap-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-1.5 sm:pl-4 transition-all hover:border-violet-500/30">
               <div className="hidden sm:flex items-center gap-2">
                 <Zap className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
@@ -74,15 +90,26 @@ export default function Navbar() {
                     {t('nav.dashboard')}
                   </Button>
                 </Link>
-                <Link href="/account">
-                  <Button variant="ghost" size="icon" className="w-8 h-8 rounded-xl text-slate-500 hover:text-violet-400 hover:bg-violet-500/10 transition-all">
-                    <User className="w-3.5 h-3.5" />
+                <Link href="/account" aria-label={t('nav.account')}>
+                  <Button variant="ghost" size="icon" className="w-8 h-8 rounded-xl text-ink-2 hover:text-violet-400 hover:bg-violet-500/10 transition-all">
+                    <User aria-hidden className="w-3.5 h-3.5" />
                   </Button>
                 </Link>
+                {/* Logout is icon-only below `sm` (the pill has no room for a second
+                    label at ~360-390px without clipping under body overflow-x-hidden);
+                    the icon is brighter (ink-1) than the account icon (ink-2) so the two
+                    are no longer indistinguishable, and aria-label names it for AT at
+                    every width. The visible word appears from `sm` up where there is
+                    room. tracking is ltr:-guarded so Arabic letter-joining survives. */}
                 <form action={logout}>
-                  <Button variant="ghost" size="icon" type="submit" className="w-8 h-8 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all">
-                    <LogOut className="w-3.5 h-3.5" />
-                  </Button>
+                  <button
+                    type="submit"
+                    aria-label={t('nav.logout')}
+                    className="h-8 w-8 sm:w-auto sm:px-3 flex items-center justify-center gap-1.5 rounded-xl text-ink-1 hover:text-red-400 hover:bg-red-500/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 text-[9px] font-black uppercase ltr:tracking-widest"
+                  >
+                    <LogOut aria-hidden className="w-3.5 h-3.5 shrink-0" />
+                    <span className="hidden sm:inline">{t('nav.logout')}</span>
+                  </button>
                 </form>
               </div>
             </div>

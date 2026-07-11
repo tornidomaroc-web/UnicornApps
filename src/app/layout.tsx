@@ -1,11 +1,9 @@
-'use client'
-
 import { Inter, IBM_Plex_Sans_Arabic } from "next/font/google";
-import { useEffect } from "react";
+import type { User } from "@supabase/supabase-js";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import { LanguageProvider } from "@/lib/i18n/LanguageContext";
-import { initializeApp } from "@/lib/capacitor";
+import Providers from "@/components/Providers";
+import { createClient } from "@/lib/supabase/server";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,15 +27,51 @@ export const viewport = {
   viewportFit: 'cover',
 }
 
+// Read the auth session on the SERVER and seed the navbar with it. The browser
+// Supabase client cannot see the auth cookie in this deployment, so a client
+// getSession() returns null and the navbar rendered a signed-out state for a
+// signed-in user (item 30 root cause). getSession() (cookie decode, no network)
+// is sufficient here because the navbar is DISPLAY-ONLY: every protected route
+// and the money path are independently gated server-side (middleware.ts uses the
+// validated getUser()), and the credits read below is validated by RLS. The
+// try/catch is load-bearing: any Supabase/env failure must degrade to today's
+// behavior (page still renders, navbar shows signed-out) rather than throwing
+// out of the root layout and white-screening every route for live Android
+// WebView users.
+async function getNavSeed(): Promise<{ user: User | null; credits: number }> {
+  try {
+    const supabase = createClient();
+    if (!supabase) return { user: null, credits: 0 };
 
-export default function RootLayout({
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const user = session?.user ?? null;
+    if (!user) return { user: null, credits: 0 };
+
+    // Own-row read under the profiles SELECT RLS policy (auth.uid() = id). This
+    // is the anon server client, NOT the service role — so PostgREST validates
+    // the session's JWT signature: a real session returns the true balance, a
+    // forged cookie (which getSession does not cryptographically verify) returns
+    // no row -> 0. That is what keeps the getSession seed safe from spoofing.
+    const { data } = await supabase
+      .from("profiles")
+      .select("credits")
+      .eq("id", user.id)
+      .single();
+
+    return { user, credits: data?.credits ?? 0 };
+  } catch {
+    return { user: null, credits: 0 };
+  }
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  useEffect(() => {
-    initializeApp();
-  }, []);
+  const { user, credits } = await getNavSeed();
 
   return (
     <html lang="en">
@@ -49,13 +83,13 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={`${inter.className} ${ibmPlexArabic.variable}`}>
-        <LanguageProvider>
+        <Providers>
           <div className="flex min-h-screen flex-col relative">
             <div className="matrix-glow-shell" />
-            <Navbar />
+            <Navbar initialUser={user} initialCredits={credits} />
             <main className="flex-1 mt-16">{children}</main>
           </div>
-        </LanguageProvider>
+        </Providers>
       </body>
     </html>
   );

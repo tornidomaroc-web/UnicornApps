@@ -70,6 +70,8 @@ const translations = {
     'nav.getStarted': 'Get Started',
     'nav.dashboard': 'Dashboard',
     'nav.credits': 'Credits',
+    'nav.account': 'Account',
+    'nav.logout': 'Sign out',
     // Hero
     'hero.badge': 'Powered by Google Gemini. Now Live',
     'hero.title1': 'Turn Product Images',
@@ -457,6 +459,8 @@ const translations = {
     'nav.getStarted': 'ابدأ الآن',
     'nav.dashboard': 'لوحة التحكم',
     'nav.credits': 'رصيد',
+    'nav.account': 'الحساب',
+    'nav.logout': 'تسجيل الخروج',
     // Hero
     'hero.badge': 'مدعوم بـ Google Gemini. متاح الآن',
     'hero.title1': 'حوّل صور منتجاتك',
