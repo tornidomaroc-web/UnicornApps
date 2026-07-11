@@ -19,7 +19,11 @@ import { useIsNative } from "@/hooks/useIsNative";
 import { openCheckout } from "@/lib/checkout";
 import { PADDLE_EVENT } from "@/lib/paddle";
 
-export default function PricingClient() {
+export default function PricingClient({
+  initialUserId,
+}: {
+  initialUserId: string | null;
+}) {
   const { t } = useLang();
   // Backstop: the server already redirects /pricing → / on native, but if that
   // is ever bypassed, default to HIDDEN and only reveal paid tiers once the
@@ -27,24 +31,15 @@ export default function PricingClient() {
   const { isNative, resolved } = useIsNative();
   const showPaid = resolved && !isNative;
   const router = useRouter();
-  const [userId, setUserId] = useState<string | null>(null);
+  // Seeded from the SERVER (page.tsx reads the validated session and passes the
+  // id down). We do NOT read auth in the browser: the browser Supabase client
+  // cannot see the auth cookie in this deployment, so a client getSession()
+  // returned null for signed-in users and the paid CTA dead-ended at /login.
+  // This page remounts on every visit (page is force-dynamic) and auth
+  // transitions navigate away from /pricing, so a one-time seed is enough — no
+  // reconcile effect needed.
+  const [userId] = useState<string | null>(initialUserId);
   const [status, setStatus] = useState<'success' | 'failed' | null>(null);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const { createClient } = await import('@/lib/supabase/client')
-        const supabase = createClient()
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user) {
-          setUserId(session.user.id)
-        }
-      } catch (err) {
-        console.error('Failed to fetch user session', err)
-      }
-    }
-    fetchUser()
-  }, []);
 
   // Surface the Paddle checkout lifecycle (re-broadcast as PADDLE_EVENT by
   // lib/paddle.ts). The overlay stays in-page; we show a transitional banner.
