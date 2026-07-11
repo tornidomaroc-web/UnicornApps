@@ -1,77 +1,43 @@
 'use client'
 
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { logout } from "@/app/(auth)/login/actions";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Zap, LogOut, User } from "lucide-react";
 import { useLang } from '@/lib/i18n/LanguageContext';
 import { useEffect, useState } from "react";
 import type { User as AuthUser } from "@supabase/supabase-js";
+import { deriveNavView, reconcileNavState } from "./navbar-auth";
 
-export default function Navbar() {
+export default function Navbar({
+  initialUser = null,
+  initialCredits = 0,
+}: {
+  initialUser?: AuthUser | null;
+  initialCredits?: number;
+}) {
   const { lang, toggleLang, t } = useLang();
-  // `undefined` = session still resolving; `null` = confirmed signed-out; an object
-  // = signed-in. The third state exists so the navbar never asserts a definitively
-  // wrong auth state on first paint (SSR renders `undefined` -> a neutral placeholder,
-  // not LOGIN), which is what made a signed-in user see the signed-out navbar.
-  const [user, setUser] = useState<AuthUser | null | undefined>(undefined);
-  const [credits, setCredits] = useState(0);
+  // Seed from the SERVER session (passed down by the root layout). The browser
+  // Supabase client cannot read the auth cookie in this deployment, so we do NOT
+  // resolve auth on the client — a client read returns null and would clobber the
+  // correct server seed (that was the original bug). `undefined` remains a valid
+  // state (neutral placeholder, never LOGIN) purely as a defensive fallback.
+  const [user, setUser] = useState<AuthUser | null | undefined>(initialUser);
+  const [credits, setCredits] = useState(initialCredits);
 
-  // Resolve the session and STAY in sync. The old code did a one-shot
-  // getUser() on mount — a network round-trip that ran before the browser
-  // session had hydrated from the cookie, returned null, and never re-checked
-  // (there was no auth subscription anywhere). getSession() reads the session
-  // locally from the cookie (no network) which is correct for a display-only
-  // navbar, and onAuthStateChange keeps it live across sign-in / sign-out /
-  // token-refresh with no full page reload.
+  // Every auth transition (login/signup/logout/updatePassword) calls
+  // revalidatePath('/', 'layout'), which re-renders this layout and passes a
+  // fresh initialUser/initialCredits. Mirror those into local state so the
+  // persisted navbar instance updates without a full page reload. reconcileNavState
+  // makes "server wins" explicit and test-pinned.
   useEffect(() => {
-    const supabase = createClient();
-    let active = true;
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (active) setUser(session?.user ?? null);
-    });
-
-    // Keep the callback synchronous and free of other supabase calls — awaiting
-    // supabase inside onAuthStateChange can deadlock. Credit loading lives in the
-    // separate effect below, keyed on the user id.
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  // Credits are a display-only badge. Fetch them whenever the signed-in user
-  // changes (own-row read, permitted by the profiles SELECT RLS policy). Keyed on
-  // the id — a primitive — so a token refresh (same user, new token object) does
-  // not refetch, and so the effect depends only on what it reads.
-  const userId = user?.id;
+    setUser((prev) => reconcileNavState(prev, initialUser));
+  }, [initialUser]);
   useEffect(() => {
-    if (!userId) {
-      setCredits(0);
-      return;
-    }
-    const supabase = createClient();
-    let active = true;
-    supabase
-      .from('profiles')
-      .select('credits')
-      .eq('id', userId)
-      .single()
-      .then(({ data }) => {
-        if (active) setCredits(data?.credits ?? 0);
-      });
-    return () => {
-      active = false;
-    };
-  }, [userId]);
+    setCredits(initialCredits);
+  }, [initialCredits]);
+
+  const view = deriveNavView(user);
 
   return (
     <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#070710]/80 backdrop-blur-xl transition-all duration-500 hover:bg-[#070710]/95">
@@ -84,7 +50,7 @@ export default function Navbar() {
               UnicornApps
             </span>
           </Link>
-          
+
           <div className="hidden lg:flex items-center gap-8 text-[10px] uppercase font-black tracking-[0.2em] text-[#c8cfe0]/60">
             <Link href="/" className="hover:text-violet-400 transition-all">{t('nav.home')}</Link>
             <Link href="/features" className="hover:text-violet-400 transition-all">{t('nav.features')}</Link>
@@ -94,14 +60,14 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3 sm:gap-6">
           {/* Language Toggle */}
-          <button 
-            onClick={toggleLang} 
+          <button
+            onClick={toggleLang}
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white hover:border-violet-500/50 transition-all"
           >
             {lang === 'en' ? '🇸🇦 AR' : '🇬🇧 EN'}
           </button>
 
-          {user === undefined ? (
+          {view === 'loading' ? (
             // Session still resolving. A neutral, non-interactive placeholder that
             // asserts NEITHER state — sized near the resolved clusters to limit
             // layout shift. aria-hidden: transient, nothing for AT to announce.
@@ -109,7 +75,7 @@ export default function Navbar() {
               className="h-10 w-24 rounded-2xl bg-white/5 animate-pulse"
               aria-hidden="true"
             />
-          ) : user ? (
+          ) : view === 'authed' ? (
             <div className="flex items-center gap-2 sm:gap-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-1.5 sm:pl-4 transition-all hover:border-violet-500/30">
               <div className="hidden sm:flex items-center gap-2">
                 <Zap className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
