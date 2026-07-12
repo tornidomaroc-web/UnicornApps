@@ -69,8 +69,11 @@ describe('Credit Logic', () => {
   })
 
   it('reserves 1 credit BEFORE calling Gemini on a successful generation', async () => {
-    // reserve_credit RPC succeeds (atomic decrement-if-sufficient returns true).
-    mockSupabase.rpc.mockResolvedValueOnce({ data: true, error: null });
+    // check_rate_limits runs first (item 21) and must admit the request; then
+    // reserve_credit succeeds (atomic decrement-if-sufficient returns true).
+    mockSupabase.rpc
+      .mockResolvedValueOnce({ data: 'allowed', error: null }) // check_rate_limits
+      .mockResolvedValueOnce({ data: true, error: null });     // reserve_credit
 
     const req = new Request('http://localhost/api/generate', {
       method: 'POST',
@@ -92,8 +95,11 @@ describe('Credit Logic', () => {
   })
 
   it('rejects generation when user has 0 credits (reserve returns false)', async () => {
-    // reserve_credit finds credits < cost -> no row matched -> returns false.
-    mockSupabase.rpc.mockResolvedValueOnce({ data: false, error: null });
+    // check_rate_limits admits the request; then reserve_credit finds
+    // credits < cost -> no row matched -> returns false.
+    mockSupabase.rpc
+      .mockResolvedValueOnce({ data: 'allowed', error: null }) // check_rate_limits
+      .mockResolvedValueOnce({ data: false, error: null });    // reserve_credit
 
     const req = new Request('http://localhost/api/generate', {
       method: 'POST',

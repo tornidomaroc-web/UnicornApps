@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { GENERATE_CREDIT_COST, createServiceClient } from '@/lib/credits'
 import { isRetryableGeminiError, resolveGeminiModels } from '@/lib/gemini'
+import { checkRateLimit } from '@/lib/rate-limit'
 import {
   createDeadline,
   DeadlineExceededError,
@@ -43,6 +44,19 @@ export async function POST(req: Request) {
     const { image, lang } = await req.json()
     if (!image) {
       return NextResponse.json({ error: 'Image is required' }, { status: 400 })
+    }
+
+    // Rate limit BEFORE any Gemini work (incl. the resolveGeminiModels ListModels
+    // quota call) and BEFORE reserve_credit: a throttled request does zero Gemini
+    // work and never touches a credit. The 429 maps to dash.aiBusy (EN/AR) via
+    // src/lib/api-error.ts by STATUS, so no new UX is needed. checkRateLimit fails
+    // OPEN on any error, so a limiter fault can never block generation here.
+    const rateLimit = await checkRateLimit(user.id)
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'AI service is busy', code: 'RATE_LIMITED', scope: rateLimit.scope },
+        { status: 429, headers: { 'Retry-After': '30' } }
+      )
     }
 
     const isArabic = lang === 'ar'

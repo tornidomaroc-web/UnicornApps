@@ -108,6 +108,13 @@ export function createSupabaseMock(): SupabaseMock {
     // no-op), or { data: null, error: {...} } (DB failure -> handler throws 500).
     rpc: (fn: string, params?: any) => {
       calls.push({ table: `rpc:${fn}`, method: 'rpc', args: [fn, params] })
+      // The rate limiter (item 21) runs check_rate_limits BEFORE reserve_credit on
+      // every generate/refine request. It is not part of the money-path result
+      // sequence these tests script, and it fails open — so answer 'allowed'
+      // WITHOUT consuming a queued result, or it would steal reserve_credit's.
+      if (fn === 'check_rate_limits') {
+        return Promise.resolve({ data: 'allowed', error: null })
+      }
       return lazyResult()
     },
     auth: {
