@@ -1,6 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { GENERATE_CREDIT_COST, createServiceClient } from '@/lib/credits'
-import { isRetryableGeminiError, resolveGeminiModels } from '@/lib/gemini'
+import {
+  classifyGeminiError,
+  resolveGeminiModels,
+  MAX_MODEL_ATTEMPTS,
+  QuotaExhaustedError,
+} from '@/lib/gemini'
 import { checkRateLimit } from '@/lib/rate-limit'
 import {
   createDeadline,
@@ -77,7 +82,7 @@ export async function POST(req: Request) {
 
     // Model resolution is a cheap list call — do it BEFORE the reserve so a
     // resolution failure is a 500 with NO credit touched.
-    const candidates = (await resolveGeminiModels(geminiApiKey)).slice(0, 3)
+    const candidates = (await resolveGeminiModels(geminiApiKey)).slice(0, MAX_MODEL_ATTEMPTS)
     const genAI = new GoogleGenerativeAI(geminiApiKey)
 
     // Prepare image for Gemini (assuming base64)
@@ -181,8 +186,14 @@ ${languageInstruction}
           // answer 503 instead of leaking Google's English text as a 500.
           if (attempt.signal.aborted) throw new DeadlineExceededError()
           const status = e?.status ?? e?.response?.status ?? 0
-          if (!isRetryableGeminiError(status, String(e?.message ?? ''))) throw e
-          console.warn(`Gemini ${modelName} over capacity, trying next model`)
+          const errorClass = classifyGeminiError(status, String(e?.message ?? ''))
+          // QUOTA is a fact about the KEY, not the model: the next candidate
+          // shares the same quota bucket and would fail too, burning another
+          // call from a 20/day budget to produce the same failure. Stop now.
+          // Thrown from INSIDE this try so the `finally` below still refunds.
+          if (errorClass === 'quota') throw new QuotaExhaustedError()
+          if (errorClass === 'fatal') throw e
+          console.warn(`Gemini ${modelName} overloaded (transient), trying next model`)
         } finally {
           attempt.cancel()
         }
@@ -247,6 +258,17 @@ ${languageInstruction}
     }
   } catch (error: any) {
     // Reached only AFTER the inner `finally` has refunded the reserved credit.
+    if (error instanceof QuotaExhaustedError) {
+      // Google's own quota is exhausted (distinct from RATE_LIMITED, which is OUR
+      // limiter throttling this user). 503 maps to dash.aiBusy (EN/AR) by STATUS
+      // in src/lib/api-error.ts — previously this fell through to a 500 that
+      // leaked Google's untranslated English message to the user.
+      console.error('Gemini quota exhausted (upstream)')
+      return NextResponse.json(
+        { error: 'AI service is busy', code: 'UPSTREAM_QUOTA_EXHAUSTED' },
+        { status: 503, headers: { 'Retry-After': '60' } }
+      )
+    }
     if (error instanceof DeadlineExceededError) {
       console.error('Generation deadline exceeded:', error.message)
       return NextResponse.json(

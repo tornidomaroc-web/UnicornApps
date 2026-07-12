@@ -50,11 +50,53 @@ export async function resolveGeminiModels(apiKey: string): Promise<string[]> {
   return names
 }
 
-// True for quota / capacity errors where trying another model can succeed.
-export function isRetryableGeminiError(status: number, message: string): boolean {
-  return (
-    status === 429 ||
-    status === 503 ||
-    /high demand|overloaded|temporarily|quota|resource.?exhausted/i.test(message)
-  )
+// How many candidates a single request may try. Every attempt is a real
+// generateContent call against a SHARED free-tier quota (5 RPM / 20 RPD for the
+// whole app), so this is a quota multiplier, not just a retry count: one request
+// can burn up to this many calls. Kept at 2 — the candidate list is rank-sorted,
+// so the 2nd entry carries most of the resilience value while the 3rd is
+// typically a lower-quality preview model that still costs a full call.
+export const MAX_MODEL_ATTEMPTS = 2
+
+// Thrown when Gemini reports a QUOTA fact. Trying another model would be waste
+// (see classifyGeminiError), so the routes stop immediately and answer 503
+// rather than burning the rest of the budget on calls that will also fail.
+export class QuotaExhaustedError extends Error {
+  constructor(message = 'Gemini quota exhausted') {
+    super(message)
+    this.name = 'QuotaExhaustedError'
+  }
+}
+
+export type GeminiErrorClass =
+  // Key/project-level: the quota bucket is shared across ALL models on this key,
+  // so a different model on the SAME key will fail too. Do NOT fall back.
+  | 'quota'
+  // This model is genuinely overloaded/down. Another model CAN succeed —
+  // this is the only case where falling back earns its cost.
+  | 'transient'
+  // Our bug or their refusal (400, safety block, malformed request). Retrying
+  // any model is pointless.
+  | 'fatal'
+
+/**
+ * Classify a Gemini failure to decide whether falling back to another model can
+ * possibly help.
+ *
+ * QUOTA IS TESTED FIRST, so it wins every ambiguous case (a 503 carrying a quota
+ * message, a 429 carrying "overloaded"). That ordering is deliberate and rests on
+ * an ASYMMETRIC COST: calling a genuine overload "quota" costs one lost retry;
+ * calling quota "overload" costs MAX_MODEL_ATTEMPTS x the daily budget at the
+ * exact moment the budget is already exhausted. Against a 20 RPD ceiling those
+ * are not comparable, so we bias to quota.
+ *
+ * Note `quota` / `resource exhausted` used to sit in the FALLBACK regex — they
+ * were the most damaging entries in it.
+ */
+export function classifyGeminiError(status: number, message: string): GeminiErrorClass {
+  if (status === 429) return 'quota'
+  if (/quota|resource.?exhausted|rate.?limit/i.test(message)) return 'quota'
+  if (status === 503) return 'transient'
+  if (/high demand|overloaded|temporarily|unavailable/i.test(message)) return 'transient'
+  return 'fatal'
 }

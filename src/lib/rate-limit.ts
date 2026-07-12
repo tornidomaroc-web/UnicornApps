@@ -12,10 +12,27 @@ import { createServiceClient } from '@/lib/credits'
 // generation.
 //
 // Limits are read from plain server env (NOT NEXT_PUBLIC_, so they are read at
-// runtime and tunable in Vercel without a rebuild). Defaults are conservative
-// against the ~10-15 RPM shared free-tier ceiling: the global cap sits below it
-// so we 429 locally before Google does, and the per-user cap sits below the
-// global so one user cannot starve paying subscribers.
+// runtime and tunable in Vercel without a rebuild).
+//
+// THE REAL CEILING (read off the Google AI Studio dashboard, 2026-07-12): the
+// served flash-class model is capped at 5 RPM and 20 RPD on the free tier, for
+// the WHOLE APP — one shared key, one quota bucket for every user. The earlier
+// "~10-15 RPM" figure in this comment was a guess, and it was WRONG.
+//
+// WHAT THIS LIMITER DOES: makes throttling fair (per-user window), clean (a local
+// 429 -> dash.aiBusy instead of Google's raw English), and credit-safe (checked
+// before reserve_credit, so a throttled request never spends a credit).
+//
+// WHAT IT DOES NOT DO: it does NOT guarantee we stay under Google's ceiling. It
+// counts REQUESTS; Google counts CALLS. Before PR 2a one request could spend up
+// to 3 generateContent calls (a 3-model fallback on ANY 429/503), so a
+// request-counted cap could overshoot the call quota by up to 3x — worst exactly
+// when the ceiling is already being hit, since that is what triggers fallback.
+// PR 2a drops the per-request call count to 1 on quota errors (no fallback on a
+// key-level 429 — see classifyGeminiError) and caps it at MAX_MODEL_ATTEMPTS on
+// genuine 503 overloads.
+//
+// SIZE THESE LIMITS AGAINST CALLS x AMPLIFICATION, NEVER AGAINST REQUEST COUNT.
 
 const DEFAULTS = {
   userRpm: 4,
