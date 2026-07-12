@@ -1,6 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { REFINE_CREDIT_COST, createServiceClient } from '@/lib/credits'
-import { isRetryableGeminiError, resolveGeminiModels } from '@/lib/gemini'
+import {
+  classifyGeminiError,
+  resolveGeminiModels,
+  MAX_MODEL_ATTEMPTS,
+  QuotaExhaustedError,
+} from '@/lib/gemini'
 import { checkRateLimit } from '@/lib/rate-limit'
 import {
   createDeadline,
@@ -73,7 +78,7 @@ export async function POST(req: Request) {
     // Same dynamic model lookup as the generate route — never pin a version.
     // Resolved BEFORE the reserve so a resolution failure is a 500 with NO
     // credit touched.
-    const candidates = (await resolveGeminiModels(geminiApiKey)).slice(0, 3)
+    const candidates = (await resolveGeminiModels(geminiApiKey)).slice(0, MAX_MODEL_ATTEMPTS)
 
     const prompt = `You are an elite E-commerce Growth Architect. You are refining existing product copy based on a user instruction.
     ${languageInstruction}
@@ -199,9 +204,15 @@ export async function POST(req: Request) {
           attempt.cancel()
         }
         if (apiResponse.ok) break
-        const message = data.error?.message || ''
-        if (!isRetryableGeminiError(apiResponse.status, message)) break
-        console.warn(`Gemini ${modelName} over capacity (${apiResponse.status}), trying next model`)
+        const message = data?.error?.message || ''
+        const errorClass = classifyGeminiError(apiResponse.status, message)
+        // QUOTA is a fact about the KEY, not the model: the next candidate shares
+        // the same quota bucket and would fail too. Stop now rather than burn
+        // another call. Thrown from INSIDE this try so `finally` still refunds.
+        if (errorClass === 'quota') throw new QuotaExhaustedError()
+        // 'fatal' breaks to the existing !ok throw below -> 500, as before.
+        if (errorClass === 'fatal') break
+        console.warn(`Gemini ${modelName} overloaded (${apiResponse.status}), trying next model`)
       }
 
       if (!apiResponse || !apiResponse.ok) {
@@ -255,6 +266,17 @@ export async function POST(req: Request) {
     }
   } catch (error: any) {
     // Reached only AFTER the inner `finally` has refunded the reserved credit.
+    if (error instanceof QuotaExhaustedError) {
+      // Google's own quota is exhausted (distinct from RATE_LIMITED, which is OUR
+      // limiter throttling this user). 503 maps to dash.aiBusy (EN/AR) by STATUS
+      // in src/lib/api-error.ts — previously this fell through to a 500 that
+      // leaked Google's untranslated English message to the user.
+      console.error('Gemini quota exhausted (upstream)')
+      return NextResponse.json(
+        { error: 'AI service is busy', code: 'UPSTREAM_QUOTA_EXHAUSTED' },
+        { status: 503, headers: { 'Retry-After': '60' } }
+      )
+    }
     if (error instanceof DeadlineExceededError) {
       console.error('Refinement deadline exceeded:', error.message)
       return NextResponse.json(
