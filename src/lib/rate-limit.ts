@@ -34,17 +34,50 @@ import { createServiceClient } from '@/lib/credits'
 //
 // SIZE THESE LIMITS AGAINST CALLS x AMPLIFICATION, NEVER AGAINST REQUEST COUNT.
 
+// THE DEFAULT MUST BE SAFE-UNDER-CEILING, NEVER THE MOST PERMISSIVE VALUE.
+//
+// These are the fallback when an env var is missing, renamed, or non-numeric —
+// i.e. they are what a MISCONFIGURATION degrades to. They used to be the
+// pre-quota guesses (8 RPM / 1200 RPD), which is 60x over the real daily ceiling:
+// one typo in Vercel silently restored the pre-limiter blowout.
+//
+// Sized against CALLS, not requests: one request costs at most MAX_MODEL_ATTEMPTS
+// (=2) generateContent calls, so globalRpm*2 <= 5 RPM and globalRpd*2 <= 20 RPD.
+// 1 and 6 clear that with margin (2 calls/min, 12 calls/day).
+//
+// They deliberately MIRROR the live Vercel values rather than the ceiling-maximal
+// legal ones (2 / 9): a misconfiguration must never make us MORE permissive than
+// the operator deliberately chose. Worst case — all four vars vanish — the app
+// behaves exactly as it does today.
+//
+// The cost of that choice: a missing var is behaviourally INVISIBLE, so the warn
+// in envInt() below is the ONLY signal that one is missing. Keep it.
 const DEFAULTS = {
-  userRpm: 4,
-  userRpd: 100,
-  globalRpm: 8,
-  globalRpd: 1200,
+  userRpm: 1,
+  userRpd: 5,
+  globalRpm: 1,
+  globalRpd: 6,
 } as const
 
-/** Parse a positive integer env var, falling back to `dflt` on missing/invalid. */
-function envInt(value: string | undefined, dflt: number): number {
+// Warn once per variable per process: enough to surface a misconfiguration in the
+// logs without spamming every request on a warm, reused lambda.
+const warnedFor = new Set<string>()
+
+/**
+ * Parse a positive integer env var, falling back to `dflt` on missing/invalid.
+ * Falling back is not an error (fail-open by design) but it IS worth seeing, so
+ * it is logged once per variable.
+ */
+function envInt(value: string | undefined, dflt: number, name: string): number {
   const n = Number.parseInt(value ?? '', 10)
-  return Number.isFinite(n) && n > 0 ? n : dflt
+  if (Number.isFinite(n) && n > 0) return n
+
+  if (!warnedFor.has(name)) {
+    warnedFor.add(name)
+    const reason = value === undefined ? 'not set' : `not a positive integer (${value})`
+    console.warn(`rate-limit: ${name} is ${reason}; using safe default ${dflt}`)
+  }
+  return dflt
 }
 
 export type RateLimitResult = {
@@ -75,10 +108,10 @@ export async function checkRateLimit(userId: string): Promise<RateLimitResult> {
 
     const { data, error } = await service.rpc('check_rate_limits', {
       p_user_id: userId,
-      p_user_rpm: envInt(process.env.RATE_LIMIT_USER_RPM, DEFAULTS.userRpm),
-      p_user_rpd: envInt(process.env.RATE_LIMIT_USER_RPD, DEFAULTS.userRpd),
-      p_global_rpm: envInt(process.env.RATE_LIMIT_GLOBAL_RPM, DEFAULTS.globalRpm),
-      p_global_rpd: envInt(process.env.RATE_LIMIT_GLOBAL_RPD, DEFAULTS.globalRpd),
+      p_user_rpm: envInt(process.env.RATE_LIMIT_USER_RPM, DEFAULTS.userRpm, 'RATE_LIMIT_USER_RPM'),
+      p_user_rpd: envInt(process.env.RATE_LIMIT_USER_RPD, DEFAULTS.userRpd, 'RATE_LIMIT_USER_RPD'),
+      p_global_rpm: envInt(process.env.RATE_LIMIT_GLOBAL_RPM, DEFAULTS.globalRpm, 'RATE_LIMIT_GLOBAL_RPM'),
+      p_global_rpd: envInt(process.env.RATE_LIMIT_GLOBAL_RPD, DEFAULTS.globalRpd, 'RATE_LIMIT_GLOBAL_RPD'),
     })
 
     if (error) {
