@@ -7,6 +7,7 @@ import {
   QuotaExhaustedError,
 } from '@/lib/gemini'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { recordUsage } from '@/lib/usageTelemetry'
 import {
   createDeadline,
   DeadlineExceededError,
@@ -157,7 +158,14 @@ ${languageInstruction}
       // Try candidates in order; fall back when a model is over capacity.
       let result: Awaited<ReturnType<ReturnType<typeof genAI.getGenerativeModel>['generateContent']>> | null = null
       let lastError: any = null
+      // Telemetry bookkeeping (item 23). `modelName` is loop-scoped and dies with
+      // the iteration, so the model that actually served the call is NOT in scope
+      // at the capture sites below. Inert: nothing reads these except recordUsage.
+      let usedModel: string | null = null
+      let attempts = 0
       for (const modelName of candidates) {
+        usedModel = modelName
+        attempts++
         // Never START an attempt we cannot finish inside the wall. Throws
         // DeadlineExceededError, which unwinds through the `finally` below and
         // refunds the credit. This can cut the fallback loop short when time
@@ -210,6 +218,28 @@ ${languageInstruction}
         generatedContent = JSON.parse(cleanedText)
       } catch (parseError) {
         console.error('SERVER ERROR: AI returned malformed JSON.', cleanedText)
+        // TELEMETRY — WE PAY FOR THIS CALL AND THE CUSTOMER DOES NOT (item 23).
+        // Gemini SUCCEEDED here: it consumed input, emitted output, and under
+        // billing we are charged IN FULL. Only the JSON failed to parse, so
+        // `settled` stays false, the `finally` refunds the credit, and the user
+        // pays nothing. This is the worst-case cost cell, and it is BIASED
+        // EXPENSIVE — a parse failure at the 8192 ceiling is usually a TRUNCATED
+        // response that burned the whole output budget. Dropping it would prune
+        // the most expensive calls from the billing sample.
+        //
+        // Awaited (serverless freezes on response) and swallowed inside
+        // recordUsage, so the 422 STAYS a 422: an unswallowed throw here would
+        // unwind through the `finally` (the refund still runs) and surface as a
+        // 500, turning a clean formatting error into a server error.
+        await recordUsage({
+          client: creditClient,
+          userId: user.id,
+          route: 'generate',
+          outcome: 'parse_failed',
+          model: usedModel,
+          attempts,
+          usageMetadata: response.usageMetadata,
+        })
         // settled stays false -> `finally` refunds the reserved credit.
         return NextResponse.json(
           { error: 'AI generation failed due to formatting issues. Please try again.' },
@@ -219,6 +249,24 @@ ${languageInstruction}
 
       // Content earned -> the reserved credit stays spent (no refund).
       settled = true
+
+      // TELEMETRY (item 23). Best-effort and OUTSIDE the refund window, exactly
+      // like the `generations` insert below: a telemetry failure must NEVER
+      // refund a credit whose content was already earned. recordUsage swallows.
+      //
+      // Ordered BEFORE the `generations` insert deliberately: that insert writes
+      // the entire base64 image into image_url and is by far the slower of the
+      // two writes. If the platform kills the tail, lose the row we are NOT
+      // making a business decision on.
+      await recordUsage({
+        client: creditClient,
+        userId: user.id,
+        route: 'generate',
+        outcome: 'success',
+        model: usedModel,
+        attempts,
+        usageMetadata: response.usageMetadata,
+      })
 
       // Save generation to database. Best-effort and OUTSIDE the refund window:
       // a failed insert must NOT refund, because the content was already earned.

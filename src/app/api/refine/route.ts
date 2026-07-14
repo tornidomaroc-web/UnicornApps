@@ -7,6 +7,7 @@ import {
   QuotaExhaustedError,
 } from '@/lib/gemini'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { recordUsage } from '@/lib/usageTelemetry'
 import {
   createDeadline,
   DeadlineExceededError,
@@ -174,7 +175,14 @@ export async function POST(req: Request) {
       // Try candidates in order; fall back when a model is over capacity.
       let apiResponse: Response | null = null
       let data: any = null
+      // Telemetry bookkeeping (item 23). `modelName` is loop-scoped and dies with
+      // the iteration, so the model that actually served the call is NOT in scope
+      // at the capture sites below. Inert: nothing reads these except recordUsage.
+      let usedModel: string | null = null
+      let attempts = 0
       for (const modelName of candidates) {
+        usedModel = modelName
+        attempts++
         // Never START an attempt we cannot finish inside the wall. Throws
         // DeadlineExceededError, which unwinds through the `finally` below and
         // refunds the credit. This can cut the fallback loop short when time
@@ -234,6 +242,25 @@ export async function POST(req: Request) {
         refinedContent = JSON.parse(cleanedText)
       } catch (parseError) {
         console.error('Refinement Parse Error:', cleanedText)
+        // TELEMETRY — WE PAY FOR THIS CALL AND THE CUSTOMER DOES NOT (item 23).
+        // Gemini SUCCEEDED: it consumed input, emitted output, and under billing
+        // we are charged IN FULL. Only the JSON failed to parse, so `settled`
+        // stays false, the `finally` refunds the credit, and the user pays
+        // nothing. Biased expensive — a parse failure at the 8192 ceiling is
+        // usually a TRUNCATED response that burned the whole output budget.
+        //
+        // Awaited and swallowed inside recordUsage, so the 422 STAYS a 422: an
+        // unswallowed throw would unwind through the `finally` (the refund still
+        // runs) and surface as a 500.
+        await recordUsage({
+          client: creditClient,
+          userId: user.id,
+          route: 'refine',
+          outcome: 'parse_failed',
+          model: usedModel,
+          attempts,
+          usageMetadata: data?.usageMetadata,
+        })
         // settled stays false -> `finally` refunds the reserved credit.
         return NextResponse.json(
           { error: 'AI refinement failed due to formatting issues.' },
@@ -243,6 +270,25 @@ export async function POST(req: Request) {
 
       // Content earned -> the reserved credit stays spent (no refund).
       settled = true
+
+      // TELEMETRY (item 23). Best-effort and OUTSIDE the refund window: a
+      // telemetry failure must NEVER refund a credit whose content was already
+      // earned. recordUsage swallows every failure.
+      //
+      // NOTE: this is the FIRST post-settle await in this route (/api/generate
+      // already had one — its `generations` insert), so it adds tail latency here
+      // that did not exist before. It is a single small insert, well inside the
+      // 60s wall.
+      await recordUsage({
+        client: creditClient,
+        userId: user.id,
+        route: 'refine',
+        outcome: 'success',
+        model: usedModel,
+        attempts,
+        usageMetadata: data?.usageMetadata,
+      })
+
       return NextResponse.json(refinedContent)
     } finally {
       // Refund the reserved credit on any failure between reserve and a valid
