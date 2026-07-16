@@ -437,3 +437,102 @@ $$;
 -- everyone's limits. Only the service-role generation routes may invoke it.
 REVOKE ALL ON FUNCTION public.check_rate_limits(uuid, integer, integer, integer, integer) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.check_rate_limits(uuid, integer, integer, integer, integer) TO service_role;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 13. Usage / cost telemetry (added 2026-07-14; backlog item 23 = item 36 leg c).
+-- Mirror of migrations/2026-07-14_add_usage_events.sql.
+--
+-- WHY: NOBODY HAS EVER MEASURED WHAT ONE CREDIT COSTS. The served free tier is
+-- 5 RPM / 20 RPD for the WHOLE APP, which cannot support a paying product, so
+-- enabling Gemini billing is the only lever that raises the ceiling — and that is
+-- a SPEND decision nobody can make without the per-call token cost. This is that
+-- measurement.
+--
+-- POSTURE: append-only observability, NOT a counter and NOT on the money path.
+-- No read-modify-write, no cross-row invariant => NO row-locked RPC (unlike
+-- reserve_credit / check_rate_limits). A plain service-role INSERT is correct;
+-- the writer (src/lib/usageTelemetry.ts) fails OPEN and logs loudly.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- One row per Gemini generateContent call that RETURNED (success, or a response
+-- we failed to parse). Bounded in practice by the rate limiter (GLOBAL_RPD=9),
+-- so growth is single-digit rows/day.
+--
+--   * user_id is NULLABLE + ON DELETE SET NULL — EXACTLY the purchases pattern
+--     above. /api/account/delete deletes the auth user and relies on the CASCADE
+--     auth.users -> profiles; a naive NOT NULL FK defaults to NO ACTION and would
+--     make that Play-MANDATED endpoint fail with a 500, while CASCADE would erase
+--     the cost history precisely where users churn. SET NULL keeps the row as
+--     anonymized counts + a model name.
+--
+--   * outcome separates BILLED from EARNED tokens. On 'parse_failed' Gemini
+--     SUCCEEDED (consumed input, emitted output, billed in full) but the JSON did
+--     not parse, so the credit is refunded and the user pays nothing. That is the
+--     worst-case cost cell — we pay, the customer does not — and it is BIASED
+--     EXPENSIVE: a parse failure at the 8192 ceiling is usually a TRUNCATED
+--     response that burned the whole output budget.
+--
+--   * model records WHICH model actually served the call. resolveGeminiModels
+--     pins nothing by design (gemini.ts:1-7, 21-51), so Google can rotate the
+--     served flash model under us with NO deploy, silently changing cost per
+--     credit. This column is the only thing that would ever detect it.
+--
+--   * token columns are NULL, NEVER 0, when absent — a 0 would silently deflate
+--     the daily SUM and make the model look cheaper than it is.
+--
+--   * usage_metadata keeps the FULL raw object: thinking tokens are billed as
+--     OUTPUT but are absent from candidatesTokenCount, cached input is billed
+--     lower, and promptTokensDetails carries the modality split. Counts and
+--     modality labels ONLY — no prompt text, no image bytes, no generated content.
+--
+--   * GENERATED ALWAYS AS IDENTITY (not serial): needs no separate sequence USAGE
+--     grant, so GRANT INSERT alone suffices for service_role.
+CREATE TABLE public.usage_events (
+  id             BIGINT      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  user_id        UUID        NULL REFERENCES public.profiles(id) ON DELETE SET NULL,
+  route          TEXT        NOT NULL CHECK (route IN ('generate','refine')),
+  outcome        TEXT        NOT NULL CHECK (outcome IN ('success','parse_failed')),
+  model          TEXT        NULL,
+  attempts       INTEGER     NULL,
+  prompt_tokens  INTEGER     NULL,
+  output_tokens  INTEGER     NULL,
+  total_tokens   INTEGER     NULL,
+  usage_metadata JSONB       NULL
+);
+
+-- The billing question is "tokens per DAY" — the daily rollup is the only access
+-- pattern that matters.
+CREATE INDEX usage_events_created_at_idx ON public.usage_events (created_at);
+
+-- RLS ON, NO policies by design: service_role bypasses RLS; clients get zero
+-- access. Same RLS posture as processed_webhook_events, purchases and
+-- rate_limits — but the PRIVILEGE posture below is deliberately STRICTER here
+-- than on those three.
+ALTER TABLE public.usage_events ENABLE ROW LEVEL SECURITY;
+
+-- Defense in depth alongside RLS. Supabase's ALTER DEFAULT PRIVILEGES grants ALL
+-- on every new public table to postgres, anon, authenticated AND service_role, so
+-- without this REVOKE anon/authenticated would each hold all seven privileges and
+-- ONLY RLS would stand between a client and the cost ledger.
+--
+-- LIVE POSTURE — CONFIRMED 2026-07-16 (information_schema.role_table_grants):
+--   processed_webhook_events -> anon, authenticated, postgres, service_role  (all seven each)
+--   purchases                -> anon, authenticated, postgres, service_role  (all seven each)
+--   rate_limits              -> anon, authenticated, postgres, service_role  (all seven each)
+--   usage_events             -> postgres, service_role ONLY  (no anon, no authenticated)
+-- usage_events is the most locked-down table in this schema: TWO layers (RLS with
+-- zero policies + no client grant) vs ONE (RLS alone) on the other three. Those
+-- three are safe today — RLS with zero policies is deny-all for any role without
+-- BYPASSRLS — but single-layer. Giving them this second layer is HARDENING, not a
+-- fix; tracked in CLAUDE.md as its own migration/decision.
+--
+-- The REVOKE names three of the four default-granted roles. service_role is NOT
+-- named, so it KEEPS its default ALL and the GRANT below is a NO-OP. INTENDED:
+-- service_role is BYPASSRLS and server-only, so its grant list is not a security
+-- boundary — possession of the service key is. Do NOT add service_role to the
+-- REVOKE; it would make this the only table with a restricted service_role for
+-- zero threat reduction. Full reasoning in the VERIFY block of
+-- migrations/2026-07-14_add_usage_events.sql (step 2).
+REVOKE ALL ON TABLE public.usage_events FROM PUBLIC, anon, authenticated;
+GRANT INSERT, SELECT ON TABLE public.usage_events TO service_role;
