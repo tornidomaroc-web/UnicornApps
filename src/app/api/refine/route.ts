@@ -4,6 +4,7 @@ import {
   classifyGeminiError,
   resolveGeminiModels,
   MAX_MODEL_ATTEMPTS,
+  ModelResolutionError,
   QuotaExhaustedError,
 } from '@/lib/gemini'
 import { checkRateLimit } from '@/lib/rate-limit'
@@ -77,9 +78,15 @@ export async function POST(req: Request) {
     }
 
     // Same dynamic model lookup as the generate route — never pin a version.
-    // Resolved BEFORE the reserve so a resolution failure is a 500 with NO
-    // credit touched.
-    const candidates = (await resolveGeminiModels(geminiApiKey)).slice(0, MAX_MODEL_ATTEMPTS)
+    // Resolved BEFORE the reserve so a resolution failure touches NO credit.
+    // Passing the deadline bounds the ListModels round-trip (RESOLVE_TIMEOUT_MS,
+    // clamped to what is left of the wall): unbounded, a hang here ran to the
+    // platform kill, which is not a JS exception, so no catch ran and the user
+    // waited ~60s for an opaque 504.
+    const candidates = (await resolveGeminiModels(geminiApiKey, deadline)).slice(
+      0,
+      MAX_MODEL_ATTEMPTS
+    )
 
     const prompt = `You are an elite E-commerce Growth Architect. You are refining existing product copy based on a user instruction.
     ${languageInstruction}
@@ -327,6 +334,18 @@ export async function POST(req: Request) {
       console.error('Refinement deadline exceeded:', error.message)
       return NextResponse.json(
         { error: 'AI service is busy', code: 'DEADLINE_EXCEEDED' },
+        { status: 503, headers: { 'Retry-After': '30' } }
+      )
+    }
+    if (error instanceof ModelResolutionError) {
+      // Could not list models and had no cached list. 503 maps to dash.aiBusy
+      // (EN/AR) by STATUS in src/lib/api-error.ts; previously this fell through
+      // to the 500 below, which answers the generic dash.requestFailed.
+      // Nothing was reserved (resolution runs BEFORE reserve_credit), so there
+      // is no credit to refund on this path.
+      console.error('Gemini model resolution failed:', error.message)
+      return NextResponse.json(
+        { error: 'AI service is busy', code: 'MODEL_RESOLUTION_FAILED' },
         { status: 503, headers: { 'Retry-After': '30' } }
       )
     }
