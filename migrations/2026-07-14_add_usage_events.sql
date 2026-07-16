@@ -1,13 +1,43 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Migration: add the usage/cost telemetry table (backlog item 23 = item 36 leg c).
 --
--- STATUS: NOT YET APPLIED. Apply this by hand in the Supabase SQL editor, then
--- run the VERIFY block at the bottom. The writer (src/lib/usageTelemetry.ts) is
--- FAIL-OPEN, so code and migration can land in EITHER order without breaking
--- anything: until this is applied, every insert errors, is swallowed, and logs
--- the loud `usage-telemetry: INSERT FAILED` line (i.e. generation behaves
--- exactly as it does today, and the failure is greppable rather than silent).
--- Clean order is still: apply this -> verify -> merge the code PR.
+-- STATUS: APPLIED to the live Supabase DB by hand on 2026-07-16, and VERIFIED.
+-- All four runnable VERIFY checks below PASSED on live (step 5 is a special case
+-- — see its own note). Recorded results:
+--   1. relrowsecurity = t, pg_policies count = 0                          PASS
+--   2. grants: postgres + service_role ONLY, all seven each; no PUBLIC,
+--      no anon, no authenticated                                          PASS
+--      (this is the CORRECTED expectation — see the long note at step 2)
+--   3. confdeltype = 'n' (SET NULL) — /api/account/delete protected        PASS
+--   4. smoke test: INSERT -> SELECT count = 1 -> DELETE                    PASS
+--
+-- ⚠️ CI CANNOT VERIFY ANY OF THE ABOVE, AND A GREEN BUILD IS NOT EVIDENCE THAT
+-- THIS MIGRATION IS APPLIED. This file is applied BY HAND in the Supabase SQL
+-- editor; nothing in the test suite or the GitHub checks connects to the live
+-- database. The tests that touch this DDL run it in PGlite (upstream Postgres in
+-- WASM), which does NOT model Supabase's roles, RLS enforcement, service_role
+-- BYPASSRLS, or PostgREST exposure. PGlite proves SQL SEMANTICS; it can say
+-- NOTHING about the live security posture or about whether the table exists in
+-- production. Green CI here means "the code compiles and the semantics hold",
+-- never "the ledger is recording".
+--
+-- THE REAL GUARD IS THE POST-DEPLOY count(*) PROOF. The writer
+-- (src/lib/usageTelemetry.ts) is FAIL-OPEN by design: if this table is missing,
+-- every INSERT errors, the error is swallowed, generation succeeds exactly as it
+-- does today, and the only trace is the `usage-telemetry: INSERT FAILED` log
+-- line. That is deliberate — telemetry must never break the money path — but it
+-- means a MISSING TABLE IS INVISIBLE FROM THE OUTSIDE. The ONLY way to know the
+-- ledger is actually recording is to run a real generation after deploy and
+-- confirm the row count moved:
+--
+--   SELECT count(*), max(created_at) FROM public.usage_events;   -- must INCREASE
+--
+-- Do that once after the code PR deploys. Until that count moves, treat the
+-- measurement as NOT LIVE regardless of what CI says.
+--
+-- Because the writer is fail-open, code and migration could land in EITHER order
+-- without breaking anything. The clean order was and remains:
+-- apply this -> verify -> merge the code PR -> confirm count(*) moved.
 --
 -- WHY: NOBODY HAS EVER MEASURED WHAT ONE CREDIT COSTS. There is no token
 -- counting, no per-call cost logging, no usageMetadata capture anywhere in the
@@ -86,13 +116,25 @@ CREATE TABLE public.usage_events (
 CREATE INDEX usage_events_created_at_idx ON public.usage_events (created_at);
 
 -- RLS ON, NO policies by design: service_role bypasses RLS; clients get zero
--- access (same posture as processed_webhook_events, purchases and rate_limits).
+-- access. Same RLS posture as processed_webhook_events, purchases and
+-- rate_limits — but see the GRANT note below: the PRIVILEGE posture is
+-- deliberately STRICTER here than on those three.
 ALTER TABLE public.usage_events ENABLE ROW LEVEL SECURITY;
 
--- Defense in depth alongside RLS: Supabase's default privileges would otherwise
--- grant anon/authenticated access to a new public table, and only RLS would be
--- standing between a client and our cost ledger. Revoke, then grant exactly what
--- the writer needs (INSERT) plus the SELECT we need to read the measurement back.
+-- Defense in depth alongside RLS. Supabase's ALTER DEFAULT PRIVILEGES grants ALL
+-- on every new public table to postgres, anon, authenticated AND service_role,
+-- so without this REVOKE anon/authenticated would each hold all seven privileges
+-- and ONLY RLS would stand between a client and our cost ledger. CONFIRMED on
+-- live 2026-07-16: purchases, rate_limits and processed_webhook_events all still
+-- carry those default anon/authenticated grants; usage_events does not.
+--
+-- NOTE the REVOKE names three of the four default-granted roles. service_role is
+-- NOT named, so it KEEPS its default ALL and the GRANT below is a NO-OP (it
+-- grants two privileges service_role already has). That is intended — see the
+-- long note at VERIFY step 2. The GRANT is kept as the explicit statement of
+-- what this table's writer actually needs (INSERT) plus the SELECT used to read
+-- the measurement back; it documents intent and would become load-bearing if the
+-- Supabase defaults ever changed.
 REVOKE ALL ON TABLE public.usage_events FROM PUBLIC, anon, authenticated;
 GRANT INSERT, SELECT ON TABLE public.usage_events TO service_role;
 
@@ -103,11 +145,64 @@ GRANT INSERT, SELECT ON TABLE public.usage_events TO service_role;
 --   SELECT relrowsecurity FROM pg_class WHERE relname = 'usage_events';        -- t
 --   SELECT count(*) FROM pg_policies WHERE tablename = 'usage_events';         -- 0
 --
---   -- 2. Privileges are service_role ONLY (no PUBLIC/anon/authenticated):
+--   -- 2. NO CLIENT ROLE holds privileges. This is the check that matters.
 --   SELECT grantee, privilege_type
 --   FROM information_schema.role_table_grants
 --   WHERE table_name = 'usage_events'
---   ORDER BY grantee, privilege_type;         -- service_role / INSERT + SELECT only
+--   ORDER BY grantee, privilege_type;
+--
+--   EXPECTED — confirmed on live 2026-07-16:
+--     postgres      -> DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE
+--     service_role  -> DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE
+--   PUBLIC / anon / authenticated MUST NOT APPEAR AT ALL. Their absence is the
+--   pass condition; the exact privilege list held by postgres/service_role is not.
+--
+--   WHY service_role HOLDS ALL SEVEN WHEN WE ONLY GRANTED INSERT, SELECT — this
+--   is INTENDED, not drift, and NOT a bug to "fix":
+--     Supabase's bootstrap runs, once, at project creation:
+--       ALTER DEFAULT PRIVILEGES IN SCHEMA public
+--         GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
+--     That fires at CREATE TABLE time and grants ALL SEVEN to FOUR roles. Our
+--     REVOKE below names only THREE of them (PUBLIC, anon, authenticated), so
+--     service_role KEEPS its default ALL and the `GRANT INSERT, SELECT ... TO
+--     service_role` on the next line is a NO-OP — it grants two privileges the
+--     role already had. postgres keeps ALL for the same reason, and is the table
+--     owner besides.
+--
+--   WHY WE DO NOT TIGHTEN IT: service_role's grant list is NOT a security
+--   boundary. service_role is BYPASSRLS, so RLS does not constrain it either.
+--   POSSESSION OF THE SERVICE KEY IS THE BOUNDARY — and that key is server-only
+--   (never shipped to a client). Anyone holding it can already call
+--   reserve_credit, read profiles and rewrite the money path, so revoking DELETE
+--   or TRUNCATE on this one table buys nothing. Adding service_role to the REVOKE
+--   would make usage_events the ONLY table in the schema with a restricted
+--   service_role — a new asymmetry for zero threat reduction. DON'T.
+--
+--   THE REVOKE IS LOAD-BEARING — DO NOT REMOVE IT. Without it, anon AND
+--   authenticated would EACH hold all seven on this table, leaving ONLY RLS
+--   between a client and the cost ledger. Their absence from the output above is
+--   the proof it ran and did real work. Verified against live on 2026-07-16 by
+--   comparing all four tables:
+--
+--     SELECT table_name, grantee, string_agg(privilege_type, ', ' ORDER BY privilege_type)
+--     FROM information_schema.role_table_grants
+--     WHERE table_schema = 'public'
+--       AND table_name IN ('purchases','rate_limits','processed_webhook_events','usage_events')
+--     GROUP BY table_name, grantee ORDER BY table_name, grantee;
+--
+--   RESULT (live, 2026-07-16) — CONFIRMED FACT, not prediction:
+--     processed_webhook_events -> anon, authenticated, postgres, service_role  (all seven each)
+--     purchases                -> anon, authenticated, postgres, service_role  (all seven each)
+--     rate_limits              -> anon, authenticated, postgres, service_role  (all seven each)
+--     usage_events             -> postgres, service_role ONLY  (no anon, no authenticated)
+--
+--   So usage_events is DELIBERATELY STRICTER than the rest of the schema, and is
+--   the most locked-down table in it: TWO independent layers (RLS with zero
+--   policies + no client grant at all) where the other three have ONE (RLS
+--   alone). Those three are safe today — RLS enabled with zero policies is
+--   deny-all for any role without BYPASSRLS — but they are single-layer. Giving
+--   them the same second layer is HARDENING, NOT A FIX: see the backlog item in
+--   CLAUDE.md. Deliberately NOT bundled into this migration.
 --
 --   -- 3. The FK is ON DELETE SET NULL (NOT cascade, NOT no-action).
 --   --    This is the check that protects /api/account/delete from a 500.
@@ -123,7 +218,23 @@ GRANT INSERT, SELECT ON TABLE public.usage_events TO service_role;
 --   SELECT count(*) FROM public.usage_events WHERE model = 'smoke-test';       -- 1
 --   DELETE FROM public.usage_events WHERE model = 'smoke-test';                -- clean up
 --
---   -- 5. The CHECK constraints actually reject garbage (both must ERROR):
+--   -- 5. The CHECK constraints reject garbage (both statements must ERROR).
+--   --
+--   -- NOT RUN ON LIVE on 2026-07-16, and deliberately left commented out. These
+--   -- two statements are DESIGNED TO ERROR, so they cannot be pasted into the
+--   -- SQL editor alongside steps 1-4: the first one aborts the batch. Run them
+--   -- ONE AT A TIME, and only if you want the live confirmation.
+--   --
+--   -- Live confirmation is not needed to trust them. The CHECK semantics WERE
+--   -- verified on 2026-07-16 against real Postgres (PGlite), running this file's
+--   -- actual CREATE TABLE block read verbatim off disk — 6/6:
+--   --   route='bogus'   -> rejected (usage_events_route_check)
+--   --   outcome='bogus' -> rejected (usage_events_outcome_check)
+--   --   all four legal combinations (generate|refine x success|parse_failed) accepted
+--   -- Postgres enforces CHECK constraints unconditionally and PGlite is upstream
+--   -- Postgres, so this is the one part of the posture PGlite CAN speak to with
+--   -- authority (unlike RLS/grants/PostgREST, which it cannot model at all).
+--   --
 --   -- INSERT INTO public.usage_events (route, outcome) VALUES ('bogus','success');
 --   -- INSERT INTO public.usage_events (route, outcome) VALUES ('generate','bogus');
 -- ─────────────────────────────────────────────────────────────────────────────

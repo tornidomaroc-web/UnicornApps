@@ -506,11 +506,33 @@ CREATE TABLE public.usage_events (
 CREATE INDEX usage_events_created_at_idx ON public.usage_events (created_at);
 
 -- RLS ON, NO policies by design: service_role bypasses RLS; clients get zero
--- access (same posture as processed_webhook_events, purchases and rate_limits).
+-- access. Same RLS posture as processed_webhook_events, purchases and
+-- rate_limits — but the PRIVILEGE posture below is deliberately STRICTER here
+-- than on those three.
 ALTER TABLE public.usage_events ENABLE ROW LEVEL SECURITY;
 
--- Defense in depth alongside RLS: Supabase default privileges would otherwise
--- grant anon/authenticated access to a new public table, leaving only RLS between
--- a client and the cost ledger.
+-- Defense in depth alongside RLS. Supabase's ALTER DEFAULT PRIVILEGES grants ALL
+-- on every new public table to postgres, anon, authenticated AND service_role, so
+-- without this REVOKE anon/authenticated would each hold all seven privileges and
+-- ONLY RLS would stand between a client and the cost ledger.
+--
+-- LIVE POSTURE — CONFIRMED 2026-07-16 (information_schema.role_table_grants):
+--   processed_webhook_events -> anon, authenticated, postgres, service_role  (all seven each)
+--   purchases                -> anon, authenticated, postgres, service_role  (all seven each)
+--   rate_limits              -> anon, authenticated, postgres, service_role  (all seven each)
+--   usage_events             -> postgres, service_role ONLY  (no anon, no authenticated)
+-- usage_events is the most locked-down table in this schema: TWO layers (RLS with
+-- zero policies + no client grant) vs ONE (RLS alone) on the other three. Those
+-- three are safe today — RLS with zero policies is deny-all for any role without
+-- BYPASSRLS — but single-layer. Giving them this second layer is HARDENING, not a
+-- fix; tracked in CLAUDE.md as its own migration/decision.
+--
+-- The REVOKE names three of the four default-granted roles. service_role is NOT
+-- named, so it KEEPS its default ALL and the GRANT below is a NO-OP. INTENDED:
+-- service_role is BYPASSRLS and server-only, so its grant list is not a security
+-- boundary — possession of the service key is. Do NOT add service_role to the
+-- REVOKE; it would make this the only table with a restricted service_role for
+-- zero threat reduction. Full reasoning in the VERIFY block of
+-- migrations/2026-07-14_add_usage_events.sql (step 2).
 REVOKE ALL ON TABLE public.usage_events FROM PUBLIC, anon, authenticated;
 GRANT INSERT, SELECT ON TABLE public.usage_events TO service_role;
