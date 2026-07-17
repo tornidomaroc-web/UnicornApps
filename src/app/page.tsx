@@ -49,7 +49,7 @@ export default function Home() {
     <main className="bg-[#070710] text-[#c8cfe0] selection:bg-violet-500/30 selection:text-white">
       {/* BACKGROUND EFFECTS remains same */}
       {/* 1. HERO SECTION */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center pt-24 pb-20 px-4 z-10 overflow-hidden">
+      <section className="relative min-h-[70vh] flex flex-col items-center justify-center pt-24 pb-20 px-4 z-10 overflow-hidden">
         {/*
           initial={false} — render the hero at its FINAL (visible) state on the
           server, instead of shipping it hidden and fading in on mount. This is
@@ -75,12 +75,9 @@ export default function Home() {
           variants={containerVariants}
           className="w-full max-w-6xl mx-auto text-center"
         >
-          {/* Brand lockup */}
-          <motion.div variants={itemVariants} className="mb-8">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/unicornapps-lockup-white.svg" alt="UnicornApps" className="h-12 sm:h-16 w-auto mx-auto" />
-          </motion.div>
-
+          {/* Brand lockup removed — the identical UnicornApps mark already sits in
+              the fixed navbar (Navbar.tsx); repeating it ~250px below in the hero
+              was redundant. The navbar keeps the brand above the fold. */}
           {/* Headline */}
           <motion.h1 variants={itemVariants} className="text-4xl sm:text-6xl md:text-8xl font-black ltr:tracking-tight leading-[0.9] mb-8">
             <span className="text-white">{t('hero.title1')}</span><br />
