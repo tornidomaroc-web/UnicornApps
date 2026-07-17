@@ -1,5 +1,6 @@
 import { Inter, IBM_Plex_Sans_Arabic } from "next/font/google";
 import type { User } from "@supabase/supabase-js";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Providers from "@/components/Providers";
@@ -90,6 +91,32 @@ export default async function RootLayout({
             <main className="flex-1 mt-16">{children}</main>
           </div>
         </Providers>
+        {/*
+          Vercel Web Analytics — PAGE VIEWS ONLY. Installed to get a BEFORE
+          baseline of the public funnel while the current design is still live:
+          once the redesign lands, the old design can never be measured again.
+          Cookieless (no consent banner needed), anonymous, no persistent ID —
+          the visitor hash is discarded after 24h.
+
+          REQUIRES A DASHBOARD TOGGLE: Vercel > Project > Analytics > Enable.
+          Without it this component is inert and no data is collected.
+
+          HOBBY LIMITS, deliberately accepted: 50,000 events/month (collection
+          PAUSES at the cap — a Hobby team cannot be billed, so this can never
+          cost money), and a 1-MONTH reporting window. That window is the catch:
+          the before-baseline EXPIRES after a month, so export it before the
+          redesign ships if the redesign takes longer than that.
+
+          CUSTOM EVENTS ARE NOT AVAILABLE ON HOBBY. This measures page paths
+          only — it can show WHERE visitors stop (do they ever reach /login?),
+          never WHY they leave. It cannot confirm or refute the "looks
+          unprofessional" diagnosis; that is a qualitative judgement.
+
+          Rendered on EVERY route, which includes the Android WebView (Capacitor
+          loads this same web layer). See the PR body: that plausibly touches the
+          Play Data Safety declaration and is unresolved.
+        */}
+        <Analytics />
       </body>
     </html>
   );
