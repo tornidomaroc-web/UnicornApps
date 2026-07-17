@@ -1,9 +1,11 @@
 import { Inter, IBM_Plex_Sans_Arabic } from "next/font/google";
 import type { User } from "@supabase/supabase-js";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Providers from "@/components/Providers";
 import { createClient } from "@/lib/supabase/server";
+import { isNativeRequest } from "@/lib/native-request";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -73,6 +75,14 @@ export default async function RootLayout({
 }>) {
   const { user, credits } = await getNavSeed();
 
+  // WEB ONLY — never mount analytics in the Android WebView. See the <Analytics />
+  // comment below for why this gate exists at all. Reuses the EXISTING
+  // isNativeRequest() helper (the same one gating /pricing and /dashboard)
+  // rather than adding a second native check: two subtly-different detections of
+  // the same fact is precisely the asymmetry that produced backlog item 39.
+  // Costs nothing — this layout already reads cookies, so it is already dynamic.
+  const isNative = isNativeRequest();
+
   return (
     <html lang="en">
       <head>
@@ -90,6 +100,44 @@ export default async function RootLayout({
             <main className="flex-1 mt-16">{children}</main>
           </div>
         </Providers>
+        {/*
+          Vercel Web Analytics — PAGE VIEWS ONLY, WEB ONLY.
+
+          WHY IT IS GATED TO WEB (this is the load-bearing part — do not remove
+          the gate):
+          The Android app is a Capacitor WebView of THIS SAME web layer, so a
+          merge here reaches Play users with NO app release. Mounting analytics
+          unconditionally would start collecting page views, city-level
+          geolocation and device info inside the Android app, which plausibly
+          requires declaring "App activity > App interactions" on the Play Data
+          Safety form — while the app sits mid production-gate (2 of 3
+          requirements met) under a hard rule to consult Grayo before touching
+          the Play submission. The gate makes that question MOOT at zero cost.
+          Advertising ID stays No either way: this uses no ad ID and no cookies.
+          It also serves the goal — the redesign is scoped to the PUBLIC WEB UI
+          (backlog item 15), so Android WebView traffic is NOISE in the funnel
+          data we actually want.
+
+          WHY IT EXISTS AT ALL — the baseline, and ONLY the baseline:
+          Once the redesign ships, the CURRENT design can never be measured
+          again. This is the only chance to capture a before/after.
+          ANALYTICS MEASURES *WHERE*, NEVER *WHY*. The owner's diagnosis ("it
+          does not look professional") is QUALITATIVE — no page-view data can
+          confirm or refute it. THE REDESIGN IS NOT GATED ON THIS DATA and must
+          not wait for it.
+
+          REQUIRES A DASHBOARD TOGGLE: Vercel > unicorn-apps > Analytics >
+          Enable. Inert until then — no data is collected.
+
+          HOBBY LIMITS, deliberately accepted: 50,000 events/month (collection
+          PAUSES at the cap; a Hobby team cannot purchase overage, so this can
+          NEVER produce a bill), CUSTOM EVENTS UNAVAILABLE (page paths only — we
+          can see whether a visitor ever reaches /login, not what they clicked),
+          and a 1-MONTH REPORTING WINDOW.
+          ^ THAT WINDOW IS THE CATCH: if the redesign runs longer than a month,
+          THE BASELINE EXPIRES AND IS GONE. Export it before it does.
+        */}
+        {!isNative && <Analytics />}
       </body>
     </html>
   );
