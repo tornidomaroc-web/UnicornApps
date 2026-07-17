@@ -50,8 +50,27 @@ export default function Home() {
       {/* BACKGROUND EFFECTS remains same */}
       {/* 1. HERO SECTION */}
       <section className="relative min-h-screen flex flex-col items-center justify-center pt-24 pb-20 px-4 z-10 overflow-hidden">
-        <motion.div 
-          initial="hidden"
+        {/*
+          initial={false} — render the hero at its FINAL (visible) state on the
+          server, instead of shipping it hidden and fading in on mount. This is
+          the ONLY motion.div on the page driven by `animate` (fires on mount);
+          every section below uses `whileInView` (scroll-triggered), which
+          correctly stays hidden-until-scrolled and is deliberately untouched.
+
+          WHY: the hidden variant is opacity:0, so `initial="hidden"` serialised
+          the hero — headline, sub, CTAs — into the SSR HTML at opacity:0. On a
+          slow device the first paint was a black rectangle with only the navbar
+          until JS downloaded, hydrated and animated. Visitors are in 177
+          countries on cheap Android; this was their first impression.
+
+          TRADEOFF, stated plainly: the hero's fade-in-on-load is GONE — you
+          cannot fade in from an already-visible state, so removing the blank
+          paint necessarily removes the entrance animation. That is intended and
+          is NOT a design decision (content, layout, type and colour are
+          untouched, and every below-the-fold scroll animation still runs).
+        */}
+        <motion.div
+          initial={false}
           animate="visible"
           variants={containerVariants}
           className="w-full max-w-6xl mx-auto text-center"
