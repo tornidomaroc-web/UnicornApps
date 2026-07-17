@@ -185,9 +185,26 @@ ${languageInstruction}
           // /api/refine already uses and validated against JSON truncation on
           // thinking models (2048 truncated mid-array there); both routes return
           // essentially the same schema.
+          //
+          // responseMimeType makes valid JSON a STRUCTURAL contract enforced at
+          // decode time, instead of asking for it in the prompt and hoping.
+          // /api/refine has set this since its own truncation fix
+          // (refine/route.ts:151); this route never got the same treatment, and
+          // THIS is the route that parse_failed on the only generation we have
+          // ever measured.
+          //
+          // The cleanup regex below cannot substitute for it: it enumerates
+          // exactly two literals (```json and ```), so a preamble ("Here's the
+          // JSON:"), a different language tag (```js), trailing commentary, or —
+          // most likely for this schema — an unescaped newline or quote inside
+          // the shopifyHtml string all survive it unparseable. JSON mode
+          // prevents that entire class; the regex never could.
           const model = genAI.getGenerativeModel({
             model: modelName,
-            generationConfig: { maxOutputTokens: 8192 },
+            generationConfig: {
+              maxOutputTokens: 8192,
+              responseMimeType: 'application/json',
+            },
           })
           result = await model.generateContent([prompt, imagePart], {
             signal: attempt.signal,
