@@ -82,9 +82,9 @@ export default function Home() {
           </motion.div>
 
           {/* Headline */}
-          <motion.h1 variants={itemVariants} className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8">
+          <motion.h1 variants={itemVariants} className="text-4xl sm:text-6xl md:text-8xl font-black ltr:tracking-tight leading-[0.9] mb-8">
             <span className="text-white">{t('hero.title1')}</span><br />
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-violet-600 to-amber-200">
+            <span className="text-white">
               {t('hero.title2')}
             </span>
           </motion.h1>
@@ -97,7 +97,7 @@ export default function Home() {
           {/* CTAs */}
           <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-16">
             <Link href="/login">
-              <Button size="lg" className="h-14 sm:h-16 px-5 sm:px-10 text-sm sm:text-lg font-black uppercase tracking-wide sm:tracking-widest rounded-2xl bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_40px_-5px_rgba(124,58,237,0.5)] transition-all hover:scale-105 active:scale-95 group">
+              <Button size="lg" className="h-14 sm:h-16 px-5 sm:px-10 text-sm sm:text-lg font-semibold rounded-2xl bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_40px_-5px_rgba(124,58,237,0.5)] transition-all hover:scale-105 active:scale-95 group">
                 {t('hero.cta1')}
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
@@ -106,7 +106,7 @@ export default function Home() {
               <Button
                 variant="ghost"
                 size="lg"
-                className="h-14 sm:h-16 px-5 sm:px-10 text-sm sm:text-lg font-black uppercase tracking-wide sm:tracking-widest rounded-2xl text-white hover:bg-white/5 border border-white/10 group"
+                className="h-14 sm:h-16 px-5 sm:px-10 text-sm sm:text-lg font-semibold rounded-2xl text-white hover:bg-white/5 border border-white/10 group"
               >
                 <Play className="mr-2 w-5 h-5 fill-white" />
                 {t('hero.cta2')}
