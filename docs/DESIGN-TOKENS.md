@@ -1,8 +1,20 @@
 # UnicornApps — Design Tokens (public-UI redesign)
 
-> **Status:** Phase 1 foundation. Tokens are **defined and available** but, aside from
-> the global `body` wiring and the Arabic font fix, applied to **no existing page yet**.
-> Per-page migration onto these tokens happens in later phases (sequence at the bottom).
+> **Status (corrected 2026-07-17):** Phase 1 foundation, **partially adopted**. The earlier
+> wording here — *"applied to no existing page yet"* — became **FALSE** on 2026-07-09 when the
+> legal redesign shipped, and was never updated. **Actual adoption today:**
+> - **`src/components/legal/LegalDoc.tsx` — FULL** (~20 token classes: `bg-surface`, `text-brand`,
+>   `text-ink-*`, `bg-surface-2/40`, …). It renders `/privacy`, `/terms`, `/refund`, so the tokens
+>   are **live in production on three pages** via PRs #26/#27.
+> - **`src/components/Navbar.tsx` — PARTIAL:** `text-ink-2` / `text-ink-1` only, sitting **alongside
+>   raw `violet-400/500`** — a half-migrated component.
+> - **`src/app/globals.css` — `body` only** (`background`/`color`).
+> - **Every other page — ZERO.**
+> 🔴 **CONSEQUENCE — TWO BRAND PURPLES ARE LIVE IN PRODUCTION.** `LegalDoc` applies
+> `brand` = **`#635BFF`**; every other public page still uses **`#7c3aed` / `#a855f7` / `#8b5cf6`**.
+> **`#635BFF` shipped in the foundation PR BEFORE the Phase 1 identity question ("keep Royal
+> Obsidian, or change direction") was ever answered** — the answer shipped before the question.
+> **Do not treat `#635BFF` as decided.** Per-page migration onto these tokens is a later phase.
 > This file is the living reference for those phases.
 
 ## Mechanism
@@ -42,12 +54,17 @@ actually on screen today (Tailwind `slate-*` + `#c8cfe0`) so that per-page migra
 *visually invisible*. A bespoke cool-grey ramp derived from the base is a deliberate
 design change deferred to a phase where visible change is sanctioned.
 
-### Applied this phase
+### Applied (updated 2026-07-17)
 - `body { background-color: rgb(var(--ua-surface)); color: rgb(var(--ua-ink-1)); }` —
   pixel-identical to the previous `#070710` / `#c8cfe0`; proves the pipeline end-to-end.
-- **Nothing else.** `brand` and `gold` are wired to zero existing elements (there is no
-  neutral target — every on-page violet differs from `#635BFF`, so applying `brand` would
-  be a visible recolor).
+- **`LegalDoc.tsx` — full token adoption** (shipped PRs #26/#27, live on `/privacy`, `/terms`,
+  `/refund`). This is where `brand` = `#635BFF` **first went live**, ahead of the Phase 1 call.
+- **`Navbar.tsx` — partial** (`text-ink-1`, `text-ink-2`; still mixes raw `violet-*`).
+- ⚠️ **The original note here — *"Nothing else… applying `brand` would be a visible recolor"* — is
+  now HALF-TRUE:** it is still true for the marketing pages (every on-page violet differs from
+  `#635BFF`, so migrating them IS a visible recolor and a Phase-1-gated decision), but it is
+  **false as a claim that `brand` is wired to nothing** — `LegalDoc` wired it, and those pages
+  visibly recolored to `#635BFF` already.
 
 ## Typography
 
