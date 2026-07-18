@@ -328,7 +328,7 @@ const translations = {
     'footer.desc': 'The AI content tool for modern e-commerce. Accelerating global commerce with Google Gemini.',
     'footer.privacy': 'Privacy Policy',
     'footer.terms': 'Terms of Service',
-    'trusted.by': 'Trusted by sellers on',
+    'trusted.by': 'Built for sellers on',
 
     // ── Legal pages: shared chrome (reused by privacy / terms / refund) ──
     'legal.back': 'Back to home',
@@ -707,7 +707,7 @@ const translations = {
     'footer.desc': 'أداة المحتوى الذكية للتجارة الإلكترونية الحديثة. تسريع التجارة العالمية باستخدام Google Gemini.',
     'footer.privacy': 'سياسة الخصوصية',
     'footer.terms': 'شروط الخدمة',
-    'trusted.by': 'موثوق به من بائعين على',
+    'trusted.by': 'مصمم للبائعين على',
 
     // ── Legal pages: shared chrome (reused by privacy / terms / refund) ──
     // TODO-LEGAL-REVIEW: The Arabic legal strings below (legal.* + privacy.*) are
