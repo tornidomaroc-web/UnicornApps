@@ -179,7 +179,7 @@ export default function Home() {
             >
               <div className="absolute inset-0 bg-brand/5 rounded-3xl blur-xl group-hover:bg-brand/10 transition-all" />
               <div className="relative bg-white/5 backdrop-blur-3xl border border-white/10 p-10 rounded-3xl h-full hover:border-brand/50 transition-all duration-500 hover:-translate-y-2 font-sans">
-                <span className="text-6xl font-black text-brand/20 group-hover:text-brand/40 transition-colors leading-none block mb-6">{item.step}</span>
+                <span className="text-6xl font-black text-brand/60 group-hover:text-brand/80 transition-colors leading-none block mb-6">{item.step}</span>
                 <h3 className="text-2xl font-bold text-white mb-4">{item.title}</h3>
                 <p className="text-slate-400 font-medium leading-relaxed">{item.desc}</p>
               </div>
@@ -247,7 +247,7 @@ export default function Home() {
           {/* Card 4: AI Refine Chat */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
-            className="md:col-span-2 bg-gradient-to-br from-brand/20 to-transparent border border-brand/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
+            className="md:col-span-2 bg-gradient-to-br from-brand/10 to-transparent border border-brand/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
           >
              <div>
               <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center mb-6 border border-brand/20">
