@@ -72,6 +72,13 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        // Canonical brand button glow. Color = --ua-brand-glow (single source);
+        // geometry is the common `0 0 40px -5px / 0.5`. Bespoke glows (different
+        // blur/spread/alpha) stay inline as shadow-[<geom> rgb(var(--ua-brand-glow)/<a>)]
+        // rather than spawning a utility per intensity. See docs/DESIGN-TOKENS.md.
+        "glow-brand": "0 0 40px -5px rgb(var(--ua-brand-glow) / 0.5)",
+      },
     },
   },
   plugins: [],
