@@ -263,8 +263,8 @@ export default function Home() {
             className="md:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
           >
             <div>
-              <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 border border-white/10">
-                <FileDown className="text-white w-6 h-6" />
+              <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center mb-6 border border-brand/20">
+                <FileDown className="text-brand w-6 h-6" />
               </div>
               <h3 className="text-2xl font-black text-white mb-4">{t('features.csv.title')}</h3>
               <p className="text-slate-400 font-medium">{t('features.csv.desc')}</p>
