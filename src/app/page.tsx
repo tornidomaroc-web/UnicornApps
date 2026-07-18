@@ -199,9 +199,8 @@ export default function Home() {
           {/* Card 1: AI Vision */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
-            className="md:col-span-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between overflow-hidden group relative"
+            className="md:col-span-4 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between overflow-hidden group relative"
           >
-            <div className="absolute top-0 right-0 w-64 h-64 bg-brand/20 rounded-full blur-[80px] -mr-32 -mt-32" />
             <div className="relative z-10">
               <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center mb-6 border border-brand/20">
                 <Sparkles className="text-brand w-6 h-6" />
@@ -219,7 +218,7 @@ export default function Home() {
           {/* Card 2: SEO Engine */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
-            className="md:col-span-2 bg-[#0d0d1a] border border-brand/20 rounded-[2.5rem] p-10 flex flex-col justify-between group"
+            className="md:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
           >
              <div>
               <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center mb-6 border border-brand/20">
@@ -233,7 +232,7 @@ export default function Home() {
           {/* Card 3: Live Mockups */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
-            className="md:col-span-2 bg-black/40 border border-white/5 rounded-[2.5rem] p-10 flex flex-col justify-between group"
+            className="md:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
           >
              <div>
               <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center mb-6 border border-brand/20">
@@ -247,7 +246,7 @@ export default function Home() {
           {/* Card 4: AI Refine Chat */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
-            className="md:col-span-2 bg-gradient-to-br from-brand/10 to-transparent border border-brand/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
+            className="md:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
           >
              <div>
               <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center mb-6 border border-brand/20">
@@ -261,7 +260,7 @@ export default function Home() {
           {/* Card 5: CSV Export */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
-            className="md:col-span-2 bg-black/20 border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
+            className="md:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
           >
             <div>
               <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 border border-white/10">
