@@ -46,7 +46,7 @@ export default function Home() {
     }
   };
   return (
-    <main className="bg-[#070710] text-[#c8cfe0] selection:bg-violet-500/30 selection:text-white">
+    <main className="bg-[#070710] text-[#c8cfe0] selection:bg-brand/30 selection:text-white">
       {/* BACKGROUND EFFECTS remains same */}
       {/* 1. HERO SECTION */}
       <section className="relative min-h-[70vh] flex flex-col items-center justify-center pt-24 pb-20 px-4 z-10 overflow-hidden">
@@ -94,7 +94,7 @@ export default function Home() {
           {/* CTAs */}
           <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-16">
             <Link href="/login">
-              <Button size="lg" className="h-14 sm:h-16 px-5 sm:px-10 text-sm sm:text-lg font-semibold rounded-2xl bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_40px_-5px_rgba(124,58,237,0.5)] transition-all hover:scale-105 active:scale-95 group">
+              <Button size="lg" className="h-14 sm:h-16 px-5 sm:px-10 text-sm sm:text-lg font-semibold rounded-2xl bg-brand hover:bg-brand/90 text-white shadow-glow-brand transition-all hover:scale-105 active:scale-95 group">
                 {t('hero.cta1')}
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
@@ -113,9 +113,9 @@ export default function Home() {
 
           {/* Trust Badges */}
           <motion.div variants={itemVariants} className="flex flex-wrap items-center justify-center gap-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-            <div className="flex items-center gap-2"><BadgeCheck className="w-4 h-4 text-violet-500" /> {t('hero.trust1')}</div>
-            <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('hero.trust2')}</div>
-            <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-violet-500" /> {t('hero.trust3')}</div>
+            <div className="flex items-center gap-2"><BadgeCheck className="w-4 h-4 text-brand" /> {t('hero.trust1')}</div>
+            <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand" /> {t('hero.trust2')}</div>
+            <div className="flex items-center gap-2"><Zap className="w-4 h-4 text-brand" /> {t('hero.trust3')}</div>
           </motion.div>
         </motion.div>
       </section>
@@ -130,7 +130,7 @@ export default function Home() {
                 "Amazon", "Shopify", "TikTok Shop", "Instagram", "Etsy", "eBay", 
                 "Walmart", "Pinterest", "WooCommerce", "Alibaba"
               ].map((logo) => (
-                <span key={logo} className="text-2xl font-black tracking-tighter text-slate-600 hover:text-violet-400 transition-colors cursor-default">
+                <span key={logo} className="text-2xl font-black tracking-tighter text-slate-600 hover:text-brand transition-colors cursor-default">
                   {logo}
                 </span>
               ))}
@@ -139,7 +139,7 @@ export default function Home() {
                 "Amazon", "Shopify", "TikTok Shop", "Instagram", "Etsy", "eBay", 
                 "Walmart", "Pinterest", "WooCommerce", "Alibaba"
               ].map((logo) => (
-                <span key={`${logo}-dup`} className="text-2xl font-black tracking-tighter text-slate-600 hover:text-violet-400 transition-colors cursor-default">
+                <span key={`${logo}-dup`} className="text-2xl font-black tracking-tighter text-slate-600 hover:text-brand transition-colors cursor-default">
                   {logo}
                 </span>
               ))}
@@ -157,7 +157,7 @@ export default function Home() {
           variants={containerVariants}
           className="text-center mb-20"
         >
-          <motion.p variants={itemVariants} className="text-violet-500 font-black uppercase tracking-[0.3em] text-xs mb-4">{t('how.tag')}</motion.p>
+          <motion.p variants={itemVariants} className="text-brand font-black uppercase tracking-[0.3em] text-xs mb-4">{t('how.tag')}</motion.p>
           <motion.h2 variants={itemVariants} className="text-4xl md:text-6xl font-black text-white tracking-tighter">
             {t('how.title')}
           </motion.h2>
@@ -177,9 +177,9 @@ export default function Home() {
               transition={{ delay: i * 0.2 }}
               className="group relative"
             >
-              <div className="absolute inset-0 bg-violet-600/5 rounded-3xl blur-xl group-hover:bg-violet-600/10 transition-all" />
-              <div className="relative bg-white/5 backdrop-blur-3xl border border-white/10 p-10 rounded-3xl h-full hover:border-violet-500/50 transition-all duration-500 hover:-translate-y-2 font-sans">
-                <span className="text-6xl font-black text-violet-500/20 group-hover:text-violet-500/40 transition-colors leading-none block mb-6">{item.step}</span>
+              <div className="absolute inset-0 bg-brand/5 rounded-3xl blur-xl group-hover:bg-brand/10 transition-all" />
+              <div className="relative bg-white/5 backdrop-blur-3xl border border-white/10 p-10 rounded-3xl h-full hover:border-brand/50 transition-all duration-500 hover:-translate-y-2 font-sans">
+                <span className="text-6xl font-black text-brand/60 group-hover:text-brand/80 transition-colors leading-none block mb-6">{item.step}</span>
                 <h3 className="text-2xl font-bold text-white mb-4">{item.title}</h3>
                 <p className="text-slate-400 font-medium leading-relaxed">{item.desc}</p>
               </div>
@@ -191,7 +191,7 @@ export default function Home() {
       {/* 4. FEATURES BENTO GRID */}
       <section className="relative z-10 py-32 px-4 max-w-7xl mx-auto">
         <div className="text-center mb-20">
-          <p className="text-amber-400 font-black uppercase tracking-[0.3em] text-xs mb-4">{t('features.tag')}</p>
+          <p className="text-brand font-black uppercase tracking-[0.3em] text-xs mb-4">{t('features.tag')}</p>
           <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter">{t('features.title')}</h2>
         </div>
 
@@ -199,12 +199,11 @@ export default function Home() {
           {/* Card 1: AI Vision */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
-            className="md:col-span-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between overflow-hidden group relative"
+            className="md:col-span-4 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between overflow-hidden group relative"
           >
-            <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/20 rounded-full blur-[80px] -mr-32 -mt-32" />
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-violet-600/20 rounded-xl flex items-center justify-center mb-6 border border-violet-500/20">
-                <Sparkles className="text-violet-400 w-6 h-6" />
+              <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center mb-6 border border-brand/20">
+                <Sparkles className="text-brand w-6 h-6" />
               </div>
               <h3 className="text-3xl font-black text-white mb-4">{t('features.vision.title')}</h3>
               <p className="text-slate-400 text-lg font-medium max-w-md">{t('features.vision.desc')}</p>
@@ -219,11 +218,11 @@ export default function Home() {
           {/* Card 2: SEO Engine */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
-            className="md:col-span-2 bg-[#0d0d1a] border border-violet-500/20 rounded-[2.5rem] p-10 flex flex-col justify-between group"
+            className="md:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
           >
              <div>
-              <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mb-6 border border-amber-500/20">
-                <Globe className="text-amber-400 w-6 h-6" />
+              <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center mb-6 border border-brand/20">
+                <Globe className="text-brand w-6 h-6" />
               </div>
               <h3 className="text-2xl font-black text-white mb-4">{t('features.seo.title')}</h3>
               <p className="text-slate-400 font-medium">{t('features.seo.desc')}</p>
@@ -233,11 +232,11 @@ export default function Home() {
           {/* Card 3: Live Mockups */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
-            className="md:col-span-2 bg-black/40 border border-white/5 rounded-[2.5rem] p-10 flex flex-col justify-between group"
+            className="md:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
           >
              <div>
-              <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-6 border border-emerald-500/20">
-                <Monitor className="text-emerald-400 w-6 h-6" />
+              <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center mb-6 border border-brand/20">
+                <Monitor className="text-brand w-6 h-6" />
               </div>
               <h3 className="text-2xl font-black text-white mb-4">{t('features.mockups.title')}</h3>
               <p className="text-slate-400 font-medium">{t('features.mockups.desc')}</p>
@@ -247,11 +246,11 @@ export default function Home() {
           {/* Card 4: AI Refine Chat */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
-            className="md:col-span-2 bg-gradient-to-br from-violet-950/20 to-transparent border border-violet-500/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
+            className="md:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
           >
              <div>
-              <div className="w-12 h-12 bg-violet-600/20 rounded-xl flex items-center justify-center mb-6 border border-violet-500/20">
-                <MessagesSquare className="text-violet-400 w-6 h-6" />
+              <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center mb-6 border border-brand/20">
+                <MessagesSquare className="text-brand w-6 h-6" />
               </div>
               <h3 className="text-2xl font-black text-white mb-4">{t('features.console.title')}</h3>
               <p className="text-slate-400 font-medium">{t('features.console.desc')}</p>
@@ -261,11 +260,11 @@ export default function Home() {
           {/* Card 5: CSV Export */}
           <motion.div 
             whileHover={{ scale: 0.98 }}
-            className="md:col-span-2 bg-black/20 border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
+            className="md:col-span-2 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-10 flex flex-col justify-between group"
           >
             <div>
-              <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 border border-white/10">
-                <FileDown className="text-white w-6 h-6" />
+              <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center mb-6 border border-brand/20">
+                <FileDown className="text-brand w-6 h-6" />
               </div>
               <h3 className="text-2xl font-black text-white mb-4">{t('features.csv.title')}</h3>
               <p className="text-slate-400 font-medium">{t('features.csv.desc')}</p>
@@ -280,28 +279,28 @@ export default function Home() {
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl font-black text-white mb-12 tracking-tighter">{t('pricing.teaser.title')}</h2>
             <div className="grid sm:grid-cols-2 gap-8 text-left">
-              <div className="bg-[#0d0d1a] border border-white/10 p-8 rounded-[2rem] hover:border-violet-500/30 transition-all group">
+              <div className="bg-[#0d0d1a] border border-white/10 p-8 rounded-[2rem] hover:border-brand/30 transition-all group">
                 <h3 className="text-xl font-black text-white mb-2 uppercase tracking-widest">{t('pricing.pack.name')}</h3>
                 <div className="text-4xl font-black text-white mb-6">{t('pricing.pack.price')} <span className="text-sm font-medium text-slate-500 uppercase">{t('pricing.pack.period')}</span></div>
                 <ul className="space-y-4 mb-8 text-sm font-medium">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('pricing.f.credits30')}</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('pricing.f.allai')}</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand" /> {t('pricing.f.credits30')}</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand" /> {t('pricing.f.allai')}</li>
                 </ul>
                 <a href="/pricing" className="block">
                   <Button className="w-full h-12 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-[10px]">{t('pricing.teaser.cta')}</Button>
                 </a>
               </div>
-              <div className="bg-[#0d0d1a] border border-violet-500/50 p-8 rounded-[2rem] shadow-[0_0_40px_-10px_rgba(124,58,237,0.3)] group relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-violet-600 text-white text-[8px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-bl-xl shadow-lg">{t('pricing.popular')}</div>
+              <div className="bg-[#0d0d1a] border border-brand/50 p-8 rounded-[2rem] shadow-[0_0_40px_-10px_rgb(var(--ua-brand-glow)/0.3)] group relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-brand text-white text-[8px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-bl-xl shadow-lg">{t('pricing.popular')}</div>
                 <h3 className="text-xl font-black text-white mb-2 uppercase tracking-widest">{t('pricing.sub.name')}</h3>
                 <div className="text-4xl font-black text-white mb-6">{t('pricing.sub.price')} <span className="text-sm font-medium text-slate-500 uppercase">{t('pricing.sub.period')}</span></div>
                 <ul className="space-y-4 mb-8 text-sm font-medium">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-500" /> {t('pricing.f.credits100')}</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-400" /> {t('pricing.f.adfree')}</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-violet-400" /> {t('pricing.f.allai')}</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand" /> {t('pricing.f.credits100')}</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand" /> {t('pricing.f.adfree')}</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand" /> {t('pricing.f.allai')}</li>
                 </ul>
                 <a href="/pricing" className="block">
-                  <Button className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(124,58,237,0.5)]">{t('pricing.teaser.cta')}</Button>
+                  <Button className="w-full h-12 rounded-xl bg-brand hover:bg-brand/90 text-white font-black uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgb(var(--ua-brand-glow)/0.5)]">{t('pricing.teaser.cta')}</Button>
                 </a>
               </div>
             </div>
@@ -311,7 +310,7 @@ export default function Home() {
 
       {/* 6. FINAL CTA SECTION */}
       <section className="relative z-10 py-40 px-4 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-violet-600/10 blur-[150px] rounded-full scale-50" />
+        <div className="absolute inset-0 bg-brand/10 blur-[150px] rounded-full scale-50" />
         <motion.div
            initial={{ opacity: 0, scale: 0.9 }}
            whileInView={{ opacity: 1, scale: 1 }}
@@ -325,7 +324,7 @@ export default function Home() {
             {t('cta.sub')}
           </p>
           <Link href="/login">
-            <Button size="lg" className="h-14 sm:h-20 px-8 sm:px-16 text-base sm:text-xl font-black uppercase tracking-widest rounded-2xl sm:rounded-3xl bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_50px_-5px_rgba(124,58,237,0.6)] transition-all hover:scale-105 active:scale-95 group">
+            <Button size="lg" className="h-14 sm:h-20 px-8 sm:px-16 text-base sm:text-xl font-black uppercase tracking-widest rounded-2xl sm:rounded-3xl bg-brand hover:bg-brand/90 text-white shadow-[0_0_50px_-5px_rgb(var(--ua-brand-glow)/0.6)] transition-all hover:scale-105 active:scale-95 group">
               {t('cta.btn')}
               <ArrowRight className="ml-4 w-6 h-6 group-hover:translate-x-2 transition-transform" />
             </Button>
@@ -348,10 +347,10 @@ export default function Home() {
           <div>
             <h4 className="text-white font-black uppercase tracking-widest text-[10px] mb-8">{t('footer.nav')}</h4>
             <ul className="space-y-4 text-sm font-medium text-slate-500">
-              <li><Link href="/" className="hover:text-violet-400 transition-colors">{t('nav.home')}</Link></li>
-              <li><Link href="/features" className="hover:text-violet-400 transition-colors">{t('nav.features')}</Link></li>
-              {showPricing && <li><Link href="/pricing" className="hover:text-violet-400 transition-colors">{t('nav.pricing')}</Link></li>}
-              <li><Link href="/about" className="hover:text-violet-400 transition-colors">{t('nav.about')}</Link></li>
+              <li><Link href="/" className="hover:text-brand transition-colors">{t('nav.home')}</Link></li>
+              <li><Link href="/features" className="hover:text-brand transition-colors">{t('nav.features')}</Link></li>
+              {showPricing && <li><Link href="/pricing" className="hover:text-brand transition-colors">{t('nav.pricing')}</Link></li>}
+              <li><Link href="/about" className="hover:text-brand transition-colors">{t('nav.about')}</Link></li>
             </ul>
           </div>
           <div>

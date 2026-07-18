@@ -41,7 +41,8 @@
 |---|---|---|---|---|
 | `surface` | `--ua-surface` | `7 7 16` | `#070710` | every `bg-[#070710]`; already wired on `body` |
 | `surface-2` | `--ua-surface-2` | `13 13 26` | `#0d0d1a` | `bg-[#0d0d1a]` raised panels |
-| `brand` | `--ua-brand` | `99 91 255` | `#635BFF` | **(per-page)** the multiple on-page violets — `violet-600`, `#7c3aed`, `#a855f7`, `#8b5cf6`, `rgba(124,58,237,…)` |
+| `brand` | `--ua-brand` | `99 91 255` | `#635BFF` | **(per-page)** the multiple on-page violets — `violet-600`, `#7c3aed`, `#a855f7`, `#8b5cf6`, `rgba(124,58,237,…)`, **and decorative `indigo-*`/`amber-*` icon hues** (see decorative-vs-functional note below) |
+| `brand-glow` | `--ua-brand-glow` | `99 91 255` | `#635BFF` | the scattered glow COLOR inside button shadows — every `rgba(124,58,237,α)`. **Color only; geometry stays per-element** (see the glow convention below) |
 | `ink-0` | `--ua-ink-0` | `255 255 255` | `#ffffff` | `text-white`; white-based overlays/borders via `/alpha` |
 | `ink-1` | `--ua-ink-1` | `200 207 224` | `#c8cfe0` | `text-[#c8cfe0]`; already wired on `body` text |
 | `ink-2` | `--ua-ink-2` | `148 163 184` | `#94a3b8` | `text-slate-400` |
@@ -54,11 +55,51 @@ actually on screen today (Tailwind `slate-*` + `#c8cfe0`) so that per-page migra
 *visually invisible*. A bespoke cool-grey ramp derived from the base is a deliberate
 design change deferred to a phase where visible change is sanctioned.
 
+### The brand-glow convention (added with the landing consolidation, PR 1)
+
+Buttons carry a violet glow as `shadow-[0_0_40px_-5px_rgba(124,58,237,0.5)]`. The scattered
+thing is the **color** (`124,58,237`), not the geometry — blur/spread/alpha differ per element
+and encode a deliberate hierarchy (a primary CTA glows harder than an inline one). So we
+tokenize **only the color**, via `--ua-brand-glow`, and keep geometry inline:
+
+- **Canonical button glow** (`0 0 40px -5px / 0.5`) → the `shadow-glow-brand` utility
+  (`tailwind.config.ts` `boxShadow`).
+- **Bespoke glows** (any other blur/spread/alpha) → inline
+  `shadow-[<geometry> rgb(var(--ua-brand-glow)/<alpha>)]`.
+
+One color source (`--ua-brand-glow`), retunable in one edit; geometry stays where it belongs.
+A single fixed `shadow-glow-brand` for *all* glows was rejected — it would flatten the intensity
+hierarchy into one silent value. `--ua-brand-glow` is aliased to `--ua-brand` today but kept
+separate so glows can later shift to a lighter tint without touching every shadow.
+
+### Decorative vs functional color (the governing rule for consolidation)
+
+Consolidation collapses **decorative** hues onto `brand` and **preserves functional/semantic**
+color:
+
+- **Decorative → `brand`:** all `violet-*`, `indigo-*`, and the decorative `amber-*` icon/eyebrow
+  hues (e.g. the landing feature-card icon sparkles). A one-accent site reads more confident than
+  a three-hue mini-rainbow.
+- **Functional → keep:** `emerald-*` where it signals the pricing **"recommended"** tier
+  (`PricingClient.tsx` — UI meaning, not decoration), and `destructive`/red for destructive
+  actions. These are *signals*, not brand accents.
+- **Watch the ambiguity per page:** the landing Monitor-icon emerald was *decorative* (a card
+  sparkle) and collapsed to `brand`; the pricing recommended-tier emerald is *functional* and
+  stays. Same hue, opposite decision — decided by role, not by color.
+- **Gold / `--ua-gold` stays reserved and unwired.** A warm secondary accent is a separate,
+  deliberate future decision — **not** smuggled in via the decorative-amber collapse above.
+
 ### Applied (updated 2026-07-17)
 - `body { background-color: rgb(var(--ua-surface)); color: rgb(var(--ua-ink-1)); }` —
   pixel-identical to the previous `#070710` / `#c8cfe0`; proves the pipeline end-to-end.
 - **`LegalDoc.tsx` — full token adoption** (shipped PRs #26/#27, live on `/privacy`, `/terms`,
   `/refund`). This is where `brand` = `#635BFF` **first went live**, ahead of the Phase 1 call.
+- **`page.tsx` (landing) — full brand-accent adoption** (PR 1 of the consolidation): all ~45
+  on-page violets + decorative amber/emerald → `brand`; glows → `shadow-glow-brand` /
+  `--ua-brand-glow`. **First page where `#635BFF` replaces the marketing violets — a VISIBLE
+  recolor, gated on the operator's eye. Legacy `--violet*` :root vars deliberately left alive
+  (other pages still use them until their own PR).** Surfaces/greys NOT migrated here (that is the
+  separate item-17 concern).
 - **`Navbar.tsx` — partial** (`text-ink-1`, `text-ink-2`; still mixes raw `violet-*`).
 - ⚠️ **The original note here — *"Nothing else… applying `brand` would be a visible recolor"* — is
   now HALF-TRUE:** it is still true for the marketing pages (every on-page violet differs from
