@@ -3,20 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --obsidian: #070710;
-  --obsidian-2: #0d0d1a;
-  --violet: #7c3aed;
-  --violet-bright: #a855f7;
-  --violet-glow: rgba(168, 85, 247, 0.35);
-  --gold: #e8c87a;
-  --silver: #c8cfe0;
-
-  /* ── UnicornApps design tokens (Phase 1 foundation) — see docs/DESIGN-TOKENS.md ──
+  /* ── UnicornApps design tokens — see docs/DESIGN-TOKENS.md ──
      RGB channel triplets, consumed as rgb(var(--x) / <alpha-value>) via
-     tailwind.config.ts (bg-surface / text-brand / border-ink-0 …). Values match
-     the current live UI, so defining them changes nothing on screen. The brand
-     accent is defined but wired to NO existing element this phase. Namespaced
-     --ua-* to avoid colliding with the legacy brand vars above (notably --gold). */
+     tailwind.config.ts (bg-surface / text-brand / border-ink-0 …). The brand
+     accent is now wired across the whole public surface (landing, features,
+     about, pricing, auth, chrome — PRs #46/#47/#48/#49/#50); the dashboard body
+     is the remaining wave. The legacy brand vars these were once namespaced
+     against (--obsidian, --violet*, --gold, --silver) are RETIRED — they had
+     zero consumers anywhere in src/. --ua-gold remains defined but unwired. */
   --ua-surface: 7 7 16;       /* #070710  canonical dark background */
   --ua-surface-2: 13 13 26;   /* #0d0d1a  raised panel */
   --ua-brand: 99 91 255;      /* #635BFF  single brand accent */
@@ -70,11 +64,6 @@
   to { transform: translateX(-50%); }
 }
 
-@keyframes pulse-subtle {
-  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
-  50% { opacity: 0.95; transform: scale(0.99); box-shadow: 0 0 40px rgba(139, 92, 246, 0.5); }
-}
-
 .animate-marquee {
   animation: marquee 20s linear infinite;
 }
@@ -98,17 +87,9 @@ body {
   .matrix-glow-shell {
     @apply fixed inset-0 z-[-1] pointer-events-none;
     background-image: 
-      radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%), 
+      radial-gradient(at 0% 0%, rgb(var(--ua-brand-glow) / 0.15) 0px, transparent 50%),
       radial-gradient(at 100% 100%, rgba(94, 234, 212, 0.05) 0px, transparent 50%),
       radial-gradient(at 50% 50%, rgba(15, 23, 42, 1) 0px, transparent 100%);
-  }
-
-  .animate-pulse-subtle {
-    animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-indigo-500 to-purple-600;
   }
 
   .font-arabic {
