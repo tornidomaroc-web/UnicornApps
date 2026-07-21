@@ -27,7 +27,7 @@ function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: st
     <Button
       type="submit"
       disabled={pending}
-      className="w-full h-12 bg-violet-600 hover:bg-violet-500 text-white font-semibold text-base rounded-xl shadow-[0_0_24px_-6px_rgba(124,58,237,0.7)] transition-all active:scale-[0.99] disabled:opacity-70 disabled:active:scale-100"
+      className="w-full h-12 bg-brand hover:bg-brand/90 text-white font-semibold text-base rounded-xl shadow-[0_0_24px_-6px_rgb(var(--ua-brand-glow)/0.7)] transition-all active:scale-[0.99] disabled:opacity-70 disabled:active:scale-100"
     >
       {pending ? (
         <>
@@ -114,20 +114,26 @@ export default function LoginPage({
     <div className="flex min-h-screen items-center justify-center bg-[#070710] px-4 py-10 sm:py-12 relative overflow-hidden">
       {/* Background glow */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] bg-violet-600/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-15%] right-[-10%] w-[45%] h-[45%] bg-indigo-500/10 rounded-full blur-[120px]" />
-        <div className="absolute top-[30%] right-[20%] w-[20%] h-[20%] bg-amber-400/5 rounded-full blur-[100px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] bg-brand/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-15%] right-[-10%] w-[45%] h-[45%] bg-brand/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[30%] right-[20%] w-[20%] h-[20%] bg-brand/5 rounded-full blur-[100px]" />
       </div>
 
-      <Card className="w-full max-w-md bg-white/[0.04] backdrop-blur-2xl border-white/10 shadow-[0_0_60px_-25px_rgba(124,58,237,0.45)] rounded-2xl overflow-hidden relative z-10">
+      <Card className="w-full max-w-md bg-white/[0.04] backdrop-blur-2xl border-white/10 shadow-[0_0_60px_-25px_rgb(var(--ua-brand-glow)/0.45)] rounded-2xl overflow-hidden relative z-10">
         <CardHeader className="space-y-3 pb-6 pt-8">
-          {/* Brand mark — gold accent */}
-          <div className="flex items-center gap-2">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-300/90 to-amber-500/80 text-black shadow-[0_0_18px_-4px_rgba(251,191,36,0.6)]">
+          {/* Brand mark — home link. w-fit is load-bearing: CardHeader is a flex
+              COLUMN, so a stretched <a> would make the whole blank header row
+              clickable and a stray tap would navigate away mid-signup, discarding
+              typed credentials. Bound the target to the lockup itself. */}
+          <Link
+            href="/"
+            className="flex w-fit items-center gap-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+          >
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-white shadow-[0_0_18px_-4px_rgb(var(--ua-brand-glow)/0.6)]">
               <Sparkles className="h-4 w-4" />
             </span>
             <span className="text-sm font-semibold tracking-wide text-slate-200">UnicornApps</span>
-          </div>
+          </Link>
           <CardTitle className="text-3xl font-bold tracking-tight text-white">
             {title}
           </CardTitle>
@@ -151,7 +157,7 @@ export default function LoginPage({
               <Button
                 type="button"
                 onClick={handleBackToSignin}
-                className="w-full h-12 bg-violet-600 hover:bg-violet-500 text-white font-semibold text-base rounded-xl shadow-[0_0_24px_-6px_rgba(124,58,237,0.7)] transition-all active:scale-[0.99]"
+                className="w-full h-12 bg-brand hover:bg-brand/90 text-white font-semibold text-base rounded-xl shadow-[0_0_24px_-6px_rgb(var(--ua-brand-glow)/0.7)] transition-all active:scale-[0.99]"
               >
                 {t('login.action.back_to_sign_in')}
               </Button>
@@ -171,7 +177,7 @@ export default function LoginPage({
                 inputMode="email"
                 placeholder={t('login.emailPlaceholder')}
                 required
-                className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-violet-500/60 focus:ring-violet-500/20 transition-all h-12 rounded-xl"
+                className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-brand/60 focus:ring-brand/20 transition-all h-12 rounded-xl"
               />
             </div>
 
@@ -185,7 +191,7 @@ export default function LoginPage({
                     <button
                       type="button"
                       onClick={() => setMode('reset')}
-                      className="text-xs font-medium text-violet-400 hover:text-violet-300 transition-colors"
+                      className="text-xs font-medium text-brand hover:text-brand/80 transition-colors"
                     >
                       {t('login.forgot')}
                     </button>
@@ -200,13 +206,13 @@ export default function LoginPage({
                     placeholder={t('login.passwordPlaceholder')}
                     required
                     minLength={mode === 'signup' ? 6 : undefined}
-                    className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-violet-500/60 focus:ring-violet-500/20 transition-all h-12 rounded-xl ltr:pr-12 rtl:pl-12"
+                    className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-brand/60 focus:ring-brand/20 transition-all h-12 rounded-xl ltr:pr-12 rtl:pl-12"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((s) => !s)}
                     aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
-                    className="absolute top-1/2 -translate-y-1/2 ltr:right-3 rtl:left-3 text-slate-500 hover:text-violet-400 transition-colors"
+                    className="absolute top-1/2 -translate-y-1/2 ltr:right-3 rtl:left-3 text-slate-500 hover:text-brand transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -301,7 +307,7 @@ export default function LoginPage({
                   setMode(mode === 'signin' ? 'signup' : 'signin')
                   setShowPassword(false)
                 }}
-                className="font-semibold text-violet-400 hover:text-violet-300 transition-colors"
+                className="font-semibold text-brand hover:text-brand/80 transition-colors"
               >
                 {mode === 'signin' ? t('login.createOne') : t('login.signinLink')}
               </button>

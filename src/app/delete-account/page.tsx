@@ -41,7 +41,7 @@ export default function DeleteAccountPage() {
         <h2 className="text-xl font-black text-white mb-3">Need help?</h2>
         <p className="text-slate-400">
           If you cannot sign in, email{' '}
-          <a href="mailto:support@unicornapps.app" className="text-violet-400 underline">
+          <a href="mailto:support@unicornapps.app" className="text-brand underline">
             support@unicornapps.app
           </a>{' '}
           from your registered email address and we will delete your account and data
