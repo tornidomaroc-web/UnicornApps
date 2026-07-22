@@ -1,0 +1,39 @@
+# Line-ending and binary handling.
+# Goal: the repository always stores LF; binaries are never munged.
+#
+# `text=auto` normalizes text files to LF *in the repository* while leaving
+# each working copy native (CRLF on Windows). We deliberately do NOT add
+# `eol=lf` to this default line: that would force LF into the Windows
+# working tree as well, rewriting every text file on the next checkout for
+# no benefit to the repo.
+* text=auto
+
+# --- MUST be LF on every platform ---
+# gradlew is executed by /bin/sh on Linux/macOS and on CI runners. CRLF
+# here fails as `bad interpreter` / `\r: command not found`.
+android/gradlew text eol=lf
+*.sh            text eol=lf
+
+# --- MUST be CRLF ---
+# The Windows batch interpreter is unreliable with LF-only line endings.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# --- Binary: never diffed, never line-ending converted ---
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.jar  binary
+*.aab  binary
+*.apk  binary
+*.pdf  binary
+
+# Signing material is gitignored, but marked binary as defense in depth so
+# it can never be corrupted or diffed if it is ever force-added by mistake.
+*.jks      binary
+*.keystore binary
+*.p12      binary
+*.pfx      binary
