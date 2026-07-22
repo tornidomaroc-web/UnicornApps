@@ -97,7 +97,7 @@ export default async function RootLayout({
           <div className="flex min-h-screen flex-col relative">
             <div className="matrix-glow-shell" />
             <Navbar initialUser={user} initialCredits={credits} />
-            <main className="flex-1 mt-16">{children}</main>
+            <main className="flex-1 mt-16 pt-safe pb-safe">{children}</main>
           </div>
         </Providers>
         {/*
