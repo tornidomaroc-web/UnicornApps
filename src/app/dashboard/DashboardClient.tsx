@@ -1250,7 +1250,7 @@ export default function DashboardClient({
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center"
             >
-              <div className="absolute top-8 left-0 right-0 z-10 text-center">
+              <div className="absolute top-8 mt-safe left-0 right-0 z-10 text-center">
                 <p className="text-xs font-black uppercase tracking-[0.3em] text-white/40 mb-2">{t('dash.cameraVision')}</p>
                 <h3 className="text-xl font-black text-white uppercase tracking-tighter">{t('dash.cameraPoint')}</h3>
               </div>
@@ -1263,7 +1263,7 @@ export default function DashboardClient({
               />
               <canvas ref={canvasRef} className="hidden" />
 
-              <div className="absolute bottom-12 left-0 right-0 z-10 flex items-center justify-center gap-12">
+              <div className="absolute bottom-12 mb-safe left-0 right-0 z-10 flex items-center justify-center gap-12">
                 <button 
                   onClick={closeCamera}
                   className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-all"

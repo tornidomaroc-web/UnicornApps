@@ -96,6 +96,41 @@ body {
     font-family: var(--font-ibm-arabic), 'IBM Plex Sans Arabic', sans-serif;
   }
 
+  /* Safe-area insets — edge-to-edge preparation.
+
+     At target SDK 36 Android enforces edge-to-edge with no opt-out, so the
+     WebView draws under the status and navigation bars. viewportFit:'cover'
+     (layout.tsx) is already set, which is what makes env() resolve to real
+     values. These are live TODAY on iOS home-screen (standalone) installs;
+     they are inert on Android until the Capacitor 8 / SDK 36 upgrade.
+
+     The fallback chain is deliberate: env() first, then Capacitor 8's
+     --safe-area-inset-* (its documented workaround for WebViews whose env()
+     is broken), then 0px.
+
+     DO NOT rewrite these as calc(base + env(...)). A browser without env()
+     support drops the WHOLE declaration as invalid — with calc() that would
+     also destroy the base offset and collapse the layout. Kept purely
+     ADDITIVE, each rule composes with an existing Tailwind class
+     (mt-16 + pt-safe, top-8 + mt-safe), so an unsupported env() degrades to
+     exactly today's layout instead of breaking it.
+
+     Top/bottom only. Left/right are non-zero solely in landscape on notched
+     devices, and composing them into the navbar's responsive px-4/sm:px-6
+     pair needs per-breakpoint calc() — the exact fragility ruled out above. */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, var(--safe-area-inset-top, 0px));
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, var(--safe-area-inset-bottom, 0px));
+  }
+  .mt-safe {
+    margin-top: env(safe-area-inset-top, var(--safe-area-inset-top, 0px));
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom, var(--safe-area-inset-bottom, 0px));
+  }
+
   /* Scroll containers that hide their scrollbar (tab bars, tables) —
      referenced throughout the dashboard but previously undefined. */
   .no-scrollbar {

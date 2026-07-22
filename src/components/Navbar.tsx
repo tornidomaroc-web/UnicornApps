@@ -40,7 +40,7 @@ export default function Navbar({
   const view = deriveNavView(user);
 
   return (
-    <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-[#070710]/80 backdrop-blur-xl transition-all duration-500 hover:bg-[#070710]/95">
+    <nav className="fixed top-0 w-full z-50 pt-safe border-b border-white/5 bg-[#070710]/80 backdrop-blur-xl transition-all duration-500 hover:bg-[#070710]/95">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 h-20 flex items-center justify-between">
         <div className="flex items-center gap-12">
           <Link href="/" className="font-black text-2xl tracking-tighter text-white flex items-center gap-3 group">
