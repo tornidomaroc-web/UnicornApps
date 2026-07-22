@@ -4,11 +4,69 @@
 /build_log.txt
 /node_modules
 /ios
-/android
 
-# Android signing
+# ============================================================
+# Android native: SIGNING MATERIAL & SECRETS - NEVER COMMIT
+# ============================================================
+# Broad globs first: catch renames, copies and backups of key
+# material anywhere in the repo, not just paths we know today.
+*.jks
+*.jks.*
+*.keystore
+*.keystore.*
+*.p12
+*.pfx
+*.bks
+*.key
+*.pem
+*.der
+*.bak
+*.orig
+
+# Belt (the globs above are the braces): the real release key and
+# its orphaned backup, named explicitly so a future glob edit
+# cannot silently expose them.
+android/app/unicornapps-release.jks
+android/app/unicornapps-release.jks.locked-orphan.bak
+
+# Signing credentials: storePassword / keyPassword / keyAlias
 android/keystore.properties
-android/app/*.jks
+
+# Firebase / Google service configs
+**/google-services.json
+**/GoogleService-Info.plist
+
+# Local machine config (SDK path) and IDE state
+android/local.properties
+android/.idea/
+
+# Gradle / build output
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+android/captures/
+android/.externalNativeBuild/
+android/.cxx/
+
+# Release artifacts
+android/app/release/
+*.apk
+*.aar
+*.ap_
+
+# Capacitor sync-generated (recreated by `npx cap sync`)
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+android/app/src/main/res/xml/config.xml
+
+# Misc
+*.iml
+*.log
+*.hprof
+*.dex
+*.class
 
 # Local clutter (not part of the app)
 /scratch
