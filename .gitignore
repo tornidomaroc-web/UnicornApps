@@ -78,3 +78,50 @@ android/app/src/main/res/xml/config.xml
 
 # Brand design source master (~15MB raster) � too large to ship; sources live in store-assets/brand/
 store-assets/brand/unicornapps-logo-source.png
+
+# ============================================================
+# Assistant working documents - NEVER COMMIT (this repo is PUBLIC)
+# ============================================================
+# CLAUDE.md holds standing instructions and PROJECT-JOURNAL.md holds
+# the full project record: known-open weaknesses, infrastructure
+# posture, provider quota ceilings and business detail. Harmless as
+# local notes; a prioritised map of where to look if published.
+# These files were never committed - but "untracked" is not
+# protection, because a single `git add -A` would publish them.
+# Unanchored on purpose: catches a copy at any depth, not just root.
+CLAUDE.md
+PROJECT-JOURNAL.md
+CLAUDE.md.bak*
+
+# `*.bak` (in the signing-material block above) matches only names
+# ENDING in .bak, so a timestamped backup such as
+# `CLAUDE.md.bak.20260725-restructure` slips past it. Close that
+# hole for every backup, not just these files.
+*.bak.*
+
+# ============================================================
+# Working-tree clutter that must not reach a PUBLIC repo
+# ============================================================
+# These three sit in the repo root but are not part of the app.
+# The cost here is deliberately asymmetric: ignoring a file costs
+# nothing and is undone by deleting one line; publishing it to a
+# public repository is permanent. Un-ignore individually if one is
+# ever wanted in git.
+#
+# An 11MB personally-named document with no relationship to the
+# codebase. Contents deliberately not inspected - a personally-named
+# file does not belong in a code repository regardless of what is
+# in it.
+abojad11.pdf
+#
+# 15MB logo-refinement raster. Same size grounds as the brand source
+# master excluded above; design sources live in store-assets/brand/.
+# Literal name: it contains no glob metacharacters, so this matches
+# exactly. A re-download under a different name (e.g. a "(1)" suffix)
+# would NOT be caught - re-check if the file is ever replaced.
+Nano Banana 2 - Refine this exact logo_ keeping it almost entirely as-is same abstract mark merging.png
+#
+# Competitive research on other companies' public sites, cited as an
+# input by CLAUDE.md. Private by default; un-ignore if it is ever
+# wanted in the open.
+REDESIGN-COMPETITIVE-RESEARCH.md
