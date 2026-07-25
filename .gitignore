@@ -78,3 +78,23 @@ android/app/src/main/res/xml/config.xml
 
 # Brand design source master (~15MB raster) � too large to ship; sources live in store-assets/brand/
 store-assets/brand/unicornapps-logo-source.png
+
+# ============================================================
+# Assistant working documents - NEVER COMMIT (this repo is PUBLIC)
+# ============================================================
+# CLAUDE.md holds standing instructions and PROJECT-JOURNAL.md holds
+# the full project record: known-open weaknesses, infrastructure
+# posture, provider quota ceilings and business detail. Harmless as
+# local notes; a prioritised map of where to look if published.
+# These files were never committed - but "untracked" is not
+# protection, because a single `git add -A` would publish them.
+# Unanchored on purpose: catches a copy at any depth, not just root.
+CLAUDE.md
+PROJECT-JOURNAL.md
+CLAUDE.md.bak*
+
+# `*.bak` (in the signing-material block above) matches only names
+# ENDING in .bak, so a timestamped backup such as
+# `CLAUDE.md.bak.20260725-restructure` slips past it. Close that
+# hole for every backup, not just these files.
+*.bak.*
