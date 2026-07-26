@@ -246,6 +246,10 @@ const translations = {
     // Paddle SDK caches its own failed CDN load for the life of the page, so an
     // in-page retry cannot succeed. See lib/paddle.ts.
     'pricing.banner.error': "We couldn't open the checkout. Please refresh the page and try again.",
+    // Payment confirmed, but the webhook grant had not landed before the
+    // reconciliation ceiling. Deliberately does NOT claim the credits arrived —
+    // the count on screen has not moved, so a bare success line would be a lie.
+    'pricing.banner.successPending': 'Payment received. Your credits are still being applied — please reload this page in a moment to see them.',
     'checkout.pending': 'Opening checkout…',
     // About
     'about.badge': 'The Unicorn Story',
@@ -628,6 +632,7 @@ const translations = {
     'pricing.banner.failed': 'لم تتمّ عملية الدفع. يُرجى المحاولة مرة أخرى.',
     // TODO-LEGAL-REVIEW n/a — UI copy, but still machine-assisted Arabic (item 20).
     'pricing.banner.error': 'تعذّر فتح صفحة الدفع. يُرجى تحديث الصفحة والمحاولة مرة أخرى.',
+    'pricing.banner.successPending': 'تم استلام الدفع. لا يزال إضافة أرصدتك جارياً — يُرجى إعادة تحميل هذه الصفحة بعد قليل لعرضها.',
     'checkout.pending': 'جارٍ فتح صفحة الدفع…',
     // About
     'about.badge': 'قصة يونيكورن',
