@@ -16,7 +16,7 @@ import { Check, Sparkles, Zap, Shield, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLang } from "@/lib/i18n/LanguageContext";
 import { useIsNative } from "@/hooks/useIsNative";
-import { openCheckout } from "@/lib/checkout";
+import { openCheckout, checkoutStatusForEvent, type CheckoutStatus } from "@/lib/checkout";
 import { PADDLE_EVENT } from "@/lib/paddle";
 
 export default function PricingClient({
@@ -39,25 +39,44 @@ export default function PricingClient({
   // transitions navigate away from /pricing, so a one-time seed is enough — no
   // reconcile effect needed.
   const [userId] = useState<string | null>(initialUserId);
-  const [status, setStatus] = useState<'success' | 'failed' | null>(null);
+  const [status, setStatus] = useState<CheckoutStatus | null>(null);
+  // Which tier is opening, from the click until Paddle's overlay is up (or the
+  // attempt failed). Both paid CTAs disable so the dynamic-import + CDN
+  // round-trip cannot be clicked through twice, but only the clicked one shows
+  // the pending label. lib/checkout.ts holds the real interlock (see there).
+  const [pending, setPending] = useState<'sub' | 'pack' | null>(null);
 
   // Surface the Paddle checkout lifecycle (re-broadcast as PADDLE_EVENT by
   // lib/paddle.ts). The overlay stays in-page; we show a transitional banner.
   // Real credit/ad-free changes are applied by the (not-yet-built) webhook,
   // asynchronously, hence the "appear shortly" copy.
+  //
+  // Event-name → status lives in lib/checkout.ts so this page and the dashboard
+  // cannot drift, and so the full CheckoutEventNames set is covered by tests.
   useEffect(() => {
     const onPaddle = (e: Event) => {
       const detail = (e as CustomEvent).detail as { name?: string } | undefined;
-      // CheckoutEventNames: 'checkout.completed' | 'checkout.payment.failed' | 'checkout.error'
-      if (detail?.name === 'checkout.completed') setStatus('success');
-      else if (detail?.name === 'checkout.payment.failed' || detail?.name === 'checkout.error') setStatus('failed');
+      const next = checkoutStatusForEvent(detail?.name);
+      if (next) setStatus(next);
     };
     window.addEventListener(PADDLE_EVENT, onPaddle);
     return () => window.removeEventListener(PADDLE_EVENT, onPaddle);
   }, []);
 
-  const handlePaid = (kind: 'sub' | 'pack') => {
-    void openCheckout({ kind, userId, navigate: (path) => router.push(path) });
+  const handlePaid = async (kind: 'sub' | 'pack') => {
+    if (pending) return;
+    setPending(kind);
+    setStatus(null);
+    try {
+      await openCheckout({ kind, userId, navigate: (path) => router.push(path) });
+    } catch (err) {
+      // Paddle.js failed to load. Previously `void`-ed, so the button silently
+      // did nothing and every later click in the session failed the same way.
+      console.error('Checkout: Paddle failed to load', err);
+      setStatus('error');
+    } finally {
+      setPending(null);
+    }
   };
 
   // Three cards: Free (signup credits, ad-supported) + the two locked paid
@@ -175,7 +194,11 @@ export default function PricingClient({
                 : 'border-red-500/30 bg-red-500/10 text-red-200'
             }`}
           >
-            {status === 'success' ? t('pricing.banner.success') : t('pricing.banner.failed')}
+            {status === 'success'
+              ? t('pricing.banner.success')
+              : status === 'error'
+                ? t('pricing.banner.error')
+                : t('pricing.banner.failed')}
           </div>
         )}
 
@@ -239,14 +262,16 @@ export default function PricingClient({
                     // native via getPaddle(). Null userId redirects to /login.
                     showPaid && (
                       <Button
-                        onClick={() => handlePaid(tier.checkoutKind!)}
-                        className={`w-full h-16 text-xs font-black uppercase tracking-[0.2em] rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${
+                        onClick={() => void handlePaid(tier.checkoutKind!)}
+                        disabled={pending !== null}
+                        aria-busy={pending === tier.checkoutKind}
+                        className={`w-full h-16 text-xs font-black uppercase tracking-[0.2em] rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 ${
                           tier.featured
                             ? "bg-brand hover:bg-brand/90 text-white shadow-[0_0_30px_rgb(var(--ua-brand-glow)/0.4)]"
                             : "bg-white/5 hover:bg-white/10 text-white border border-white/10"
                         }`}
                       >
-                        {tier.cta}
+                        {pending === tier.checkoutKind ? t('checkout.pending') : tier.cta}
                       </Button>
                     )
                   ) : (

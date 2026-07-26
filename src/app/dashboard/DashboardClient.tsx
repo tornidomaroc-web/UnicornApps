@@ -45,7 +45,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { useLang } from '@/lib/i18n/LanguageContext'
 import { takePicture } from '@/lib/capacitor'
-import { openCheckout } from '@/lib/checkout'
+import { openCheckout, checkoutStatusForEvent, type CheckoutStatus } from '@/lib/checkout'
 import { resolveApiError } from '@/lib/api-error'
 import { PADDLE_EVENT } from '@/lib/paddle'
 import {
@@ -155,23 +155,43 @@ export default function DashboardClient({
   // Paddle checkout feedback: same PADDLE_EVENT bridge (lib/paddle.ts) used by
   // the pricing page. Real credit/ad-free changes are applied by the
   // (not-yet-built) webhook, asynchronously, hence the transitional banner.
-  const [checkoutStatus, setCheckoutStatus] = useState<'success' | 'failed' | null>(null)
+  //
+  // Event-name → status lives in lib/checkout.ts so this page and /pricing
+  // cannot drift, and so the full CheckoutEventNames set is covered by tests.
+  const [checkoutStatus, setCheckoutStatus] = useState<CheckoutStatus | null>(null)
   useEffect(() => {
     const onPaddle = (e: Event) => {
       const detail = (e as CustomEvent).detail as { name?: string } | undefined
-      // CheckoutEventNames: 'checkout.completed' | 'checkout.payment.failed' | 'checkout.error'
-      if (detail?.name === 'checkout.completed') setCheckoutStatus('success')
-      else if (detail?.name === 'checkout.payment.failed' || detail?.name === 'checkout.error') setCheckoutStatus('failed')
+      const next = checkoutStatusForEvent(detail?.name)
+      if (next) setCheckoutStatus(next)
     }
     window.addEventListener(PADDLE_EVENT, onPaddle)
     return () => window.removeEventListener(PADDLE_EVENT, onPaddle)
   }, [])
 
+  // Which product is opening, from the click until Paddle's overlay is up (or
+  // the attempt failed). Both CTAs disable so the dynamic-import + CDN
+  // round-trip cannot be clicked through twice, but only the clicked one shows
+  // the pending label. lib/checkout.ts holds the real interlock (see there).
+  const [checkoutPending, setCheckoutPending] = useState<'sub' | 'pack' | null>(null)
+
   // Reuses the SAME openCheckout from lib/checkout.ts as the pricing page (no
   // duplicated checkout logic). userId is the server-provided prop, so it is
   // non-null at click time; openCheckout's null guard stays as a harmless backstop.
-  const handlePaid = (kind: 'sub' | 'pack') => {
-    void openCheckout({ kind, userId, navigate: (path) => router.push(path) })
+  const handlePaid = async (kind: 'sub' | 'pack') => {
+    if (checkoutPending) return
+    setCheckoutPending(kind)
+    setCheckoutStatus(null)
+    try {
+      await openCheckout({ kind, userId, navigate: (path) => router.push(path) })
+    } catch (err) {
+      // Paddle.js failed to load. Previously `void`-ed, so the button silently
+      // did nothing and every later click in the session failed the same way.
+      console.error('Checkout: Paddle failed to load', err)
+      setCheckoutStatus('error')
+    } finally {
+      setCheckoutPending(null)
+    }
   }
 
   // Camera Support
@@ -606,17 +626,21 @@ export default function DashboardClient({
                        {/* Both CTAs reuse openCheckout from lib/checkout.ts. */}
                        <button
                          type="button"
-                         onClick={() => handlePaid('pack')}
-                         className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+                         onClick={() => void handlePaid('pack')}
+                         disabled={checkoutPending !== null}
+                         aria-busy={checkoutPending === 'pack'}
+                         className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                        >
-                         {t('dash.cta.pack')}
+                         {checkoutPending === 'pack' ? t('checkout.pending') : t('dash.cta.pack')}
                        </button>
                        <button
                          type="button"
-                         onClick={() => handlePaid('sub')}
-                         className="bg-violet-600/10 border border-violet-500/30 text-violet-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg hover:bg-violet-600 hover:text-white transition-all"
+                         onClick={() => void handlePaid('sub')}
+                         disabled={checkoutPending !== null}
+                         aria-busy={checkoutPending === 'sub'}
+                         className="bg-violet-600/10 border border-violet-500/30 text-violet-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg hover:bg-violet-600 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                        >
-                         {t('dash.cta.sub')}
+                         {checkoutPending === 'sub' ? t('checkout.pending') : t('dash.cta.sub')}
                        </button>
                      </div>
                    </>
@@ -636,7 +660,11 @@ export default function DashboardClient({
                 : 'border-red-500/30 bg-red-500/10 text-red-200'
             }`}
           >
-            {checkoutStatus === 'success' ? t('pricing.banner.success') : t('pricing.banner.failed')}
+            {checkoutStatus === 'success'
+              ? t('pricing.banner.success')
+              : checkoutStatus === 'error'
+                ? t('pricing.banner.error')
+                : t('pricing.banner.failed')}
           </div>
         )}
 
