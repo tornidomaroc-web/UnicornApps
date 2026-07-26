@@ -157,3 +157,49 @@ body {
     background: transparent;
   }
 }
+
+/* ── Arabic letter-joining: neutralise letter-spacing under RTL ───────────────
+
+   THE DEFECT
+   Arabic is a cursive script: letters JOIN. CSS letter-spacing does not "space
+   out" Arabic — it forces a gap into the join, severing connected words into
+   disconnected glyph fragments. Negative tracking (tracking-tight / -tighter,
+   50 sites) is worse still: it overlaps the glyphs. This sat on the paid CTAs,
+   i.e. on the last words a visitor reads before deciding to trust the site with
+   a card.
+
+   WHY ONE RULE INSTEAD OF ltr:-GUARDING EACH SITE
+   src/ carries 141 tracking-* utilities and only 4 were guarded. Guarding the
+   rest by hand requires correctly deciding, per site, whether it can ever render
+   Arabic — and that decision is not reliably derivable from the source:
+     - AI-generated copy (results.seoTitle, hotspot labels, structuredData) is
+       Arabic whenever the user generates with lang:'ar', and no grep for t()
+       will ever find it;
+     - components/ui/card.tsx bakes tracking-tight into CardTitle, so a single
+       line leaks into every Arabic card title on every page.
+   One rule keyed on the direction the app already sets is exhaustive today AND
+   self-enforcing: any tracking-* added later is covered without anyone
+   remembering a convention.
+
+   SCOPE AND SPECIFICITY
+   LanguageContext.tsx puts dir="rtl" (and lang="ar", and .font-arabic) on the
+   wrapper that contains Navbar + every page, so this reaches the whole tree.
+   It applies ONLY under dir="rtl": English rendering is byte-for-byte untouched,
+   so the design's tracking is fully intact in the default language.
+
+   Specificity is (0,1,1) — one attribute selector plus one type selector —
+   which beats every Tailwind tracking utility (a single class, (0,1,0)),
+   including arbitrary values like tracking-[0.2em]. That is why no !important is
+   needed. Do NOT "simplify" this to `[dir="rtl"] *`: that drops to (0,1,0),
+   ties with the utilities, and silently starts losing on source order.
+
+   KNOWN, ACCEPTED TRADE-OFF
+   CSS cannot detect script per text node, only per subtree. So Latin fragments
+   rendered WHILE IN ARABIC MODE (prices, "Instagram"/"TikTok", the footer
+   copyright, marquee logos) also lose their tracking. That is cosmetic, affects
+   only the Arabic surface, and is the correct side of the trade: a mangled
+   Arabic CTA is a trust failure, a slightly tighter "$0" is not.            */
+html [dir='rtl'],
+html [dir='rtl'] * {
+  letter-spacing: normal;
+}
