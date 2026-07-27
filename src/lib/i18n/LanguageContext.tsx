@@ -502,7 +502,7 @@ const translations = {
     'dash.noCredits': 'نفد رصيدك. رقِّ خطّتك للمتابعة.',
     // Native-only neutral limit copy (see English block) — no steering.
     'dash.limitReached': 'لقد بلغتَ الحدّ المجاني.',
-    'dash.noCreditsNeutral': 'لم يتبقّ لديك رصيد مجاني.',
+    'dash.noCreditsNeutral': 'نفد رصيدك المجانيّ.',
     'dash.consuming': '(يستهلك رصيداً واحداً)',
     'dash.aboutItem': 'حول هذا المنتج',
     'dash.addToCart': 'أضف إلى السلة',
@@ -630,9 +630,12 @@ const translations = {
     // Checkout banner (transitional; webhook applies credits asynchronously)
     'pricing.banner.success': 'تم استلام الدفع، وستظهر أرصدتك قريباً.',
     'pricing.banner.failed': 'لم تتمّ عملية الدفع. يُرجى المحاولة مرة أخرى.',
-    // TODO-LEGAL-REVIEW n/a — UI copy, but still machine-assisted Arabic (item 20).
     'pricing.banner.error': 'تعذّر فتح صفحة الدفع، ولم يُخصم منك أيّ مبلغ. أعد تحميل الصفحة ثمّ حاول مرّة أخرى.',
     'pricing.banner.successPending': 'تمّ استلام الدفع، ولا تزال أرصدتك في طريقها إليك. أعد تحميل هذه الصفحة بعد قليل لتظهر.',
+    // TODO-LEGAL-REVIEW n/a. UI copy, but still machine-assisted Arabic (item 20).
+    // SCOPE: 'checkout.pending' ONLY. 'pricing.banner.error' and
+    // 'pricing.banner.successPending' above were operator-reviewed in 13b2ff6 (PR #60)
+    // and are NOT covered by this marker.
     'checkout.pending': 'جارٍ فتح صفحة الدفع…',
     // About
     'about.badge': 'قصة يونيكورن',
