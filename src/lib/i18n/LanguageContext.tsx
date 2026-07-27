@@ -499,11 +499,11 @@ const translations = {
     'dash.copyLogic': 'نسخ النص',
     'dash.copyCode': 'نسخ الكود',
     'dash.analysisComplete': 'اكتمل التحليل لمنصة {platform}. المحتوى جاهز.',
-    'dash.noCredits': 'لا يوجد رصيد. قم بالتطوير للمتابعة',
+    'dash.noCredits': 'نفد رصيدك. رقِّ خطّتك للمتابعة.',
     // Native-only neutral limit copy (see English block) — no steering.
     'dash.limitReached': 'لقد بلغتَ الحدّ المجاني.',
     'dash.noCreditsNeutral': 'لم يتبقّ لديك رصيد مجاني.',
-    'dash.consuming': '(يستهلك 1 رصيد)',
+    'dash.consuming': '(يستهلك رصيداً واحداً)',
     'dash.aboutItem': 'حول هذا المنتج',
     'dash.addToCart': 'أضف إلى السلة',
     'dash.buyNow': 'اشتري الآن',
@@ -520,7 +520,7 @@ const translations = {
     'dash.processing': 'جارٍ المعالجة…',
     'dash.error': 'خطأ: {error}. يرجى تجربة تعليمات مختلفة.',
     // Counterpart of the EN 'dash.aiBusy' note above.
-    'dash.aiBusy': 'الذكاء الاصطناعي مزدحم بشكل غير معتاد حالياً. لم يُخصم رصيدك — يرجى المحاولة مرة أخرى بعد قليل.',
+    'dash.aiBusy': 'الخدمة مزدحمة أكثر من المعتاد الآن. لم يُخصم من رصيدك شيء، فحاول مرّة أخرى بعد قليل.',
     'dash.id': 'المعرف',
     'dash.asset': 'الأصل',
     'dash.platformName': 'المنصة',
@@ -595,7 +595,7 @@ const translations = {
     'dash.step.loadingSub': 'جارٍ تحليل صورتك…',
     // Pricing
     'pricing.title': 'أسعار بسيطة للبائعين العالميين',
-    'pricing.sub': 'ابدأ مجاناً، وطوّر عندما تحتاج مزيداً من القوة.',
+    'pricing.sub': 'ابدأ مجاناً، وارتقِ بخطّتك حين تحتاج إلى المزيد.',
     'pricing.badge': 'الأسعار والخطط',
     'pricing.free': 'مجاني',
     'pricing.free.desc': 'جرّب الذكاء الاصطناعي على بعض المنتجات. مدعوم بالإعلانات.',
@@ -606,7 +606,7 @@ const translations = {
     'pricing.enterprise.cta': 'اتصل بالمبيعات اليوم',
     // Free-tier features
     'pricing.f.gen3': '3 أرصدة مجانية',
-    'pricing.f.vision.std': 'تحليل رؤية قياسي',
+    'pricing.f.vision.std': 'تحليل بصريّ قياسيّ',
     'pricing.f.seo.basic': 'عناوين SEO أساسية',
     'pricing.f.adssupported': 'مدعوم بالإعلانات',
     // Subscription ($9.99/mo) - ad-free
@@ -631,8 +631,8 @@ const translations = {
     'pricing.banner.success': 'تم استلام الدفع، وستظهر أرصدتك قريباً.',
     'pricing.banner.failed': 'لم تتمّ عملية الدفع. يُرجى المحاولة مرة أخرى.',
     // TODO-LEGAL-REVIEW n/a — UI copy, but still machine-assisted Arabic (item 20).
-    'pricing.banner.error': 'تعذّر فتح صفحة الدفع. يُرجى تحديث الصفحة والمحاولة مرة أخرى.',
-    'pricing.banner.successPending': 'تم استلام الدفع. لا يزال إضافة أرصدتك جارياً — يُرجى إعادة تحميل هذه الصفحة بعد قليل لعرضها.',
+    'pricing.banner.error': 'تعذّر فتح صفحة الدفع، ولم يُخصم منك أيّ مبلغ. أعد تحميل الصفحة ثمّ حاول مرّة أخرى.',
+    'pricing.banner.successPending': 'تمّ استلام الدفع، ولا تزال أرصدتك في طريقها إليك. أعد تحميل هذه الصفحة بعد قليل لتظهر.',
     'checkout.pending': 'جارٍ فتح صفحة الدفع…',
     // About
     'about.badge': 'قصة يونيكورن',
