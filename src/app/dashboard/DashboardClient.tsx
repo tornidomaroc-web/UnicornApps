@@ -939,11 +939,17 @@ export default function DashboardClient({
                                <div className="flex flex-col items-center gap-3">
                                   <AlertCircle className="w-5 h-5 text-red-500/50" />
                                   <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest text-center px-2">
-                                    {/* Native surface: neutral, translated, steers nowhere (Play policy).
-                                        Web surface: unchanged steering copy. isNative is server-seeded. */}
                                     {isNative
+                                      // NATIVE: neutral, steers nowhere (Play policy). Do not
+                                      // swap this for dash.noCredits, which upsells.
                                       ? t('dash.limitReached')
-                                      : "You've reached your free limit. More features are available on the official UnicornApps website."}
+                                      // WEB: may steer to purchase. Same key, same ternary shape
+                                      // as the refine 403 branch above, so the two out-of-credits
+                                      // surfaces can no longer drift apart. Was hardcoded English
+                                      // (rendered untranslated on the Arabic surface) AND pointed
+                                      // web users at "the official UnicornApps website", which is
+                                      // the site they are already on.
+                                      : t('dash.noCredits')}
                                   </p>
                                </div>
                             ) : (
