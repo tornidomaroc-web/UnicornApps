@@ -48,6 +48,15 @@ import { takePicture } from '@/lib/capacitor'
 import { openCheckout, checkoutStatusForEvent, type CheckoutStatus } from '@/lib/checkout'
 import { pollForCreditGrant, type CreditPollLock } from '@/lib/credit-refresh'
 import { resolveApiError } from '@/lib/api-error'
+import {
+  bannerToneClass,
+  checkoutBannerTone,
+  isCameraCancellation,
+  nextDashboardError,
+  toUserMessage,
+  ERROR_BANNER_TONE,
+  UserFacingError,
+} from '@/lib/dashboard-banner'
 import { PADDLE_EVENT } from '@/lib/paddle'
 import {
   Card,
@@ -116,6 +125,8 @@ export default function DashboardClient({
   const [preview, setPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<GeneratedContent | null>(null)
+  // Rendered by the banner below the credits header. Every write goes through
+  // nextDashboardError so the clearing rules stay in one place (lib/dashboard-banner.ts).
   const [error, setError] = useState<string | null>(null)
   const [copySuccess, setCopySuccess] = useState<string | null>(null)
   const [history, setHistory] = useState<Generation[]>(initialHistory)
@@ -136,6 +147,7 @@ export default function DashboardClient({
   const [viewMode, setViewMode] = useState<'raw' | 'preview'>('raw')
   const [shopifyViewMode, setShopifyViewMode] = useState<'preview' | 'code'>('preview')
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const errorRef = useRef<HTMLDivElement>(null)
 
   // Seeded from the server's native User-Agent check so the Paddle upgrade links
   // never render on native (no flash). Client check only ever upgrades to native.
@@ -273,11 +285,15 @@ export default function DashboardClient({
         if (photo) {
           setPreview(photo);
           setFile(null);
-          setError(null);
+          setError(nextDashboardError({ kind: 'input-changed' }));
           setResults(null);
         }
       } catch (err) {
-        setError(t('dash.cameraError'));
+        // Backing out of the native camera throws through this same channel.
+        // Telling that user their camera permission was denied would be a lie,
+        // and one they would now SEE. See isCameraCancellation.
+        if (isCameraCancellation(err)) return;
+        setError(nextDashboardError({ kind: 'capture-failed', message: t('dash.cameraError') }));
       }
       return;
     }
@@ -294,7 +310,7 @@ export default function DashboardClient({
         }
       }, 100)
     } catch (err) {
-      setError(t('dash.cameraError'))
+      setError(nextDashboardError({ kind: 'capture-failed', message: t('dash.cameraError') }))
     }
   }
 
@@ -306,6 +322,9 @@ export default function DashboardClient({
     canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0)
     const dataUrl = canvas.toDataURL('image/jpeg', 0.9)
     setPreview(dataUrl)
+    // A photo taken after a denied-then-granted permission prompt must not land
+    // under a stale "camera access denied" banner.
+    setError(nextDashboardError({ kind: 'input-changed' }))
     closeCamera()
   }
 
@@ -338,6 +357,14 @@ export default function DashboardClient({
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatHistory])
 
+  // The banner sits at the top of the page, but the Generate button that raises
+  // it is at the bottom of the right-hand column and, on a phone, well below the
+  // fold. Without this the fix would be invisible on exactly the surface that
+  // matters most. Same mechanism the chat above already uses.
+  useEffect(() => {
+    if (error) errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [error])
+
   const platforms = [
     { id: 'amazon', label: t('dash.tab.amazon'), emoji: '🛒', color: 'orange' },
     { id: 'shopify', label: t('dash.tab.shopify'), emoji: '🏪', color: 'green' },
@@ -349,7 +376,7 @@ export default function DashboardClient({
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
       if (selectedFile.size > 4 * 1024 * 1024) {
-        setError(t('dash.filesizeError'))
+        setError(nextDashboardError({ kind: 'input-rejected', message: t('dash.filesizeError') }))
         return
       }
       setFile(selectedFile)
@@ -358,7 +385,7 @@ export default function DashboardClient({
         setPreview(reader.result as string)
       }
       reader.readAsDataURL(selectedFile)
-      setError(null)
+      setError(nextDashboardError({ kind: 'input-changed' }))
       setResults(null)
     }
   }
@@ -367,7 +394,7 @@ export default function DashboardClient({
     if (!preview) return
 
     setLoading(true)
-    setError(null)
+    setError(nextDashboardError({ kind: 'attempt-started' }))
 
     try {
       const response = await fetch('/api/generate', {
@@ -384,13 +411,15 @@ export default function DashboardClient({
       // are text/plain, so parsing first turned them into a raw SyntaxError and
       // hid the real status. See @/lib/api-error.
       if (!response.ok) {
-        throw new Error(await resolveApiError(response, t))
+        // UserFacingError, not Error: the catch below shows this message, and
+        // only a message we translated ourselves may be shown. See toUserMessage.
+        throw new UserFacingError(await resolveApiError(response, t))
       }
 
       const data = await response.json()
 
       setResults(data)
-      
+
       // Add to history locally for immediate feedback if needed, 
       // but router.refresh() will handle the actual data sync
       router.refresh() 
@@ -400,8 +429,10 @@ export default function DashboardClient({
         message: t('dash.analysisComplete').replace('{platform}', selectedPlatform.toUpperCase()),
         timestamp: new Date()
       }])
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      // The ONLY user-visible outcome of a failed generate. Before this branch
+      // was rendered, a 429 or 503 here produced nothing at all on screen.
+      setError(nextDashboardError({ kind: 'attempt-failed', message: toUserMessage(err, t) }))
     } finally {
       setLoading(false)
     }
@@ -412,7 +443,7 @@ export default function DashboardClient({
     if (!results || !finalInstruction.trim()) return
 
     setIsRefining(true)
-    setError(null)
+    setError(nextDashboardError({ kind: 'attempt-started' }))
 
     // Add user message to chat history
     const userMsg: ChatMessage = {
@@ -449,7 +480,7 @@ export default function DashboardClient({
           }])
           return
         }
-        throw new Error(await resolveApiError(response, t))
+        throw new UserFacingError(await resolveApiError(response, t))
       }
 
       const data = await response.json()
@@ -464,11 +495,17 @@ export default function DashboardClient({
         message: t('dash.refineSuccess'),
         timestamp: new Date()
       }])
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      // DELIBERATELY does not write `error`. Refine already has a purpose-built
+      // surface for its own failures: the console the user is looking at, where
+      // the reply lands in the turn they just took. Also raising the page-level
+      // banner would report one failure twice, in two different wordings (bare
+      // message up there, dash.error template down here), and would leave the
+      // user's message with no reply if they scrolled. The banner is for the
+      // paths that have no other surface.
       setChatHistory(prev => [...prev, {
         role: 'ai',
-        message: t('dash.error').replace('{error}', err.message),
+        message: t('dash.error').replace('{error}', toUserMessage(err, t)),
         timestamp: new Date()
       }])
     } finally {
@@ -718,19 +755,13 @@ export default function DashboardClient({
           </div>
         </motion.div>
 
+        {/* Banner row. Both banners share ONE container + tone vocabulary, held
+            in lib/dashboard-banner.ts, so the error state cannot drift into a
+            second visual language. They can co-exist: a checkout outcome and a
+            failed generate are unrelated events and suppressing either would
+            lose information. */}
         {checkoutStatus && (
-          <div
-            className={`max-w-2xl mx-auto mb-8 rounded-2xl border px-6 py-4 text-center text-sm font-medium ${
-              checkoutStatus === 'success'
-                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                : checkoutStatus === 'success_pending'
-                  ? // Functional waiting state, not decorative: the payment is fine
-                    // but the count on screen is not yet true, so it must read as
-                    // neither "done" (emerald) nor "failed" (red).
-                    'border-amber-500/30 bg-amber-500/10 text-amber-200'
-                  : 'border-red-500/30 bg-red-500/10 text-red-200'
-            }`}
-          >
+          <div className={bannerToneClass(checkoutBannerTone(checkoutStatus))}>
             {checkoutStatus === 'success'
               ? t('pricing.banner.success')
               : checkoutStatus === 'success_pending'
@@ -738,6 +769,16 @@ export default function DashboardClient({
                 : checkoutStatus === 'error'
                   ? t('pricing.banner.error')
                   : t('pricing.banner.failed')}
+          </div>
+        )}
+
+        {/* Defect B. `error` was written by nine call sites and read by none, so
+            a 429/503 on the generate path, an oversize image and a camera
+            failure were all silent. `error` is ALREADY translated at every write
+            site (see toUserMessage), so no copy is composed here. */}
+        {error && (
+          <div ref={errorRef} role="alert" aria-live="assertive" className={bannerToneClass(ERROR_BANNER_TONE)}>
+            {error}
           </div>
         )}
 
@@ -850,7 +891,7 @@ export default function DashboardClient({
                         ))}
 
                          <button 
-                           onClick={() => { setFile(null); setPreview(null); setResults(null); }}
+                           onClick={() => { setFile(null); setPreview(null); setResults(null); setError(nextDashboardError({ kind: 'input-changed' })); }}
                            className="absolute top-6 right-6 w-10 h-10 bg-black/60 backdrop-blur-xl border border-white/10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors z-30"
                          >
                             <Trash2 className="w-5 h-5" />
@@ -1294,6 +1335,9 @@ export default function DashboardClient({
                             setResults(item.content);
                             setPreview(item.image_url);
                             setSelectedPlatform(item.platform || 'amazon');
+                            // Recalling a past generation replaces the image on
+                            // screen, so a banner about the previous one is stale.
+                            setError(nextDashboardError({ kind: 'input-changed' }));
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                          }}>
                             {/* HOVER BORDER EFFECT */}
