@@ -17,6 +17,9 @@
 // pure function instead of left inline: the part that carries the logic is now
 // testable without adding a browser environment to the project.
 
+import { readFileSync } from 'fs'
+import { join } from 'path'
+
 import { resolveApiError, readJsonBody } from '../src/lib/api-error'
 
 // Exactly what https://www.unicornapps.app/api/generate returns for an oversize
@@ -157,5 +160,59 @@ describe('readJsonBody', () => {
 
   it('returns null when there is no content-type at all', async () => {
     await expect(readJsonBody(new Response('whatever', { status: 500 }))).resolves.toBeNull()
+  })
+})
+
+// -----------------------------------------------------------------------------
+// The other half of the contract: what the ROUTES are allowed to put in `error`.
+//
+// resolveApiError deliberately TRUSTS `body.error` from our own routes and shows
+// it verbatim. That trust is what makes the 422 and 403 strings work, and it is
+// only safe while every route treats `error` as reviewed, user-facing copy.
+//
+// Both catch-all 500s used to build it by concatenating `error.message`, so an
+// exception was shown to the user untranslated, in the Arabic UI too. These are
+// source-level assertions because the condition is "no route may ever do this",
+// which no single request-level test can establish.
+// -----------------------------------------------------------------------------
+describe('routes never put a raw exception in a client-visible error field', () => {
+  const ROUTES = ['src/app/api/generate/route.ts', 'src/app/api/refine/route.ts']
+
+  const sourceOf = (rel: string) =>
+    readFileSync(join(process.cwd(), rel), 'utf8')
+      // Comments FIRST: the explanation of this very rule names `error.message`.
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '')
+
+  it.each(ROUTES)('%s builds no error string by concatenation', rel => {
+    // e.g. `error: 'Failed to refine content: ' + error.message`
+    expect(sourceOf(rel)).not.toMatch(/\berror:\s*(['"`])[\s\S]*?\1\s*\+/)
+  })
+
+  it.each(ROUTES)('%s never places error.message in a response body', rel => {
+    const src = sourceOf(rel)
+    for (const match of src.match(/NextResponse\.json\([\s\S]{0,200}?\)/g) ?? []) {
+      expect(match).not.toMatch(/error\.message/)
+    }
+  })
+
+  it.each(ROUTES)('%s still logs the exception server-side', rel => {
+    // The detail must not be lost, only kept out of the response.
+    expect(sourceOf(rel)).toMatch(/console\.error\('(Generation|Refinement) error:', error\)/)
+  })
+
+  it.each(ROUTES)('%s sends no prose with its catch-all 500', rel => {
+    expect(sourceOf(rel)).toMatch(/\{ code: 'INTERNAL_ERROR' \}, \{ status: 500 \}/)
+  })
+
+  it('a 500 carrying only a code falls through to the translated generic', async () => {
+    // The client-side half: this is what the routes above now return.
+    const res = jsonResponse({ code: 'INTERNAL_ERROR' }, 500)
+    await expect(resolveApiError(res, t)).resolves.toBe('dash.requestFailed')
+  })
+
+  it('a 500 carrying a code never surfaces the code itself', async () => {
+    const res = jsonResponse({ code: 'SERVER_MISCONFIGURED' }, 500)
+    await expect(resolveApiError(res, t)).resolves.not.toMatch(/SERVER_MISCONFIGURED/)
   })
 })

@@ -31,11 +31,11 @@ export async function POST(req: Request) {
     const supabase = createClient()
 
     if (!supabase) {
+      // No `error` prose: see the note on the catch-all 500 at the bottom of this
+      // file. This one also named our hosting provider and told the user to check
+      // its settings, which is our operational detail, not theirs.
       console.error('SERVER ERROR: Supabase client is null. Environment variables missing.')
-      return NextResponse.json(
-        { error: 'Server configuration error. Database features are currently unavailable. Check Vercel settings.' },
-        { status: 500 }
-      )
+      return NextResponse.json({ code: 'SERVER_MISCONFIGURED' }, { status: 500 })
     }
 
     const {
@@ -43,14 +43,14 @@ export async function POST(req: Request) {
     } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ code: 'UNAUTHORIZED' }, { status: 401 })
     }
 
     // 1. Cheap validation BEFORE touching credits — a malformed request must
     //    never reserve (and then have to refund) a credit.
     const { image, lang } = await req.json()
     if (!image) {
-      return NextResponse.json({ error: 'Image is required' }, { status: 400 })
+      return NextResponse.json({ code: 'INVALID_REQUEST' }, { status: 400 })
     }
 
     // Rate limit BEFORE any Gemini work (incl. the resolveGeminiModels ListModels
@@ -76,10 +76,7 @@ export async function POST(req: Request) {
 
     if (!geminiApiKey) {
       console.error('SERVER ERROR: GEMINI_API_KEY is missing from environment variables.')
-      return NextResponse.json(
-        { error: 'Server configuration error. AI features are currently unavailable.' },
-        { status: 500 }
-      )
+      return NextResponse.json({ code: 'AI_UNAVAILABLE' }, { status: 500 })
     }
 
     // Model resolution is a cheap list call — do it BEFORE the reserve so a
@@ -151,7 +148,7 @@ ${languageInstruction}
       // than risk a free generation. This is also the path when the service-role
       // key is absent: EXECUTE on reserve_credit is locked to service_role.
       console.error('Credit reserve failed for user', user.id, reserveError)
-      return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 })
+      return NextResponse.json({ code: 'SERVER_MISCONFIGURED' }, { status: 500 })
     }
     if (!reserved) {
       return NextResponse.json({ error: 'Insufficient credits' }, { status: 403 })
@@ -360,10 +357,19 @@ ${languageInstruction}
         { status: 503, headers: { 'Retry-After': '30' } }
       )
     }
+    // THE FULL DETAIL STAYS HERE, SERVER SIDE. The response carries no prose.
+    //
+    // `resolveApiError` trusts any `error` string OUR OWN routes send and shows it
+    // to the user verbatim (that is what makes the 422 and 403 strings work). This
+    // catch-all is the one place where that string was built from an exception, so
+    // `error.message` reached the user untranslated: raw English in the Arabic UI,
+    // the exact bug class src/lib/api-error.ts exists to end, and it also leaked
+    // internal failure text to anyone who could make this route throw.
+    //
+    // With no `error` field the client falls through to the translated
+    // dash.requestFailed, which is what the ModelResolutionError comment above
+    // already claimed this 500 did.
     console.error('Generation error:', error)
-    return NextResponse.json(
-      { error: 'Failed to generate content: ' + error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ code: 'INTERNAL_ERROR' }, { status: 500 })
   }
 }
