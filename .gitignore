@@ -91,6 +91,8 @@ store-assets/brand/unicornapps-logo-source.png
 # Unanchored on purpose: catches a copy at any depth, not just root.
 CLAUDE.md
 PROJECT-JOURNAL.md
+BACKLOG.md
+BACKLOG.md.bak*
 CLAUDE.md.bak*
 
 # `*.bak` (in the signing-material block above) matches only names
