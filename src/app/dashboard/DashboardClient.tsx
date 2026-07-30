@@ -505,7 +505,14 @@ export default function DashboardClient({
       // paths that have no other surface.
       setChatHistory(prev => [...prev, {
         role: 'ai',
-        message: t('dash.error').replace('{error}', toUserMessage(err, t)),
+        // Shown AS WRITTEN, exactly as the generate path shows it. Every message
+        // that can arrive here is already a complete, translated sentence, so
+        // wrapping it in a template appended advice ("try a different
+        // instruction") that was correct for at most one of the nine failures
+        // that reach this catch, and wrong for a busy model, an oversize image
+        // and a dropped connection. It also produced a doubled full stop in both
+        // languages, because every message already ends in one.
+        message: toUserMessage(err, t),
         timestamp: new Date()
       }])
     } finally {

@@ -176,10 +176,10 @@ describe('dash.aiBusy now reaches the user on the GENERATE path', () => {
     await expect(walkGeneratePath(res)).resolves.toBe('dash.aiBusy')
   })
 
-  it('the aiBusy message is NOT wrapped in the dash.error template here', () => {
-    // On the refine path it arrives as "Error: {aiBusy}. Please try a different
-    // instruction." - advice that is wrong for a busy model. The generate path
-    // shows the message as written.
+  it('the aiBusy message is shown as written, not wrapped in a template', () => {
+    // Both paths now show it as written. The refine path used to wrap it as
+    // "Error: {aiBusy}. Please try a different instruction.", advice that is
+    // wrong for a busy model; that template is gone.
     expect(nextDashboardError({ kind: 'attempt-failed', message: 'dash.aiBusy' })).toBe(
       'dash.aiBusy'
     )
@@ -262,9 +262,37 @@ describe('structural - DashboardClient actually renders and routes the state', (
     expect(src).toMatch(/role="alert"/)
   })
 
+  // The refine catch block, isolated. Asserting on the WHOLE file cannot tell
+  // "refine does not raise the banner" from "nothing anywhere raises it", and the
+  // previous version of these tests pinned the literal composition string, so it
+  // failed on any edit to that line rather than on a change in behaviour.
+  const refineBody = src.slice(
+    src.indexOf('const handleRefine'),
+    src.indexOf('const copyToClipboard')
+  )
+
+  it('the refine catch reports through the chat surface', () => {
+    expect(refineBody).toMatch(/setChatHistory/)
+    expect(refineBody).toMatch(/message:\s*toUserMessage\(err, t\)/)
+  })
+
   it('the refine path keeps its chat surface and does not also raise the banner', () => {
     // Deliberate: one failure, one report. See the comment at that catch block.
-    expect(src).toMatch(/t\('dash\.error'\)\.replace\('\{error\}', toUserMessage\(err, t\)\)/)
+    //
+    // It DOES touch setError once, to CLEAR: starting a refine must not leave a
+    // stale banner from an earlier generate failure on screen. What it must never
+    // do is RAISE, which is what 'attempt-failed' means.
+    expect(refineBody.length).toBeGreaterThan(0)
+    expect(refineBody).toMatch(/setError\(nextDashboardError\(\{ kind: 'attempt-started' \}\)\)/)
+    expect(refineBody).not.toMatch(/attempt-failed/)
+  })
+
+  it('the refine failure message is shown as written, not wrapped in a template', () => {
+    // It arrived as "Error: {message}. Please try a different instruction." which
+    // is wrong advice for a busy model, an oversize image or a dropped
+    // connection, and doubled the full stop in EN and AR alike.
+    expect(refineBody).not.toMatch(/dash\.error/)
+    expect(refineBody).not.toMatch(/\.replace\('\{error\}'/)
   })
 })
 
@@ -309,6 +337,35 @@ describe('no new user-facing copy was introduced', () => {
     expect(literals.length).toBeGreaterThan(0)
     for (const literal of literals) {
       expect({ literal, forbidden: FORBIDDEN.test(literal) }).toEqual({ literal, forbidden: false })
+    }
+  })
+})
+
+describe('the generic dash.error template is gone', () => {
+  const DICT = join(process.cwd(), 'src/lib/i18n/LanguageContext.tsx')
+  const dict = readFileSync(DICT, 'utf8')
+
+  it('neither dictionary still defines it', () => {
+    // It had ONE consumer, the refine catch, and its "{error}" placeholder had no
+    // other consumer in either language. Left in place it would invite a second
+    // call site to reintroduce the wrapping this change removed.
+    expect(dict).not.toMatch(/'dash\.error':/)
+  })
+
+  it('nothing anywhere still substitutes the {error} placeholder', () => {
+    const component = readFileSync(
+      join(process.cwd(), 'src/app/dashboard/DashboardClient.tsx'),
+      'utf8'
+    )
+    expect(dict).not.toMatch(/\{error\}/)
+    expect(component).not.toMatch(/replace\('\{error\}'/)
+  })
+
+  it('EN and AR still define every key the error paths use', () => {
+    // dash.error left, but these must not: they are what the paths fall back to.
+    for (const key of ['dash.aiBusy', 'dash.requestFailed', 'dash.filesizeError']) {
+      const occurrences = dict.split(`'${key}':`).length - 1
+      expect(occurrences).toBe(2)
     }
   })
 })
