@@ -121,11 +121,11 @@ const translations = {
     'dash.matrixSync': 'AI assistant ready',
     'dash.enterVector': 'Tell the AI what to change…',
     'dash.processing': 'Working on it…',
-    'dash.error': 'Error: {error}. Please try a different instruction.',
     // Shown on a 503/429 from /api/generate or /api/refine: the AI did not
-    // answer in time. Deliberately NOT dash.error (its "try a different
-    // instruction" advice is wrong here) nor dash.limitReached (that means the
-    // user is out of credits, which is the opposite of what happened).
+    // answer in time. Shown as written on both paths; the refine path used to
+    // wrap it in a generic "Error: {message}. Please try a different instruction."
+    // template, which gave advice that is wrong here, and dash.limitReached is
+    // also wrong (that means the user is out of credits, the opposite of this).
     'dash.aiBusy': 'Our AI is unusually busy right now. Your credit was not used — please try again in a moment.',
     'dash.id': 'ID',
     'dash.asset': 'Asset',
@@ -142,9 +142,9 @@ const translations = {
     // the image is base64-encoded (+33%) and the request limit counts headers,
     // so auth-cookie size shifts it per session. Naming "4MB" was a false claim.
     'dash.filesizeError': 'This image is too large to upload. Please try a smaller image.',
-    // Any other failure whose body is not JSON (502, 504, an HTML error page).
-    // Previously surfaced as a raw English SyntaxError. Deliberately NOT
-    // dash.error, whose "try a different instruction" is wrong advice here.
+    // Any other failure whose body is not JSON (502, 504, an HTML error page),
+    // plus every 500 from our own routes, which deliberately send no prose.
+    // Previously surfaced as a raw English SyntaxError.
     'dash.requestFailed': 'Something went wrong. Please try again.',
     'dash.cameraError': 'Camera access denied. Please allow camera permissions.',
     'dash.visitStore': 'Visit the Store',
@@ -518,7 +518,6 @@ const translations = {
     'dash.matrixSync': 'المساعد الذكي جاهز',
     'dash.enterVector': 'أخبر المساعد بما تريد تعديله…',
     'dash.processing': 'جارٍ المعالجة…',
-    'dash.error': 'خطأ: {error}. يرجى تجربة تعليمات مختلفة.',
     // Counterpart of the EN 'dash.aiBusy' note above.
     'dash.aiBusy': 'الخدمة مزدحمة أكثر من المعتاد الآن. لم يُخصم من رصيدك شيء، فحاول مرّة أخرى بعد قليل.',
     'dash.id': 'المعرف',
