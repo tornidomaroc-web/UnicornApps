@@ -143,9 +143,26 @@ const translations = {
     // so auth-cookie size shifts it per session. Naming "4MB" was a false claim.
     'dash.filesizeError': 'This image is too large to upload. Please try a smaller image.',
     // Any other failure whose body is not JSON (502, 504, an HTML error page),
-    // plus every 500 from our own routes, which deliberately send no prose.
+    // plus our own routes' code-only bodies that the map in src/lib/api-error.ts
+    // does NOT name: every 500 (SERVER_MISCONFIGURED, AI_UNAVAILABLE,
+    // INTERNAL_ERROR) and the 400 INVALID_REQUEST. UNAUTHORIZED landed here too
+    // until it got dash.sessionExpired below — its "try again" was futile advice.
     // Previously surfaced as a raw English SyntaxError.
     'dash.requestFailed': 'Something went wrong. Please try again.',
+    // The 422: the model answered, but its JSON did not parse. Reaches the client
+    // as a CODE, never as prose — see the code map in src/lib/api-error.ts. TWO
+    // keys, not one: /api/generate has no instruction to vary, so "try a different
+    // instruction" is wrong advice there and right on /api/refine. The refine
+    // clause is the surviving half of the deleted dash.error (PR #64), reused
+    // verbatim rather than retranslated. Both routes refund on this path
+    // (`settled` stays false, so the `finally` refunds), so the credit line is true.
+    'dash.formatFailed': "We couldn't format the content. Your credit was not used. Please try again.",
+    'dash.refineFormatFailed': "We couldn't format the content. Your credit was not used. Please try a different instruction.",
+    // 401 from either route. Previously fell through to dash.requestFailed, whose
+    // "please try again" is futile here: every retry 401s too. Delivered as the
+    // UNAUTHORIZED code the routes ALREADY send — the 401 fires BEFORE req.json(),
+    // so the route cannot know `lang` and could not localize prose even if it tried.
+    'dash.sessionExpired': 'Your session has expired. Please sign in again.',
     'dash.cameraError': 'Camera access denied. Please allow camera permissions.',
     'dash.visitStore': 'Visit the Store',
     'dash.newArrival': 'New Arrival',
@@ -534,6 +551,11 @@ const translations = {
     // Counterparts of the EN 'dash.filesizeError' / 'dash.requestFailed' notes above.
     'dash.filesizeError': 'هذه الصورة كبيرة جداً للرفع. يرجى تجربة صورة أصغر.',
     'dash.requestFailed': 'حدث خطأ ما. يرجى المحاولة مرة أخرى.',
+    // Counterparts of the EN 'dash.formatFailed' / 'dash.refineFormatFailed' /
+    // 'dash.sessionExpired' notes above.
+    'dash.formatFailed': 'تعذّر تنسيق المحتوى. لم يُخصم من رصيدك شيء. يرجى المحاولة مرّة أخرى.',
+    'dash.refineFormatFailed': 'تعذّر تنسيق المحتوى. لم يُخصم من رصيدك شيء. يرجى تجربة تعليمات مختلفة.',
+    'dash.sessionExpired': 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرّة أخرى.',
     'dash.cameraError': 'تم رفض الوصول إلى الكاميرا. يرجى السماح بأذونات الكاميرا.',
     'dash.visitStore': 'زيارة المتجر',
     'dash.newArrival': 'وصل حديثاً',

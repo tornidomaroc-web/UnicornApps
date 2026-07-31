@@ -262,10 +262,13 @@ ${languageInstruction}
           usageMetadata: response.usageMetadata,
         })
         // settled stays false -> `finally` refunds the reserved credit.
-        return NextResponse.json(
-          { error: 'AI generation failed due to formatting issues. Please try again.' },
-          { status: 422 }
-        )
+        //
+        // Was `error: 'AI generation failed due to formatting issues. Please try
+        // again.'`, shown VERBATIM by resolveApiError — untranslated English in
+        // the Arabic UI. A DISTINCT code from the refine route's: there is no
+        // instruction to vary here, so dash.formatFailed says "try again" while
+        // dash.refineFormatFailed says "try a different instruction".
+        return NextResponse.json({ code: 'FORMAT_FAILED' }, { status: 422 })
       }
 
       // Content earned -> the reserved credit stays spent (no refund).

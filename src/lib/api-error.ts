@@ -43,6 +43,35 @@ export async function readJsonBody(response: Response): Promise<any | null> {
 }
 
 /**
+ * Codes our own routes send INSTEAD of prose, mapped to translated keys.
+ *
+ * WHY A CODE AND NOT A STRING. A route cannot translate. `/api/refine` and
+ * `/api/generate` do receive `lang` in the request body, but the 401 is answered
+ * BEFORE `await req.json()` runs — it could not localize prose even if we wanted
+ * it to. Putting Arabic literals in route files would also fork the dictionary.
+ *
+ * ⚠️ THIS IS NOT THE ALLOWLIST (backlog item 47). It does not restrict anything.
+ * `resolveApiError` still trusts `body.error` verbatim below, and a route that
+ * sends prose is still shown verbatim. What stands between a new route and a
+ * repeat of the PR #64 leak is the ledger in __tests__/api-error.test.ts, which
+ * FAILS CI on new prose — read that, not this, for the enforcement story. The
+ * allowlist is finished when this map is the ONLY path and the `body.error`
+ * branch is deleted; the blocker for that is the 403 (item 50).
+ */
+const CODE_KEYS: Record<string, string> = {
+  // Both routes ALREADY sent this code, so wiring the 401 was a zero-line route
+  // change. Previously fell through to dash.requestFailed ("please try again"),
+  // which is futile advice here: every retry 401s too.
+  UNAUTHORIZED: 'dash.sessionExpired',
+  // The 422 parse failure. Two codes, not one shared code, because
+  // resolveApiError takes no route argument and the advice differs per route:
+  // /api/generate has no instruction to vary. Keeping it a pure function of the
+  // Response is deliberate — that is the shape item 47's allowlist needs.
+  FORMAT_FAILED: 'dash.formatFailed',
+  REFINE_FORMAT_FAILED: 'dash.refineFormatFailed',
+}
+
+/**
  * The user-visible message for a non-ok Response. Always returns a string;
  * never throws.
  *
@@ -67,8 +96,18 @@ export async function resolveApiError(
   // is what finally makes this branch reachable.
   if (response.status === 503 || response.status === 429) return t('dash.aiBusy')
 
-  // Our own routes' JSON error bodies — the common case, preserved as-is.
   const body = await readJsonBody(response)
+
+  // CODES BEFORE PROSE. A route may send both (the 429/503 bodies carry an
+  // untranslated `error` alongside their code), so a named code must win over
+  // the trust branch below or the English would beat the translation.
+  if (body && typeof body.code === 'string') {
+    const key = CODE_KEYS[body.code]
+    if (key) return t(key)
+  }
+
+  // Our own routes' JSON error bodies — the common case, preserved as-is.
+  // Still trusted verbatim; see the warning on CODE_KEYS above.
   if (body && typeof body.error === 'string' && body.error.length > 0) {
     return body.error
   }
