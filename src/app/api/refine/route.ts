@@ -267,10 +267,14 @@ export async function POST(req: Request) {
           usageMetadata: data?.usageMetadata,
         })
         // settled stays false -> `finally` refunds the reserved credit.
-        return NextResponse.json(
-          { error: 'AI refinement failed due to formatting issues.' },
-          { status: 422 }
-        )
+        //
+        // Was `error: 'AI refinement failed due to formatting issues.'`, which
+        // resolveApiError showed VERBATIM — untranslated English in the Arabic
+        // UI, the §6 violation PR #64 named but deliberately left open because
+        // the replacement copy did not exist yet. The code now maps to
+        // dash.refineFormatFailed (EN/AR), whose "try a different instruction"
+        // is correct HERE and nowhere else on this route.
+        return NextResponse.json({ code: 'REFINE_FORMAT_FAILED' }, { status: 422 })
       }
 
       // Content earned -> the reserved credit stays spent (no refund).

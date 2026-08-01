@@ -17,8 +17,8 @@
 // pure function instead of left inline: the part that carries the logic is now
 // testable without adding a browser environment to the project.
 
-import { readFileSync } from 'fs'
-import { join } from 'path'
+import { readdirSync, readFileSync } from 'fs'
+import { join, relative, sep } from 'path'
 
 import { resolveApiError, readJsonBody } from '../src/lib/api-error'
 
@@ -214,5 +214,177 @@ describe('routes never put a raw exception in a client-visible error field', () 
   it('a 500 carrying a code never surfaces the code itself', async () => {
     const res = jsonResponse({ code: 'SERVER_MISCONFIGURED' }, 500)
     await expect(resolveApiError(res, t)).resolves.not.toMatch(/SERVER_MISCONFIGURED/)
+  })
+})
+
+// -----------------------------------------------------------------------------
+// The code map: routes that answer with a machine-readable code, which the
+// CLIENT translates. This is how a route ships user-facing copy without either
+// forking the dictionary into route files or shipping untranslated English.
+// -----------------------------------------------------------------------------
+describe('resolveApiError — the code map', () => {
+  it('401 UNAUTHORIZED -> dash.sessionExpired, not the generic', async () => {
+    // Both routes already sent this code; before the map it fell through to
+    // dash.requestFailed ("please try again"), which is futile: a retry 401s too.
+    await expect(resolveApiError(jsonResponse({ code: 'UNAUTHORIZED' }, 401), t)).resolves.toBe(
+      'dash.sessionExpired'
+    )
+  })
+
+  it('422 FORMAT_FAILED (generate) -> dash.formatFailed', async () => {
+    await expect(resolveApiError(jsonResponse({ code: 'FORMAT_FAILED' }, 422), t)).resolves.toBe(
+      'dash.formatFailed'
+    )
+  })
+
+  it('422 REFINE_FORMAT_FAILED (refine) -> dash.refineFormatFailed', async () => {
+    await expect(
+      resolveApiError(jsonResponse({ code: 'REFINE_FORMAT_FAILED' }, 422), t)
+    ).resolves.toBe('dash.refineFormatFailed')
+  })
+
+  // The reason there are two codes at all. resolveApiError takes no route
+  // argument, so a single shared code could not pick different advice, and the
+  // advice genuinely differs: /api/generate has no instruction to vary.
+  it('the two 422 codes resolve to DIFFERENT keys', async () => {
+    const a = await resolveApiError(jsonResponse({ code: 'FORMAT_FAILED' }, 422), t)
+    const b = await resolveApiError(jsonResponse({ code: 'REFINE_FORMAT_FAILED' }, 422), t)
+    expect(a).not.toBe(b)
+  })
+
+  it('an unmapped code still falls through to the translated generic', async () => {
+    await expect(resolveApiError(jsonResponse({ code: 'INVALID_REQUEST' }, 400), t)).resolves.toBe(
+      'dash.requestFailed'
+    )
+  })
+
+  // Ordering, and it is load-bearing: a mapped code must beat the `body.error`
+  // trust branch, or a body carrying both would show the English.
+  it('a mapped code beats an untranslated error string in the same body', async () => {
+    const res = jsonResponse({ error: 'Not authenticated', code: 'UNAUTHORIZED' }, 401)
+    await expect(resolveApiError(res, t)).resolves.toBe('dash.sessionExpired')
+  })
+
+  // ...but STATUS still beats the code map. The 429/503 bodies carry both an
+  // untranslated `error` and a code, and dash.aiBusy is the right answer there.
+  it('429/503 are still resolved by status, ahead of the code map', async () => {
+    const rl = jsonResponse({ error: 'AI service is busy', code: 'RATE_LIMITED' }, 429)
+    await expect(resolveApiError(rl, t)).resolves.toBe('dash.aiBusy')
+    const dl = jsonResponse({ error: 'AI service is busy', code: 'DEADLINE_EXCEEDED' }, 503)
+    await expect(resolveApiError(dl, t)).resolves.toBe('dash.aiBusy')
+  })
+
+  it('never surfaces a code to the user', async () => {
+    for (const code of ['UNAUTHORIZED', 'FORMAT_FAILED', 'REFINE_FORMAT_FAILED']) {
+      const msg = await resolveApiError(jsonResponse({ code }, 422), t)
+      expect(msg).not.toMatch(/_/)
+    }
+  })
+})
+
+// -----------------------------------------------------------------------------
+// THE LEDGER — every user-visible prose string our API routes may still emit.
+//
+// WHAT THIS IS FOR
+// `resolveApiError` trusts `body.error` verbatim, so any prose a route puts
+// there is shown to the user as written: untranslated English in the Arabic UI
+// (CLAUDE.md §6). PR #64 fixed the two places that abused this and left behind a
+// source-level test over an ENUMERATED pair of files. That enumeration cannot
+// see a route it does not list — and one already exists:
+// src/app/api/account/delete/route.ts has been leaking three English strings
+// through AccountClient.tsx since before #64, unnoticed by anything.
+//
+// So this walks EVERY route file that exists, now and in future, and requires
+// each `error:` it emits to be named below. Adding prose fails CI.
+//
+// HOW TO READ AN ENTRY
+// Presence here is not approval — it is a debt with a number on it. An unwritten
+// leak is the one nobody has to justify. Shrinking this object is the measurable
+// form of backlog item 47; when only status-intercepted entries remain, the
+// `body.error` branch in api-error.ts can be deleted outright.
+//
+// ⚠️ KNOWN LIMITATION, STATED SO NOBODY TRUSTS THIS PAST ITS REACH.
+// This is a regex over source, not an AST. It requires `error:` INSIDE a
+// NextResponse.json(...) call to be a single-quoted literal, which catches a
+// variable, a template literal, an imported constant, a helper call and
+// concatenation — all now FAIL the literal check rather than slipping past a
+// membership test. It does NOT catch prose routed through an intermediate
+// object (`const body = { error: msg }; return NextResponse.json(body, ...)`),
+// because that `error:` is not inside the call site. Closing that needs a real
+// parser. If you are adding a route, this file is a backstop, not a substitute
+// for the §6 rule.
+// -----------------------------------------------------------------------------
+const KNOWN_UNTRANSLATED_ERROR_PROSE: Record<string, string> = {
+  'AI service is busy':
+    'NEVER DISPLAYED: resolveApiError maps 429/503 by STATUS before the body is read.',
+  'Insufficient credits':
+    'DISPLAYED, untranslated, on /api/generate. Backlog item 50 (Play-policy sensitive: native must not steer to upgrade).',
+  'Server configuration error':
+    'DISPLAYED, untranslated, by AccountClient.tsx. Backlog item 53.',
+  'Not authenticated': 'DISPLAYED, untranslated, by AccountClient.tsx. Backlog item 53.',
+  'Failed to delete account':
+    'DISPLAYED, untranslated, by AccountClient.tsx. Backlog item 53.',
+}
+
+describe('no API route emits unledgered user-visible prose', () => {
+  const API_ROOT = join(process.cwd(), 'src/app/api')
+
+  const walk = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+      const p = join(dir, entry.name)
+      if (entry.isDirectory()) return walk(p)
+      return entry.name === 'route.ts' ? [p] : []
+    })
+
+  const ROUTE_FILES = walk(API_ROOT).map(p => relative(process.cwd(), p).split(sep).join('/'))
+
+  const bodyOf = (rel: string) =>
+    readFileSync(join(process.cwd(), rel), 'utf8')
+      // Comments FIRST: the explanations above and in the routes quote the very
+      // strings being removed, and a quoted example must not read as an emission.
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '')
+
+  // Without this, deleting the walker (or moving the api directory) would leave
+  // it.each with an empty list, and an empty it.each is not a passing test — it
+  // is no test. Assert the discovery worked before trusting what it found.
+  it('discovers every route file under src/app/api', () => {
+    expect(ROUTE_FILES.length).toBeGreaterThanOrEqual(4)
+    expect(ROUTE_FILES).toContain('src/app/api/generate/route.ts')
+    expect(ROUTE_FILES).toContain('src/app/api/refine/route.ts')
+    expect(ROUTE_FILES).toContain('src/app/api/account/delete/route.ts')
+  })
+
+  it.each(ROUTE_FILES)('%s emits only ledgered prose in `error`', rel => {
+    const src = bodyOf(rel)
+    for (const call of src.match(/NextResponse\.json\([\s\S]{0,300}?\)/g) ?? []) {
+      // exec loop, not matchAll: tsconfig sets no `target`, so spreading a
+      // RegExp iterator needs --downlevelIteration and fails `tsc --noEmit`.
+      const errorKey = /\berror:\s*([^,}\n]+)/g
+      let m: RegExpExecArray | null
+      while ((m = errorKey.exec(call)) !== null) {
+        const raw = m[1].trim()
+        // Must be a literal at all. A variable/template/call fails HERE, rather
+        // than silently not participating in the membership check below.
+        expect(raw).toMatch(/^'[^']*'$/)
+        expect(Object.keys(KNOWN_UNTRANSLATED_ERROR_PROSE)).toContain(raw.slice(1, -1))
+      }
+    }
+  })
+
+  // The two strings this PR removed. Pinned so a revert is loud rather than a
+  // silent return of untranslated English to the Arabic dashboard.
+  it.each(['src/app/api/generate/route.ts', 'src/app/api/refine/route.ts'])(
+    '%s no longer sends 422 formatting prose',
+    rel => {
+      expect(bodyOf(rel)).not.toMatch(/formatting issues/)
+    }
+  )
+
+  it.each([
+    ['src/app/api/generate/route.ts', 'FORMAT_FAILED'],
+    ['src/app/api/refine/route.ts', 'REFINE_FORMAT_FAILED'],
+  ])('%s answers its 422 with the %s code', (rel, code) => {
+    expect(bodyOf(rel)).toMatch(new RegExp(`\\{ code: '${code}' \\}, \\{ status: 422 \\}`))
   })
 })
