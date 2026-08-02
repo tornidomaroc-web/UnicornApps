@@ -48,6 +48,8 @@ import { takePicture } from '@/lib/capacitor'
 import { openCheckout, checkoutStatusForEvent, type CheckoutStatus } from '@/lib/checkout'
 import { pollForCreditGrant, type CreditPollLock } from '@/lib/credit-refresh'
 import { resolveApiError } from '@/lib/api-error'
+import { prepareImageForUpload } from '@/lib/prepare-image'
+import { MAX_SOURCE_FILE_BYTES } from '@/lib/image-budget'
 import {
   bannerToneClass,
   checkoutBannerTone,
@@ -375,7 +377,15 @@ export default function DashboardClient({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
-      if (selectedFile.size > 4 * 1024 * 1024) {
+      // DECODE sanity only — no longer the payload guard. This used to be
+      // 4 * 1024 * 1024, compared against the raw File.size, which is the wrong
+      // quantity: what crosses the wire is the base64 data URL, ~1.37x larger,
+      // so the check admitted payloads over Vercel's 4.5 MB limit while
+      // rejecting files that were perfectly sendable. The payload is now bounded
+      // by prepareImageForUpload at the generate call site, which downscales
+      // instead of refusing, so this only has to stop something too large to
+      // decode without exhausting a phone WebView's memory.
+      if (selectedFile.size > MAX_SOURCE_FILE_BYTES) {
         setError(nextDashboardError({ kind: 'input-rejected', message: t('dash.filesizeError') }))
         return
       }
@@ -397,11 +407,17 @@ export default function DashboardClient({
     setError(nextDashboardError({ kind: 'attempt-started' }))
 
     try {
+      // THE choke point. `preview` stays full-size so the on-screen image is not
+      // degraded; only what goes on the wire is bounded. All three inputs —
+      // upload, webcam canvas, native camera — converge here, so none of them
+      // carries a size guard of its own. See lib/prepare-image.ts.
+      const image = await prepareImageForUpload(preview)
+
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          image: preview,
+        body: JSON.stringify({
+          image,
           platform: selectedPlatform,
           lang: lang
         }),
