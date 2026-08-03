@@ -9,6 +9,7 @@ import {
 } from '@/lib/gemini'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { recordUsage } from '@/lib/usageTelemetry'
+import { formatParseFailure } from '@/lib/parse-failure-log'
 import {
   createDeadline,
   DeadlineExceededError,
@@ -246,7 +247,19 @@ export async function POST(req: Request) {
       try {
         refinedContent = JSON.parse(cleanedText)
       } catch (parseError) {
-        console.error('Refinement Parse Error:', cleanedText)
+        // Logs the RAW text, not just the cleaned string this route used to dump.
+        // The fence regex runs before the log, so the cleaned-only version had
+        // already destroyed the evidence about the regex itself; and finishReason
+        // answers the truncation hypothesis outright. Never throws — see the note
+        // below on why a throw here would cost us the 422.
+        console.error(
+          formatParseFailure({
+            route: 'refine',
+            raw: text,
+            cleaned: cleanedText,
+            finishReason: data?.candidates?.[0]?.finishReason,
+          })
+        )
         // TELEMETRY — WE PAY FOR THIS CALL AND THE CUSTOMER DOES NOT (item 23).
         // Gemini SUCCEEDED: it consumed input, emitted output, and under billing
         // we are charged IN FULL. Only the JSON failed to parse, so `settled`
