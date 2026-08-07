@@ -106,36 +106,41 @@ export default async function RootLayout({
           WHY IT IS GATED TO WEB (this is the load-bearing part — do not remove
           the gate):
           The Android app is a Capacitor WebView of THIS SAME web layer, so a
-          merge here reaches Play users with NO app release. Mounting analytics
-          unconditionally would start collecting page views, city-level
-          geolocation and device info inside the Android app, which plausibly
-          requires declaring "App activity > App interactions" on the Play Data
-          Safety form — while the app sits mid production-gate (2 of 3
-          requirements met) under a hard rule to consult Grayo before touching
-          the Play submission. The gate makes that question MOOT at zero cost.
-          Advertising ID stays No either way: this uses no ad ID and no cookies.
-          It also serves the goal — the redesign is scoped to the PUBLIC WEB UI
-          (backlog item 15), so Android WebView traffic is NOISE in the funnel
-          data we actually want.
+          merge here reaches every production Play user instantly — no app
+          release, no store review, no staged rollout in between. Mounting
+          analytics unconditionally would therefore begin collecting page views,
+          city-level geolocation and device info INSIDE a live, listed Android
+          app, which plausibly requires declaring "App activity > App
+          interactions" on the Play Data Safety form. The gate makes that
+          question moot at zero cost: no native traffic, so no new declaration,
+          and no window in which the live listing is out of step with its own
+          form. Advertising ID stays No either way — this uses no ad ID and no
+          cookies. Second, smaller reason: the funnel worth reading is the
+          public web UI, so Android WebView traffic would be noise in it.
 
-          WHY IT EXISTS AT ALL — the baseline, and ONLY the baseline:
-          Once the redesign ships, the CURRENT design can never be measured
-          again. This is the only chance to capture a before/after.
-          ANALYTICS MEASURES *WHERE*, NEVER *WHY*. The owner's diagnosis ("it
-          does not look professional") is QUALITATIVE — no page-view data can
-          confirm or refute it. THE REDESIGN IS NOT GATED ON THIS DATA and must
-          not wait for it.
+          WHAT IT CAN AND CANNOT TELL YOU:
+          ANALYTICS MEASURES *WHERE*, NEVER *WHY*. Page paths can show that a
+          visitor never reached /login; they cannot say why, and no page-view
+          count can confirm or refute a qualitative judgement about how the site
+          looks. Treat a small count as an ABSENCE of evidence, not as evidence
+          of a defect — below a certain volume the data cannot show a problem in
+          either direction. This was originally added to capture a before/after
+          around a design change; that comparison was never captured and cannot
+          be reconstructed from this data afterwards. Do not cite it as one.
 
-          REQUIRES A DASHBOARD TOGGLE: Vercel > unicorn-apps > Analytics >
-          Enable. Inert until then — no data is collected.
+          DEPENDS ON A DASHBOARD TOGGLE: Vercel > unicorn-apps > Analytics.
+          This component collects nothing while that is off, and the toggle
+          moves with no deploy — so the presence of this tag is not evidence
+          about whether data is being collected today, in either direction.
 
           HOBBY LIMITS, deliberately accepted: 50,000 events/month (collection
           PAUSES at the cap; a Hobby team cannot purchase overage, so this can
           NEVER produce a bill), CUSTOM EVENTS UNAVAILABLE (page paths only — we
           can see whether a visitor ever reaches /login, not what they clicked),
           and a 1-MONTH REPORTING WINDOW.
-          ^ THAT WINDOW IS THE CATCH: if the redesign runs longer than a month,
-          THE BASELINE EXPIRES AND IS GONE. Export it before it does.
+          ^ THAT WINDOW IS ROLLING, AND IT IS THE CATCH: anything older than a
+          month is gone from the dashboard for good, and nothing warns you
+          first. If a period matters, export it before it ages out.
         */}
         {!isNative && <Analytics />}
       </body>
