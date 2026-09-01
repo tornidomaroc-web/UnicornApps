@@ -833,8 +833,7 @@ export default function DashboardClient({
                       className="flex flex-col items-center justify-center gap-12 py-12"
                     >
                        <div className="text-center space-y-3">
-                          <h2 className="text-3xl font-black text-white tracking-tighter uppercase">{t('dash.title')}</h2>
-                          <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">{t('dash.inputSource')}</p>
+                          <h2 className="text-slate-400 font-black uppercase tracking-widest text-[10px]">{t('dash.inputSource')}</h2>
                        </div>
 
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl px-4">
