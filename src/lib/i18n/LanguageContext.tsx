@@ -130,7 +130,7 @@ const translations = {
     'dash.id': 'ID',
     'dash.asset': 'Asset',
     'dash.platformName': 'Platform',
-    'dash.matrixSignature': 'Generated Title',
+    'dash.matrixSignature': 'Title',
     'dash.timestamp': 'Date',
     'dash.action': 'Action',
     'dash.exportCsv': 'Export CSV',
