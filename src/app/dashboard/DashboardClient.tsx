@@ -1362,10 +1362,12 @@ export default function DashboardClient({
                             setError(nextDashboardError({ kind: 'input-changed' }));
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                          }}>
-                            {/* HOVER BORDER EFFECT */}
-                            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-violet-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            
                             <td className="px-4 sm:px-8 py-4">
+                               {/* HOVER BORDER EFFECT — must stay INSIDE this cell. A <div> as a
+                                   direct child of <tr> is invalid HTML; the parser relocates it and
+                                   hydration fails. This <td> is static, so the bar still resolves
+                                   against the `relative` <tr>. Do NOT add `relative` to this <td>. */}
+                               <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-violet-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                                <div className="w-14 h-14 rounded-xl overflow-hidden border border-white/10 shadow-lg">
                                   <img src={item.image_url} alt="Product" className="w-full h-full object-cover" />
                                </div>
