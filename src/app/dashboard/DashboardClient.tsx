@@ -24,7 +24,6 @@ import {
   Copy,
   ZapIcon,
   Smile,
-  Target,
   ArrowRight,
   Play,
   Globe,
@@ -740,6 +739,85 @@ export default function DashboardClient({
     document.body.removeChild(link)
   }
 
+  /* THE PRIMARY ACTION, DEFINED ONCE AND RENDERED IN EXACTLY ONE PLACE.
+     On the pre-generation screen it lives in the fixed bar at the foot of the
+     viewport; once `results` exist it returns to the flow, under the controls,
+     so re-generating after a result still works. It is never rendered twice —
+     two Generate buttons would be a defect in the UI and would also make any
+     `querySelector`/`.find()` probe silently measure whichever came first. */
+  const generateButton = (
+    <Button
+      onClick={handleGenerate}
+      disabled={loading || initialCredits <= 0}
+      className={`w-full h-20 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-500 group relative overflow-hidden ${
+        loading 
+        ? 'bg-black border border-violet-500/50' 
+        : initialCredits <= 0 
+          ? 'bg-red-500/10 border border-red-500/20 text-red-400' 
+          : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_40px_-5px_rgba(124,58,237,0.5)]'
+      }`}
+    >
+       {loading ? (
+         <div className="relative z-10 flex flex-col items-center">
+            <span className="text-xs font-black uppercase tracking-[0.3em] text-violet-400 animate-pulse">
+              {t('dash.analyzing')}
+            </span>
+            <div className="mt-2 w-48 h-1 bg-white/5 rounded-full overflow-hidden">
+               <motion.div className="h-full bg-violet-500" animate={{ x: ['-100%', '100%'] }} transition={{ repeat: Infinity, duration: 1.5 }} />
+            </div>
+         </div>
+       ) : initialCredits <= 0 ? (
+          <div className="flex flex-col items-center gap-3">
+             <AlertCircle className="w-5 h-5 text-red-500/50" />
+             <p className="text-xs font-medium text-slate-500 uppercase tracking-widest text-center px-2">
+               {isNative
+                 // NATIVE: neutral, steers nowhere (Play policy). Do not
+                 // swap this for dash.noCredits, which upsells.
+                 ? t('dash.limitReached')
+                 // WEB: may steer to purchase. Same key, same ternary shape
+                 // as the refine 403 branch above, so the two out-of-credits
+                 // surfaces can no longer drift apart. Was hardcoded English
+                 // (rendered untranslated on the Arabic surface) AND pointed
+                 // web users at "the official UnicornApps website", which is
+                 // the site they are already on.
+                 : t('dash.noCredits')}
+             </p>
+          </div>
+       ) : (
+         <>
+            {/* 🔴 THE HERO STEP IS FOR CONTENT, NOT FOR CONTROLS — content can
+                reflow, a control cannot. This label sat at the ladder's 32px top
+                step and CLIPPED: the button above is w-full h-20 overflow-hidden
+                with a nowrap flex row, so there is nothing to give. Measured at
+                vw 500, below every breakpoint and the narrowest this button ever
+                gets: inner box 339px, and icon 20 + gap 8 + the English label at
+                32px = 369px. The sparkle was cut in half on the left and
+                the final T of CONTENT sliced on the right. At 16px the same row
+                measures 199px, a 140px margin that survives a longer string or a
+                new locale. The other three 32px sites are content and absorb the
+                pressure by wrapping; this one had no such move.
+                Do NOT raise this back to a large step to "finish" the ladder, and
+                do not buy the room by cutting a word — the Arabic string at :506
+                was shortened because the short form is the FAITHFUL translation,
+                not to make it fit, and that distinction is the whole reason it
+                was acceptable. */}
+            <span className="relative z-10 text-base leading-[1.15] font-black uppercase flex items-center gap-2">
+              <Sparkles className="w-5 h-5 animate-pulse" />
+              {t('dash.generate').split(' — ')[0]}
+            </span>
+            {/* The "(consumes 1 credit)" sublabel was removed here. The cost is stated
+                once, in the pre-flight line, which is a whole sentence; this was a
+                fragment that only read correctly directly beneath it. Pinning the button
+                to the foot of the viewport put the two on screen together for the first
+                time, saying the same thing twice — the pin CREATED that duplication, it
+                did not inherit it. This was its only call site, so the key was deleted
+                from both dictionaries rather than left behind to be wired back in. */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-white/10 to-black/0 translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-1000" />
+         </>
+       )}
+    </Button>
+  )
+
   return (
     <div className="min-h-screen bg-[#070710] text-[#c8cfe0] selection:bg-violet-500/30 selection:text-white px-4 py-8 md:px-8">
       {/* BACKGROUND EFFECTS */}
@@ -1221,6 +1299,44 @@ export default function DashboardClient({
                        <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                     </motion.div>
                  ) : (
+                   <>
+                   <div className="p-5 sm:p-8 md:p-12 pb-0 md:pb-0">
+                      {/* 🔴 POSITION IS LOAD-BEARING: this sits ABOVE the grid, not inside the
+                          right-hand column. Measured at 500x861 it had been below a square
+                          preview image and landed at docY 842 against a fold of 861 — the one
+                          honest sentence on the screen, clipped by the fold. Its old position
+                          depended on the IMAGE HEIGHT, which depends on the container width,
+                          so any pixel-level fix would have been per-device luck. Above the
+                          grid it clears the fold by construction at every width. */}
+                      {/* 🔴 ONE LINE, AND IT DESCRIBES THE ACTION — NEVER A STATE.
+                          This replaced four status cards. Three of them carried no
+                          information and one of them lied:
+                            · "Image loaded" was guaranteed by the enclosing `preview`
+                              conditional — it could not render and be false.
+                            · "Gemini Vision ready" asserted something NOTHING verifies.
+                              With the API key absent it still said ready; it would have
+                              read "ready" through an outage or an exhausted quota.
+                            · the platform card was the only live read, and it printed the
+                              RAW id (`selectedPlatform.toUpperCase()`), so the Arabic
+                              surface said "AMAZON" while the selector below it said
+                              "أمازون". That leak is fixed here by sourcing the label.
+                            · the last card reverted to "waiting to start" after a FAILED
+                              generation, because `loading` is false in both the
+                              never-started and the just-failed case.
+                          🔴 Do not reintroduce a readiness indicator on this screen. There
+                          is nothing on it whose readiness is checked, so any such element
+                          is decoration at best and a false assurance at worst. The failure
+                          path already has a home: the banner from lib/dashboard-banner.ts.
+                          Interpolation is done here because `t()` is a bare lookup with no
+                          placeholder support (LanguageContext.tsx:845) — keeping the whole
+                          sentence per dictionary lets each language own its word order. */}
+                      <p className="text-base font-medium text-slate-300">
+                         {t('dash.preflight').replace(
+                           '{platform}',
+                           platforms.find(p => p.id === selectedPlatform)?.label ?? selectedPlatform
+                         )}
+                      </p>
+                   </div>
                    <div className="grid md:grid-cols-[1fr,400px] gap-8 md:gap-12 items-start p-5 sm:p-8 md:p-12">
                       {/* Left: Preview */}
                       <div className="relative min-w-0 aspect-square rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl bg-black/50 group/img">
@@ -1277,27 +1393,6 @@ export default function DashboardClient({
 
                       {/* Right: Requirements & Action */}
                       <div className="min-w-0 space-y-8 h-full flex flex-col justify-between">
-                         <div className="space-y-6">
-                            <h3 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.readyTitle')}</h3>
-                            <div className="space-y-4">
-                               {[
-                                 { label: t('dash.step.image'), sub: t('dash.step.imageSub'), status: 'done' },
-                                 { label: t('dash.step.vision'), sub: t('dash.step.visionSub'), status: 'done' },
-                                 { label: `${t('dash.platform')}: ${selectedPlatform.toUpperCase()}`, sub: t('dash.step.platformSub'), status: 'platform' },
-                                 { label: loading ? t('dash.analyzing') : t('dash.step.pending'), sub: loading ? t('dash.step.loadingSub') : t('dash.step.pendingSub'), status: loading ? 'loading' : 'pending' }
-                               ].map((item, i) => (
-                                 <div key={i} className={`flex items-start gap-4 p-4 rounded-2xl border transition-all ${item.status === 'done' ? 'bg-emerald-500/5 border-emerald-500/20' : item.status === 'platform' ? 'bg-violet-500/5 border-violet-500/20' : 'bg-white/5 border-white/10'}`}>
-                                    <div className="mt-1">
-                                       {item.status === 'done' ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : item.status === 'loading' ? <Loader2 className="w-5 h-5 text-violet-500 animate-spin" /> : item.status === 'platform' ? <Target className="w-5 h-5 text-violet-500" /> : <div className="w-5 h-5 rounded-full border-2 border-slate-700 animate-pulse" />}
-                                    </div>
-                                    <div>
-                                       <p className={`text-base font-black uppercase tracking-widest ${item.status === 'done' ? 'text-emerald-400' : item.status === 'platform' ? 'text-violet-400' : item.status === 'loading' ? 'text-violet-400' : 'text-slate-500'}`}>{item.label}</p>
-                                       <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-widest">{item.sub}</p>
-                                    </div>
-                                 </div>
-                               ))}
-                            </div>
-                         </div>
 
                          {/* 3. PLATFORM SELECTOR */}
                          <div className="space-y-4">
@@ -1332,75 +1427,12 @@ export default function DashboardClient({
                             </div>
                          </div>
 
-                         {/* 4. GENERATE BUTTON UPGRADE */}
-                         <Button
-                           onClick={handleGenerate}
-                           disabled={loading || initialCredits <= 0}
-                           className={`w-full h-20 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-500 group relative overflow-hidden ${
-                             loading 
-                             ? 'bg-black border border-violet-500/50' 
-                             : initialCredits <= 0 
-                               ? 'bg-red-500/10 border border-red-500/20 text-red-400' 
-                               : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_40px_-5px_rgba(124,58,237,0.5)]'
-                           }`}
-                         >
-                            {loading ? (
-                              <div className="relative z-10 flex flex-col items-center">
-                                 <span className="text-xs font-black uppercase tracking-[0.3em] text-violet-400 animate-pulse">
-                                   {t('dash.analyzing')}
-                                 </span>
-                                 <div className="mt-2 w-48 h-1 bg-white/5 rounded-full overflow-hidden">
-                                    <motion.div className="h-full bg-violet-500" animate={{ x: ['-100%', '100%'] }} transition={{ repeat: Infinity, duration: 1.5 }} />
-                                 </div>
-                              </div>
-                            ) : initialCredits <= 0 ? (
-                               <div className="flex flex-col items-center gap-3">
-                                  <AlertCircle className="w-5 h-5 text-red-500/50" />
-                                  <p className="text-xs font-medium text-slate-500 uppercase tracking-widest text-center px-2">
-                                    {isNative
-                                      // NATIVE: neutral, steers nowhere (Play policy). Do not
-                                      // swap this for dash.noCredits, which upsells.
-                                      ? t('dash.limitReached')
-                                      // WEB: may steer to purchase. Same key, same ternary shape
-                                      // as the refine 403 branch above, so the two out-of-credits
-                                      // surfaces can no longer drift apart. Was hardcoded English
-                                      // (rendered untranslated on the Arabic surface) AND pointed
-                                      // web users at "the official UnicornApps website", which is
-                                      // the site they are already on.
-                                      : t('dash.noCredits')}
-                                  </p>
-                               </div>
-                            ) : (
-                              <>
-                                 {/* 🔴 THE HERO STEP IS FOR CONTENT, NOT FOR CONTROLS — content can
-                                     reflow, a control cannot. This label sat at the ladder's 32px top
-                                     step and CLIPPED: the button above is w-full h-20 overflow-hidden
-                                     with a nowrap flex row, so there is nothing to give. Measured at
-                                     vw 500, below every breakpoint and the narrowest this button ever
-                                     gets: inner box 339px, and icon 20 + gap 8 + the English label at
-                                     32px = 369px. The sparkle was cut in half on the left and
-                                     the final T of CONTENT sliced on the right. At 16px the same row
-                                     measures 199px, a 140px margin that survives a longer string or a
-                                     new locale. The other three 32px sites are content and absorb the
-                                     pressure by wrapping; this one had no such move.
-                                     Do NOT raise this back to a large step to "finish" the ladder, and
-                                     do not buy the room by cutting a word — the Arabic string at :506
-                                     was shortened because the short form is the FAITHFUL translation,
-                                     not to make it fit, and that distinction is the whole reason it
-                                     was acceptable. */}
-                                 <span className="relative z-10 text-base leading-[1.15] font-black uppercase flex items-center gap-2">
-                                   <Sparkles className="w-5 h-5 animate-pulse" />
-                                   {t('dash.generate').split(' — ')[0]}
-                                 </span>
-                                 <span className="relative z-10 text-xs font-bold uppercase tracking-widest text-white/60">
-                                   {t('dash.consuming')}
-                                 </span>
-                                 <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-white/10 to-black/0 translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-1000" />
-                              </>
-                            )}
-                         </Button>
+                         {/* 4. PRIMARY ACTION — in flow only once results exist; otherwise it
+                             lives in the fixed bar. See `generateButton`. */}
+                         {results && generateButton}
                       </div>
                    </div>
+                   </>
                  )}
               </div>
            </motion.div>
@@ -1561,6 +1593,47 @@ export default function DashboardClient({
           )}
         </AnimatePresence>
       </div>
+
+      {/* 🔴 PINNED PRIMARY ACTION — PRE-GENERATION SCREEN ONLY.
+          Rendered when a photo is chosen and no result exists yet: the one screen with a
+          single pending action and nothing competing. NOT on the entry screen (no action
+          yet), NOT on the results surface (a bar pinned over a result competes with the
+          most valuable thing on the page), NOT on history.
+
+          🔴 IT MUST STAY OUT HERE, A SIBLING OF THE max-w-7xl WRAPPER. It cannot move
+          inside the panel that holds this screen: that panel is a `motion.div` with the
+          `layout` prop AND `overflow-hidden`, and a non-`none` transform makes an element
+          the containing block for its `position: fixed` descendants. Framer-motion writes
+          a transform there on every layout animation, so a bar nested inside would stop
+          being viewport-fixed mid-animation and then be clipped by that same ancestor.
+          Nothing on the chain out here (the page root, the max-w-7xl wrapper) sets
+          transform, filter, perspective, contain or backdrop-filter, so the viewport is
+          the containing block — the decorative `fixed inset-0` layer at the top of this
+          component already relies on that and proves it.
+
+          The spacer below is the compensation: without it the last element in flow, the
+          platform selector, sits underneath the bar. Its height mirrors the bar's box —
+          keep the two expressions in step, they are deliberately adjacent. */}
+      {preview && !results && (
+        <>
+          <div
+            aria-hidden
+            /* 5rem button + 0.75rem pt + 1px border-t + the same bottom pad the bar uses.
+               The border was missing from a first version and left the spacer 1px short,
+               measured: bar 105px against spacer 104px. Keep this in step with the bar's
+               classes below — they are adjacent so the two cannot drift unnoticed. */
+            style={{ height: 'calc(5rem + 0.75rem + 1px + max(0.75rem, env(safe-area-inset-bottom)))' }}
+          />
+          <div
+            className="fixed bottom-0 left-0 right-0 z-40 bg-[#070710]/95 backdrop-blur-xl border-t border-white/10 px-4 pt-3"
+            style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+          >
+            <div className="max-w-7xl mx-auto">
+              {generateButton}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
