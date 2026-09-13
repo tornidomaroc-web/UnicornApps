@@ -1616,21 +1616,30 @@ export default function DashboardClient({
           keep the two expressions in step, they are deliberately adjacent. */}
       {preview && !results && (
         <>
-          <div
-            aria-hidden
-            /* 5rem button + 0.75rem pt + 1px border-t + the same bottom pad the bar uses.
-               The border was missing from a first version and left the spacer 1px short,
-               measured: bar 105px against spacer 104px. Keep this in step with the bar's
-               classes below — they are adjacent so the two cannot drift unnoticed. */
-            style={{ height: 'calc(5rem + 0.75rem + 1px + max(0.75rem, env(safe-area-inset-bottom)))' }}
-          />
-          <div
-            className="fixed bottom-0 left-0 right-0 z-40 bg-[#070710]/95 backdrop-blur-xl border-t border-white/10 px-4 pt-3"
-            style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
-          >
+          {/* 🔴 THE SAFE AREA IS ADDITIVE, NEVER calc(base + env(...)).
+              globals.css states the rule and its failure mode: a browser without env()
+              support drops the WHOLE declaration as invalid, so folding the base into a
+              calc() alongside env() destroys the base too and collapses the layout. A
+              first version of this bar did exactly that — `height: calc(5rem + 0.75rem +
+              1px + max(0.75rem, env(...)))` — which would have left this spacer at height
+              ZERO and put the controls under the bar, in precisely the browser that
+              cannot report it.
+              So the base lives in a Tailwind class and the inset is a SEPARATE property
+              on a separate declaration, exactly like the pt-safe/mt-safe pairs already in
+              globals.css. If env() is unsupported the inset contributes nothing and the
+              layout degrades to the 105px base instead of breaking.
+              105px = 12 (pt-3) + 80 (h-20 button) + 12 (pb-3) + 1 (border-t).
+              `mb-safe` here and the `pb-safe` child inside the bar are the SAME inset, so
+              the spacer and the bar grow together. Keep the two in step — they are
+              adjacent deliberately. */}
+          <div aria-hidden className="h-[105px] mb-safe" />
+          <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#070710]/95 backdrop-blur-xl border-t border-white/10 px-4 pt-3 pb-3">
             <div className="max-w-7xl mx-auto">
               {generateButton}
             </div>
+            {/* zero-height; carries ONLY the inset, so it adds to pb-3 rather than
+                replacing it and vanishes cleanly when env() is unsupported */}
+            <div aria-hidden className="pb-safe" />
           </div>
         </>
       )}
