@@ -650,7 +650,11 @@ export default function DashboardClient({
           <div className="space-y-8">
             <div className="space-y-2">
               <span className="text-violet-600 font-semibold tracking-widest text-xs uppercase">{t('dash.newArrival')}</span>
-              <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-zinc-900 break-words">{results?.seoTitle}</h1>
+                            {/* No tracking-* here: this renders GENERATED text, which is Arabic whenever the user
+                  generated in Arabic — independent of the UI language. The global RTL guard keys on
+                  the wrapper's dir, so it does not fire on the English surface and the tracking lands
+                  on joined Arabic glyphs. Measured on the history title: -0.4px under the English UI. */}
+              <h1 className="text-2xl sm:text-4xl font-bold text-zinc-900 break-words">{results?.seoTitle}</h1>
               <p className="text-2xl text-zinc-500 font-light">$99.00 USD</p>
             </div>
 
@@ -1016,7 +1020,11 @@ export default function DashboardClient({
                             <div className="grid gap-6">
                                <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-10 space-y-4 sm:space-y-6">
                                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('dash.social.hook')}</span>
-                                  <p className="text-lg sm:text-2xl font-black text-white tracking-tight leading-tight sm:leading-none italic uppercase">&quot;{results.viralScript?.hook}&quot;</p>
+                                                                    {/* No tracking-* here: this renders GENERATED text, which is Arabic whenever the user
+                                      generated in Arabic — independent of the UI language. The global RTL guard keys on
+                                      the wrapper's dir, so it does not fire on the English surface and the tracking lands
+                                      on joined Arabic glyphs. Measured on the history title: -0.4px under the English UI. */}
+                                  <p className="text-lg sm:text-2xl font-black text-white leading-tight sm:leading-none italic uppercase">&quot;{results.viralScript?.hook}&quot;</p>
                                </Card>
                                <div className="grid md:grid-cols-2 gap-6">
                                   <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-8 space-y-4">
@@ -1045,7 +1053,11 @@ export default function DashboardClient({
                                 ].map((d, i) => (
                                   <Card key={i} className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-8 flex flex-col justify-between">
                                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">{d.l}</span>
-                                     <p className="text-white font-black text-lg uppercase tracking-tight">{d.v}</p>
+                                                                          {/* No tracking-* here: this renders GENERATED text, which is Arabic whenever the user
+                                         generated in Arabic — independent of the UI language. The global RTL guard keys on
+                                         the wrapper's dir, so it does not fire on the English surface and the tracking lands
+                                         on joined Arabic glyphs. Measured on the history title: -0.4px under the English UI. */}
+                                     <p className="text-white font-black text-lg uppercase">{d.v}</p>
                                   </Card>
                                 ))}
                              </div>
@@ -1230,7 +1242,10 @@ export default function DashboardClient({
                             >
                                <span className="absolute inset-0 rounded-full animate-ping bg-violet-400 opacity-75" />
                             </motion.div>
-                            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/hotspot:opacity-100 transition-all pointer-events-none bg-black/80 backdrop-blur-xl text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border border-white/10 shadow-2xl whitespace-nowrap">
+                            {/* No tracking-* here: hotspot labels are GENERATED text and are Arabic
+                                whenever the user generated in Arabic, independent of the UI language.
+                                The global RTL guard keys on the wrapper's dir and misses that. */}
+                            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/hotspot:opacity-100 transition-all pointer-events-none bg-black/80 backdrop-blur-xl text-white text-[10px] font-black uppercase px-4 py-2 rounded-xl border border-white/10 shadow-2xl whitespace-nowrap">
                               {hotspot.label}
                             </div>
                           </div>
@@ -1429,7 +1444,11 @@ export default function DashboardClient({
                             </td>
                             <td className="px-4 sm:px-8 py-4">
                                <div className="max-w-[300px]">
-                                  <p className="text-white font-bold truncate group-hover:text-violet-400 transition-colors uppercase tracking-tight">{item.content.seoTitle}</p>
+                                                                    {/* No tracking-* here: this renders GENERATED text, which is Arabic whenever the user
+                                      generated in Arabic — independent of the UI language. The global RTL guard keys on
+                                      the wrapper's dir, so it does not fire on the English surface and the tracking lands
+                                      on joined Arabic glyphs. Measured on the history title: -0.4px under the English UI. */}
+                                  <p className="text-white font-bold truncate group-hover:text-violet-400 transition-colors uppercase">{item.content.seoTitle}</p>
                                   <p className="text-[10px] font-medium text-slate-600 mt-1 uppercase tracking-widest">{t('dash.id')}: {item.id.slice(0, 8)}</p>
                                </div>
                             </td>
