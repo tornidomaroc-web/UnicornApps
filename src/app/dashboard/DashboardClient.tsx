@@ -150,6 +150,9 @@ export default function DashboardClient({
   const [shopifyViewMode, setShopifyViewMode] = useState<'preview' | 'code'>('preview')
   const chatEndRef = useRef<HTMLDivElement>(null)
   const errorRef = useRef<HTMLDivElement>(null)
+  // Raised by handleGenerate only. `refine` also calls setResults, and yanking
+  // the user out of the refine console mid-conversation would be wrong.
+  const scrollToResults = useRef(false)
 
   // Seeded from the server's native User-Agent check so the Paddle upgrade links
   // never render on native (no flash). Client check only ever upgrades to native.
@@ -367,6 +370,26 @@ export default function DashboardClient({
     if (error) errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [error])
 
+  // MUST run after commit, never inline after setResults. The results zone
+  // renders ABOVE the upload zone, so a first generation inserts ~2400px above
+  // a user who is down at the Generate button. Scrolling before React commits
+  // moves the OLD, shorter document; the browser then applies scroll anchoring
+  // to the inserted content and pushes them straight back down. Measured at
+  // 500x861: the inline version settled at y1118 instead of 0.
+  //
+  // MUST ALSO STAY DECLARED AFTER the chatHistory effect above. handleGenerate
+  // calls setResults and setChatHistory in the same handler, so React batches
+  // them into one commit and runs both effects in declaration order. The chat
+  // effect scrolls to the bottom of the refine console; this one has to be
+  // issued second to win. Measured on the shipped order, a successful generate
+  // ended at y2500 — the console — having scrolled the user PAST the results
+  // they had just paid a credit for.
+  useEffect(() => {
+    if (!results || !scrollToResults.current) return
+    scrollToResults.current = false
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [results])
+
   const platforms = [
     { id: 'amazon', label: t('dash.tab.amazon'), emoji: '🛒', color: 'orange' },
     { id: 'shopify', label: t('dash.tab.shopify'), emoji: '🏪', color: 'green' },
@@ -434,6 +457,10 @@ export default function DashboardClient({
 
       const data = await response.json()
 
+      // Recalling a past generation already scrolls to top, and the error banner
+      // scrolls itself into view for the same stated reason — the success path
+      // never did, and now it must: the results zone renders above this button.
+      scrollToResults.current = true
       setResults(data)
 
       // Add to history locally for immediate feedback if needed, 
@@ -805,237 +832,23 @@ export default function DashboardClient({
           </div>
         )}
 
-        {/* 2. UPLOAD & PLATFORM CONTROL ZONE */}
-        <div className="grid lg:grid-cols-1 gap-8">
-           <motion.div
-              layout
-              className="relative p-1 bg-white/5 rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden group"
-           >
-              {/* DASHED ANIMATED BORDER */}
-              <div className="absolute inset-0 z-0 pointer-events-none p-2">
-                 <svg className="w-full h-full">
-                    <rect 
-                      width="100%" height="100%" 
-                      fill="none" 
-                      rx="32" ry="32" 
-                      stroke="rgba(124, 58, 237, 0.4)" 
-                      strokeWidth="2" 
-                      strokeDasharray="10 10" 
-                      className="animate-[dash-rotate_3s_linear_infinite]"
-                    />
-                 </svg>
-              </div>
+        {/* 5. RESULTS & STEALTH CONSOLE ZONE
 
-              <div className="relative z-10">
-                 {!preview ? (
-                    <motion.div 
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                      className="flex flex-col items-center justify-center gap-12 py-12"
-                    >
-                       <div className="text-center space-y-3">
-                          <h2 className="text-slate-400 font-black uppercase tracking-widest text-[10px]">{t('dash.inputSource')}</h2>
-                       </div>
+            Deliberately ABOVE the upload/platform zone below it. A generation
+            leaves `preview` set, so both blocks render at once; with the upload
+            zone first, the generated title sat ~1700px down a 500px-wide phone
+            layout — about a screen below the fold — and the largest thing on the
+            first screen was the "U" avatar glyph. Measured at 500x861, moving
+            this block up puts the title at y462 (ar) / y494 (en) against a fold
+            of 861, with document height, node count and horizontal overflow all
+            unchanged.
 
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl px-4">
-                          {/* OPTION 1: UPLOAD */}
-                          <button 
-                            onClick={() => document.getElementById('file-upload')?.click()}
-                            className="group relative flex flex-col items-center gap-6 p-10 rounded-[2rem] bg-white/5 border border-white/10 hover:border-violet-500/50 transition-all duration-500 hover:-translate-y-1"
-                          >
-                             <div className="absolute inset-0 bg-violet-600/0 group-hover:bg-violet-600/5 rounded-[2rem] transition-all" />
-                             <div className="relative w-16 h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:border-violet-500/50 transition-all">
-                                <UploadCloud className="w-8 h-8 text-violet-400" />
-                             </div>
-                             <div className="text-center relative">
-                                <h3 className="text-lg font-black text-white uppercase tracking-tight">{t('dash.uploadBtn')}</h3>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{t('dash.uploadFormat')}</p>
-                             </div>
-                          </button>
+            DOM order, NOT `order:` on a flex parent: visual order has to match
+            reading and tab order.
 
-                          {/* OPTION 2: CAMERA */}
-                          <button 
-                            onClick={openCamera}
-                            className="group relative flex flex-col items-center gap-6 p-10 rounded-[2rem] bg-white/5 border border-white/10 hover:border-violet-500/50 transition-all duration-500 hover:-translate-y-1"
-                          >
-                             <div className="absolute inset-0 bg-violet-600/0 group-hover:bg-violet-600/5 rounded-[2rem] transition-all" />
-                             <div className="relative w-16 h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:border-violet-500/50 transition-all">
-                                <Camera className="w-8 h-8 text-violet-400" />
-                             </div>
-                             <div className="text-center relative">
-                                <h3 className="text-lg font-black text-white uppercase tracking-tight">{t('dash.cameraBtn')}</h3>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{t('dash.cameraSub')}</p>
-                             </div>
-                          </button>
-                       </div>
-
-                       <div className="flex gap-2 flex-wrap justify-center opacity-50">
-                          {[t('dash.badge.edge'), t('dash.badge.vercel'), t('dash.badge.gemini')].map(b => (
-                            <span key={b} className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500">{b}</span>
-                          ))}
-                       </div>
-                       <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                    </motion.div>
-                 ) : (
-                   <div className="grid md:grid-cols-[1fr,400px] gap-8 md:gap-12 items-start p-5 sm:p-8 md:p-12">
-                      {/* Left: Preview */}
-                      <div className="relative min-w-0 aspect-square rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl bg-black/50 group/img">
-                         <img src={preview} alt="Preview" className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-105" />
-                         {loading && (
-                            <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
-                               <motion.div
-                                 className="absolute left-0 right-0 h-[2px] bg-violet-500 shadow-[0_0_30px_violet]"
-                                 animate={{ top: ['0%', '100%', '0%'] }}
-                                 transition={{ repeat: Infinity, duration: 2.5, ease: 'linear' }}
-                               />
-                               <div className="absolute inset-0 bg-violet-600/10 backdrop-blur-[2px]" />
-                            </div>
-                         )}
-
-                         {/* Results Hotspots */}
-                         {!loading && results?.hotspots?.map((hotspot, idx) => (
-                          <div
-                            key={idx}
-                            className="absolute z-20 group/hotspot cursor-pointer"
-                            style={{ top: `${hotspot.y}%`, left: `${hotspot.x}%`, transform: 'translate(-50%, -50%)' }}
-                          >
-                            <motion.div
-                              initial={{ scale: 0, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              transition={{ delay: 0.5 + idx * 0.1 }}
-                              className="w-5 h-5 rounded-full border-2 border-white bg-violet-600 shadow-[0_0_20px_rgba(124,58,237,0.8)] relative"
-                            >
-                               <span className="absolute inset-0 rounded-full animate-ping bg-violet-400 opacity-75" />
-                            </motion.div>
-                            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/hotspot:opacity-100 transition-all pointer-events-none bg-black/80 backdrop-blur-xl text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border border-white/10 shadow-2xl whitespace-nowrap">
-                              {hotspot.label}
-                            </div>
-                          </div>
-                        ))}
-
-                         <button 
-                           onClick={() => { setFile(null); setPreview(null); setResults(null); setError(nextDashboardError({ kind: 'input-changed' })); }}
-                           className="absolute top-6 right-6 w-10 h-10 bg-black/60 backdrop-blur-xl border border-white/10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors z-30"
-                         >
-                            <Trash2 className="w-5 h-5" />
-                         </button>
-                      </div>
-
-                      {/* Right: Requirements & Action */}
-                      <div className="min-w-0 space-y-8 h-full flex flex-col justify-between">
-                         <div className="space-y-6">
-                            <h3 className="text-xl font-black text-white uppercase tracking-tighter">{t('dash.readyTitle')}</h3>
-                            <div className="space-y-4">
-                               {[
-                                 { label: t('dash.step.image'), sub: t('dash.step.imageSub'), status: 'done' },
-                                 { label: t('dash.step.vision'), sub: t('dash.step.visionSub'), status: 'done' },
-                                 { label: `${t('dash.platform')}: ${selectedPlatform.toUpperCase()}`, sub: t('dash.step.platformSub'), status: 'platform' },
-                                 { label: loading ? t('dash.analyzing') : t('dash.step.pending'), sub: loading ? t('dash.step.loadingSub') : t('dash.step.pendingSub'), status: loading ? 'loading' : 'pending' }
-                               ].map((item, i) => (
-                                 <div key={i} className={`flex items-start gap-4 p-4 rounded-2xl border transition-all ${item.status === 'done' ? 'bg-emerald-500/5 border-emerald-500/20' : item.status === 'platform' ? 'bg-violet-500/5 border-violet-500/20' : 'bg-white/5 border-white/10'}`}>
-                                    <div className="mt-1">
-                                       {item.status === 'done' ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : item.status === 'loading' ? <Loader2 className="w-5 h-5 text-violet-500 animate-spin" /> : item.status === 'platform' ? <Target className="w-5 h-5 text-violet-500" /> : <div className="w-5 h-5 rounded-full border-2 border-slate-700 animate-pulse" />}
-                                    </div>
-                                    <div>
-                                       <p className={`text-sm font-black uppercase tracking-widest ${item.status === 'done' ? 'text-emerald-400' : item.status === 'platform' ? 'text-violet-400' : item.status === 'loading' ? 'text-violet-400' : 'text-slate-500'}`}>{item.label}</p>
-                                       <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">{item.sub}</p>
-                                    </div>
-                                 </div>
-                               ))}
-                            </div>
-                         </div>
-
-                         {/* 3. PLATFORM SELECTOR */}
-                         <div className="space-y-4">
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">{t('dash.platform')}</span>
-                            <div className="grid grid-cols-2 gap-2">
-                               {platforms.map(p => (
-                                 <button
-                                   key={p.id}
-                                   onClick={() => setSelectedPlatform(p.id)}
-                                   className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
-                                     selectedPlatform === p.id 
-                                     ? `border-${p.color}-500/50 bg-${p.color}-500/10 text-${p.color}-300 shadow-[0_0_15px_rgba(var(--${p.color}-rgb),0.2)] scale-[1.02]` 
-                                     : 'border-white/5 bg-white/5 text-slate-500 hover:border-white/20'
-                                   }`}
-                                   // Tailwind dynamic colors workaround - usually you'd use a record
-                                   style={selectedPlatform === p.id ? { 
-                                      borderColor: `var(--${p.id}-color-glow)`, 
-                                      backgroundColor: `var(--${p.id}-color-bg)`,
-                                      color: `var(--${p.id}-color-text)`
-                                   } : {}}
-                                 >
-                                    <span className="text-lg">{p.emoji}</span>
-                                    {p.label}
-                                 </button>
-                               ))}
-                               <style jsx>{`
-                                  button { --amazon-color-glow: rgba(251, 146, 60, 0.4); --amazon-color-bg: rgba(251, 146, 60, 0.1); --amazon-color-text: #fb923c; }
-                                  button { --shopify-color-glow: rgba(74, 222, 128, 0.4); --shopify-color-bg: rgba(74, 222, 128, 0.1); --shopify-color-text: #4ade80; }
-                                  button { --instagram-color-glow: rgba(244, 114, 182, 0.4); --instagram-color-bg: rgba(244, 114, 182, 0.1); --instagram-color-text: #f472b6; }
-                                  button { --tiktok-color-glow: rgba(248, 113, 113, 0.4); --tiktok-color-bg: rgba(248, 113, 113, 0.1); --tiktok-color-text: #f87171; }
-                               `}</style>
-                            </div>
-                         </div>
-
-                         {/* 4. GENERATE BUTTON UPGRADE */}
-                         <Button
-                           onClick={handleGenerate}
-                           disabled={loading || initialCredits <= 0}
-                           className={`w-full h-20 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-500 group relative overflow-hidden ${
-                             loading 
-                             ? 'bg-black border border-violet-500/50' 
-                             : initialCredits <= 0 
-                               ? 'bg-red-500/10 border border-red-500/20 text-red-400' 
-                               : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_40px_-5px_rgba(124,58,237,0.5)]'
-                           }`}
-                         >
-                            {loading ? (
-                              <div className="relative z-10 flex flex-col items-center">
-                                 <span className="text-xs font-black uppercase tracking-[0.3em] text-violet-400 animate-pulse">
-                                   {t('dash.analyzing')}
-                                 </span>
-                                 <div className="mt-2 w-48 h-1 bg-white/5 rounded-full overflow-hidden">
-                                    <motion.div className="h-full bg-violet-500" animate={{ x: ['-100%', '100%'] }} transition={{ repeat: Infinity, duration: 1.5 }} />
-                                 </div>
-                              </div>
-                            ) : initialCredits <= 0 ? (
-                               <div className="flex flex-col items-center gap-3">
-                                  <AlertCircle className="w-5 h-5 text-red-500/50" />
-                                  <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest text-center px-2">
-                                    {isNative
-                                      // NATIVE: neutral, steers nowhere (Play policy). Do not
-                                      // swap this for dash.noCredits, which upsells.
-                                      ? t('dash.limitReached')
-                                      // WEB: may steer to purchase. Same key, same ternary shape
-                                      // as the refine 403 branch above, so the two out-of-credits
-                                      // surfaces can no longer drift apart. Was hardcoded English
-                                      // (rendered untranslated on the Arabic surface) AND pointed
-                                      // web users at "the official UnicornApps website", which is
-                                      // the site they are already on.
-                                      : t('dash.noCredits')}
-                                  </p>
-                               </div>
-                            ) : (
-                              <>
-                                 <span className="relative z-10 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
-                                   <Sparkles className="w-5 h-5 animate-pulse" />
-                                   {t('dash.generate').split(' — ')[0]}
-                                 </span>
-                                 <span className="relative z-10 text-[9px] font-bold uppercase tracking-widest text-white/60">
-                                   {t('dash.consuming')}
-                                 </span>
-                                 <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-white/10 to-black/0 translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-1000" />
-                              </>
-                            )}
-                         </Button>
-                      </div>
-                   </div>
-                 )}
-              </div>
-           </motion.div>
-        </div>
-
-        {/* 5. RESULTS & STEALTH CONSOLE ZONE */}
+            The companion change is the scrollTo in handleGenerate. Without it a
+            fresh generation inserts this block above the user, who is down at
+            the Generate button, and they never see it. */}
         {results && (
            <div className="grid lg:grid-cols-[1fr,360px] gap-8 items-start">
               <div className="min-w-0 space-y-6">
@@ -1315,6 +1128,243 @@ export default function DashboardClient({
               </div>
            </div>
         )}
+
+        {/* 2. UPLOAD & PLATFORM CONTROL ZONE */}
+        <div className="grid lg:grid-cols-1 gap-8">
+           <motion.div
+              layout
+              className="relative p-1 bg-white/5 rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden group"
+           >
+              {/* DASHED ANIMATED BORDER */}
+              <div className="absolute inset-0 z-0 pointer-events-none p-2">
+                 <svg className="w-full h-full">
+                    <rect 
+                      width="100%" height="100%" 
+                      fill="none" 
+                      rx="32" ry="32" 
+                      stroke="rgba(124, 58, 237, 0.4)" 
+                      strokeWidth="2" 
+                      strokeDasharray="10 10" 
+                      className="animate-[dash-rotate_3s_linear_infinite]"
+                    />
+                 </svg>
+              </div>
+
+              <div className="relative z-10">
+                 {!preview ? (
+                    <motion.div 
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      className="flex flex-col items-center justify-center gap-12 py-12"
+                    >
+                       <div className="text-center space-y-3">
+                          <h2 className="text-slate-400 font-black uppercase tracking-widest text-[10px]">{t('dash.inputSource')}</h2>
+                       </div>
+
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl px-4">
+                          {/* OPTION 1: UPLOAD */}
+                          <button 
+                            onClick={() => document.getElementById('file-upload')?.click()}
+                            className="group relative flex flex-col items-center gap-6 p-10 rounded-[2rem] bg-white/5 border border-white/10 hover:border-violet-500/50 transition-all duration-500 hover:-translate-y-1"
+                          >
+                             <div className="absolute inset-0 bg-violet-600/0 group-hover:bg-violet-600/5 rounded-[2rem] transition-all" />
+                             <div className="relative w-16 h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:border-violet-500/50 transition-all">
+                                <UploadCloud className="w-8 h-8 text-violet-400" />
+                             </div>
+                             <div className="text-center relative">
+                                <h3 className="text-lg font-black text-white uppercase tracking-tight">{t('dash.uploadBtn')}</h3>
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{t('dash.uploadFormat')}</p>
+                             </div>
+                          </button>
+
+                          {/* OPTION 2: CAMERA */}
+                          <button 
+                            onClick={openCamera}
+                            className="group relative flex flex-col items-center gap-6 p-10 rounded-[2rem] bg-white/5 border border-white/10 hover:border-violet-500/50 transition-all duration-500 hover:-translate-y-1"
+                          >
+                             <div className="absolute inset-0 bg-violet-600/0 group-hover:bg-violet-600/5 rounded-[2rem] transition-all" />
+                             <div className="relative w-16 h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:border-violet-500/50 transition-all">
+                                <Camera className="w-8 h-8 text-violet-400" />
+                             </div>
+                             <div className="text-center relative">
+                                <h3 className="text-lg font-black text-white uppercase tracking-tight">{t('dash.cameraBtn')}</h3>
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{t('dash.cameraSub')}</p>
+                             </div>
+                          </button>
+                       </div>
+
+                       <div className="flex gap-2 flex-wrap justify-center opacity-50">
+                          {[t('dash.badge.edge'), t('dash.badge.vercel'), t('dash.badge.gemini')].map(b => (
+                            <span key={b} className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500">{b}</span>
+                          ))}
+                       </div>
+                       <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                    </motion.div>
+                 ) : (
+                   <div className="grid md:grid-cols-[1fr,400px] gap-8 md:gap-12 items-start p-5 sm:p-8 md:p-12">
+                      {/* Left: Preview */}
+                      <div className="relative min-w-0 aspect-square rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl bg-black/50 group/img">
+                         <img src={preview} alt="Preview" className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-105" />
+                         {loading && (
+                            <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+                               <motion.div
+                                 className="absolute left-0 right-0 h-[2px] bg-violet-500 shadow-[0_0_30px_violet]"
+                                 animate={{ top: ['0%', '100%', '0%'] }}
+                                 transition={{ repeat: Infinity, duration: 2.5, ease: 'linear' }}
+                               />
+                               <div className="absolute inset-0 bg-violet-600/10 backdrop-blur-[2px]" />
+                            </div>
+                         )}
+
+                         {/* Results Hotspots */}
+                         {!loading && results?.hotspots?.map((hotspot, idx) => (
+                          <div
+                            key={idx}
+                            className="absolute z-20 group/hotspot cursor-pointer"
+                            style={{ top: `${hotspot.y}%`, left: `${hotspot.x}%`, transform: 'translate(-50%, -50%)' }}
+                          >
+                            <motion.div
+                              initial={{ scale: 0, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ delay: 0.5 + idx * 0.1 }}
+                              className="w-5 h-5 rounded-full border-2 border-white bg-violet-600 shadow-[0_0_20px_rgba(124,58,237,0.8)] relative"
+                            >
+                               <span className="absolute inset-0 rounded-full animate-ping bg-violet-400 opacity-75" />
+                            </motion.div>
+                            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/hotspot:opacity-100 transition-all pointer-events-none bg-black/80 backdrop-blur-xl text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border border-white/10 shadow-2xl whitespace-nowrap">
+                              {hotspot.label}
+                            </div>
+                          </div>
+                        ))}
+
+                         <button 
+                           /* The ONLY reset in the app — the sole setPreview(null)
+                              outside initial state. The file input and the camera
+                              button live in the OTHER branch of this ternary, which
+                              is reachable only while `preview` is null. So this zone
+                              must never be conditionally hidden once `results` is set:
+                              that strands the user on one generation per page load
+                              with no way back except reloading. */
+                           onClick={() => { setFile(null); setPreview(null); setResults(null); setError(nextDashboardError({ kind: 'input-changed' })); }}
+                           className="absolute top-6 right-6 w-10 h-10 bg-black/60 backdrop-blur-xl border border-white/10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors z-30"
+                         >
+                            <Trash2 className="w-5 h-5" />
+                         </button>
+                      </div>
+
+                      {/* Right: Requirements & Action */}
+                      <div className="min-w-0 space-y-8 h-full flex flex-col justify-between">
+                         <div className="space-y-6">
+                            <h3 className="text-xl font-black text-white uppercase tracking-tighter">{t('dash.readyTitle')}</h3>
+                            <div className="space-y-4">
+                               {[
+                                 { label: t('dash.step.image'), sub: t('dash.step.imageSub'), status: 'done' },
+                                 { label: t('dash.step.vision'), sub: t('dash.step.visionSub'), status: 'done' },
+                                 { label: `${t('dash.platform')}: ${selectedPlatform.toUpperCase()}`, sub: t('dash.step.platformSub'), status: 'platform' },
+                                 { label: loading ? t('dash.analyzing') : t('dash.step.pending'), sub: loading ? t('dash.step.loadingSub') : t('dash.step.pendingSub'), status: loading ? 'loading' : 'pending' }
+                               ].map((item, i) => (
+                                 <div key={i} className={`flex items-start gap-4 p-4 rounded-2xl border transition-all ${item.status === 'done' ? 'bg-emerald-500/5 border-emerald-500/20' : item.status === 'platform' ? 'bg-violet-500/5 border-violet-500/20' : 'bg-white/5 border-white/10'}`}>
+                                    <div className="mt-1">
+                                       {item.status === 'done' ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : item.status === 'loading' ? <Loader2 className="w-5 h-5 text-violet-500 animate-spin" /> : item.status === 'platform' ? <Target className="w-5 h-5 text-violet-500" /> : <div className="w-5 h-5 rounded-full border-2 border-slate-700 animate-pulse" />}
+                                    </div>
+                                    <div>
+                                       <p className={`text-sm font-black uppercase tracking-widest ${item.status === 'done' ? 'text-emerald-400' : item.status === 'platform' ? 'text-violet-400' : item.status === 'loading' ? 'text-violet-400' : 'text-slate-500'}`}>{item.label}</p>
+                                       <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">{item.sub}</p>
+                                    </div>
+                                 </div>
+                               ))}
+                            </div>
+                         </div>
+
+                         {/* 3. PLATFORM SELECTOR */}
+                         <div className="space-y-4">
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">{t('dash.platform')}</span>
+                            <div className="grid grid-cols-2 gap-2">
+                               {platforms.map(p => (
+                                 <button
+                                   key={p.id}
+                                   onClick={() => setSelectedPlatform(p.id)}
+                                   className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                                     selectedPlatform === p.id 
+                                     ? `border-${p.color}-500/50 bg-${p.color}-500/10 text-${p.color}-300 shadow-[0_0_15px_rgba(var(--${p.color}-rgb),0.2)] scale-[1.02]` 
+                                     : 'border-white/5 bg-white/5 text-slate-500 hover:border-white/20'
+                                   }`}
+                                   // Tailwind dynamic colors workaround - usually you'd use a record
+                                   style={selectedPlatform === p.id ? { 
+                                      borderColor: `var(--${p.id}-color-glow)`, 
+                                      backgroundColor: `var(--${p.id}-color-bg)`,
+                                      color: `var(--${p.id}-color-text)`
+                                   } : {}}
+                                 >
+                                    <span className="text-lg">{p.emoji}</span>
+                                    {p.label}
+                                 </button>
+                               ))}
+                               <style jsx>{`
+                                  button { --amazon-color-glow: rgba(251, 146, 60, 0.4); --amazon-color-bg: rgba(251, 146, 60, 0.1); --amazon-color-text: #fb923c; }
+                                  button { --shopify-color-glow: rgba(74, 222, 128, 0.4); --shopify-color-bg: rgba(74, 222, 128, 0.1); --shopify-color-text: #4ade80; }
+                                  button { --instagram-color-glow: rgba(244, 114, 182, 0.4); --instagram-color-bg: rgba(244, 114, 182, 0.1); --instagram-color-text: #f472b6; }
+                                  button { --tiktok-color-glow: rgba(248, 113, 113, 0.4); --tiktok-color-bg: rgba(248, 113, 113, 0.1); --tiktok-color-text: #f87171; }
+                               `}</style>
+                            </div>
+                         </div>
+
+                         {/* 4. GENERATE BUTTON UPGRADE */}
+                         <Button
+                           onClick={handleGenerate}
+                           disabled={loading || initialCredits <= 0}
+                           className={`w-full h-20 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-500 group relative overflow-hidden ${
+                             loading 
+                             ? 'bg-black border border-violet-500/50' 
+                             : initialCredits <= 0 
+                               ? 'bg-red-500/10 border border-red-500/20 text-red-400' 
+                               : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_40px_-5px_rgba(124,58,237,0.5)]'
+                           }`}
+                         >
+                            {loading ? (
+                              <div className="relative z-10 flex flex-col items-center">
+                                 <span className="text-xs font-black uppercase tracking-[0.3em] text-violet-400 animate-pulse">
+                                   {t('dash.analyzing')}
+                                 </span>
+                                 <div className="mt-2 w-48 h-1 bg-white/5 rounded-full overflow-hidden">
+                                    <motion.div className="h-full bg-violet-500" animate={{ x: ['-100%', '100%'] }} transition={{ repeat: Infinity, duration: 1.5 }} />
+                                 </div>
+                              </div>
+                            ) : initialCredits <= 0 ? (
+                               <div className="flex flex-col items-center gap-3">
+                                  <AlertCircle className="w-5 h-5 text-red-500/50" />
+                                  <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest text-center px-2">
+                                    {isNative
+                                      // NATIVE: neutral, steers nowhere (Play policy). Do not
+                                      // swap this for dash.noCredits, which upsells.
+                                      ? t('dash.limitReached')
+                                      // WEB: may steer to purchase. Same key, same ternary shape
+                                      // as the refine 403 branch above, so the two out-of-credits
+                                      // surfaces can no longer drift apart. Was hardcoded English
+                                      // (rendered untranslated on the Arabic surface) AND pointed
+                                      // web users at "the official UnicornApps website", which is
+                                      // the site they are already on.
+                                      : t('dash.noCredits')}
+                                  </p>
+                               </div>
+                            ) : (
+                              <>
+                                 <span className="relative z-10 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                                   <Sparkles className="w-5 h-5 animate-pulse" />
+                                   {t('dash.generate').split(' — ')[0]}
+                                 </span>
+                                 <span className="relative z-10 text-[9px] font-bold uppercase tracking-widest text-white/60">
+                                   {t('dash.consuming')}
+                                 </span>
+                                 <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-white/10 to-black/0 translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-1000" />
+                              </>
+                            )}
+                         </Button>
+                      </div>
+                   </div>
+                 )}
+              </div>
+           </motion.div>
+        </div>
 
         {/* 7. HISTORY TABLE UPGRADE */}
         <section className="space-y-8">
