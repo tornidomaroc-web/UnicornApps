@@ -759,8 +759,8 @@ export default function DashboardClient({
           <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
           
           <div className="flex items-center gap-4 mb-2 md:mb-0">
-             <div className="w-10 h-10 bg-white text-slate-950 flex items-center justify-center rounded-xl text-xl font-black shadow-[0_0_20px_rgba(255,255,255,0.1)]">U</div>
-             <h1 className="text-xl sm:text-2xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-violet-400">
+             <div className="w-10 h-10 bg-white text-slate-950 flex items-center justify-center rounded-xl text-base font-black shadow-[0_0_20px_rgba(255,255,255,0.1)]">U</div>
+             <h1 className="text-base font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-violet-400">
                {t('dash.title').toUpperCase()}
              </h1>
           </div>
@@ -769,7 +769,7 @@ export default function DashboardClient({
              <div className="bg-black/40 border border-white/10 rounded-2xl px-4 sm:px-5 py-2.5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 backdrop-blur-xl">
                  <div className="flex items-center gap-2">
                     <Zap className="w-4 h-4 text-amber-400 animate-pulse" />
-                    <span className="text-2xl font-black text-white">
+                    <span className="text-base font-black text-white">
                       {displayCredits}
                     </span>
                     <span className="text-xs font-black uppercase tracking-widest text-slate-400">
@@ -786,7 +786,7 @@ export default function DashboardClient({
                          onClick={() => void handlePaid('pack')}
                          disabled={checkoutPending !== null}
                          aria-busy={checkoutPending === 'pack'}
-                         className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                         className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                        >
                          {checkoutPending === 'pack' ? t('checkout.pending') : t('dash.cta.pack')}
                        </button>
@@ -795,7 +795,7 @@ export default function DashboardClient({
                          onClick={() => void handlePaid('sub')}
                          disabled={checkoutPending !== null}
                          aria-busy={checkoutPending === 'sub'}
-                         className="bg-violet-600/10 border border-violet-500/30 text-violet-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg hover:bg-violet-600 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                         className="bg-violet-600/10 border border-violet-500/30 text-violet-300 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-lg hover:bg-violet-600 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                        >
                          {checkoutPending === 'sub' ? t('checkout.pending') : t('dash.cta.sub')}
                        </button>
@@ -859,10 +859,10 @@ export default function DashboardClient({
                 {/* Visual View Mode Selector */}
                 <div className="flex justify-between items-center bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-2">
                    <div className="flex gap-1">
-                      <button onClick={() => setViewMode('raw')} className={`px-4 sm:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'raw' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>{t('dash.raw')}</button>
-                      <button onClick={() => setViewMode('preview')} className={`px-4 sm:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'preview' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>{t('dash.preview')}</button>
+                      <button onClick={() => setViewMode('raw')} className={`px-4 sm:px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'raw' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>{t('dash.raw')}</button>
+                      <button onClick={() => setViewMode('preview')} className={`px-4 sm:px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'preview' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>{t('dash.preview')}</button>
                    </div>
-                   <div className="hidden sm:flex items-center gap-2 px-4 text-[10px] font-black uppercase tracking-widest text-emerald-400">
+                   <div className="hidden sm:flex items-center gap-2 px-4 text-xs font-black uppercase tracking-widest text-emerald-400">
                       <CheckCircle2 className="w-4 h-4" />
                       {t('dash.stable')}
                    </div>
@@ -874,20 +874,38 @@ export default function DashboardClient({
                         <section className="space-y-6">
                            <div className="flex items-center gap-3">
                               <div className="p-2 bg-orange-500/20 rounded-lg"><ShoppingBag className="w-5 h-5 text-orange-400" /></div>
-                              <h2 className="text-xl font-black text-white uppercase tracking-tighter">{t('dash.amazon.live')}</h2>
+                              <h2 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.amazon.live')}</h2>
                            </div>
                            <AmazonMockup />
                         </section>
                         <section className="space-y-6">
                            <div className="flex items-center gap-3">
                               <div className="p-2 bg-green-500/20 rounded-lg"><Store className="w-5 h-5 text-green-400" /></div>
-                              <h2 className="text-xl font-black text-white uppercase tracking-tighter">{t('dash.shopify.live')}</h2>
+                              <h2 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.shopify.live')}</h2>
                            </div>
                            <ShopifyMockup />
                         </section>
                      </motion.div>
                   ) : (
                     <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
+                       {/* HERO — the generated title, hoisted OUT of the SEO tab so that every
+                           tab has a top. Three of the five tab payloads are a list or a code
+                           block and have no single string to promote, so a per-tab hero would
+                           leave three tabs with nothing largest. This is the one string every
+                           tab is about and the one users copy first. Node count is unchanged:
+                           the block moved, it was not duplicated. */}
+                       <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                             <span className="text-xs font-black uppercase tracking-widest text-slate-500">{t('dash.seo.target')}</span>
+                             <Button variant="ghost" size="sm" onClick={() => copyToClipboard(results.seoTitle, 't')} className="h-8 px-3 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 text-xs font-black uppercase">
+                                {copySuccess === 't' ? t('dash.copied') : t('dash.seo.copy')}
+                             </Button>
+                          </div>
+                          {/* No tracking-* — this renders model output. See the RTL note elsewhere
+                              in this file: the global guard keys on the wrapper dir, not the script. */}
+                          <p className="text-[32px] leading-[1.15] font-bold text-white break-words">{results.seoTitle}</p>
+                       </div>
+
                        {/* 5. TABS UPGRADE */}
                        <div className="relative">
                           <div className="flex gap-2 p-1 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto no-scrollbar">
@@ -901,7 +919,7 @@ export default function DashboardClient({
                                <button
                                  key={t.id}
                                  onClick={() => setActiveTab(t.id as any)}
-                                 className={`flex items-center gap-2 px-4 sm:px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all relative ${activeTab === t.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                                 className={`flex items-center gap-2 px-4 sm:px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all relative ${activeTab === t.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
                                >
                                   {t.icon}
                                   {t.label}
@@ -922,22 +940,13 @@ export default function DashboardClient({
                           {activeTab === 'seo' && (
                              <Card className="bg-white/[0.03] border-white/10 rounded-3xl overflow-hidden">
                                 <CardHeader className="border-b border-white/5 py-5 px-5 sm:py-8 sm:px-10">
-                                   <CardTitle className="text-white font-black text-lg sm:text-2xl uppercase tracking-tighter">{t('dash.seo.title')}</CardTitle>
+                                   <CardTitle className="text-white font-black text-base uppercase tracking-tighter">{t('dash.seo.title')}</CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-5 sm:p-10 space-y-8 sm:space-y-10">
                                    <div className="space-y-4">
                                       <div className="flex justify-between items-center">
-                                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('dash.seo.target')}</span>
-                                         <Button variant="ghost" size="sm" onClick={() => copyToClipboard(results.seoTitle, 't')} className="h-8 px-3 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 text-[10px] font-black uppercase">
-                                            {copySuccess === 't' ? t('dash.copied') : t('dash.seo.copy')}
-                                         </Button>
-                                      </div>
-                                      <p className="text-lg sm:text-xl font-bold text-white leading-tight break-words">{results.seoTitle}</p>
-                                   </div>
-                                   <div className="space-y-4">
-                                      <div className="flex justify-between items-center">
-                                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('dash.seo.meta')}</span>
-                                         <Button variant="ghost" size="sm" onClick={() => copyToClipboard(results.metaDescription, 'm')} className="h-8 px-3 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 text-[10px] font-black uppercase">
+                                         <span className="text-xs font-black uppercase tracking-widest text-slate-500">{t('dash.seo.meta')}</span>
+                                         <Button variant="ghost" size="sm" onClick={() => copyToClipboard(results.metaDescription, 'm')} className="h-8 px-3 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 text-xs font-black uppercase">
                                             {copySuccess === 'm' ? t('dash.copied') : t('dash.copyLogic')}
                                          </Button>
                                       </div>
@@ -951,24 +960,24 @@ export default function DashboardClient({
                             <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-10 space-y-6 sm:space-y-8">
                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6">
                                   <div className="space-y-1">
-                                     <h3 className="text-base sm:text-xl font-black text-white uppercase tracking-tighter">{t('dash.shopify.title')}</h3>
-                                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('dash.liquidData')}</p>
+                                     <h3 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.shopify.title')}</h3>
+                                     <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{t('dash.liquidData')}</p>
                                   </div>
                                   <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
                                      <button 
                                        onClick={() => setShopifyViewMode('preview')}
-                                       className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${shopifyViewMode === 'preview' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-slate-500 hover:text-white'}`}
+                                       className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${shopifyViewMode === 'preview' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-slate-500 hover:text-white'}`}
                                      >
                                         {t('dash.shopify.preview')}
                                      </button>
                                      <button 
                                        onClick={() => setShopifyViewMode('code')}
-                                       className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${shopifyViewMode === 'code' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-slate-500 hover:text-white'}`}
+                                       className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${shopifyViewMode === 'code' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-slate-500 hover:text-white'}`}
                                      >
                                         {t('dash.shopify.code')}
                                      </button>
                                   </div>
-                                  <Button onClick={() => copyToClipboard(results.shopifyHtml || '', 'sh')} className="bg-white/5 border border-white/10 hover:border-white/20 text-white text-[10px] font-black uppercase rounded-xl px-6 h-10">
+                                  <Button onClick={() => copyToClipboard(results.shopifyHtml || '', 'sh')} className="bg-white/5 border border-white/10 hover:border-white/20 text-white text-xs font-black uppercase rounded-xl px-6 h-10">
                                      {copySuccess === 'sh' ? t('dash.copied') : <><Copy className="w-3.5 h-3.5 mr-2" /> {t('dash.copyCode')}</>}
                                   </Button>
                                </div>
@@ -995,7 +1004,7 @@ export default function DashboardClient({
                                       className="bg-black/80 rounded-[2rem] p-5 sm:p-8 border border-white/5 font-mono text-xs text-violet-300/80 h-[500px] overflow-auto custom-scrollbar relative"
                                     >
                                        <pre className="whitespace-pre-wrap break-words">{results.shopifyHtml}</pre>
-                                       <div className="absolute top-4 right-4 text-[8px] font-black uppercase tracking-[0.2em] text-slate-700 pointer-events-none">{t('dash.liquidSig')}</div>
+                                       <div className="absolute top-4 right-4 text-xs font-black uppercase tracking-[0.2em] text-slate-700 pointer-events-none">{t('dash.liquidSig')}</div>
                                     </motion.div>
                                   )}
                                </AnimatePresence>
@@ -1004,7 +1013,7 @@ export default function DashboardClient({
                           {/* Amazon Redesign */}
                           {activeTab === 'amazon' && (
                             <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-10 space-y-6 sm:space-y-8">
-                               <h3 className="text-base sm:text-xl font-black text-white uppercase tracking-tighter">{t('dash.amazon.title')}</h3>
+                               <h3 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.amazon.title')}</h3>
                                <div className="space-y-4">
                                   {results.amazonBullets?.map((b, i) => (
                                     <div key={i} className="flex items-start gap-3 sm:gap-4 p-4 sm:p-5 bg-white/5 border border-white/5 rounded-2xl group hover:border-violet-500/30 transition-all">
@@ -1019,20 +1028,20 @@ export default function DashboardClient({
                           {activeTab === 'social' && (
                             <div className="grid gap-6">
                                <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-10 space-y-4 sm:space-y-6">
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('dash.social.hook')}</span>
+                                  <span className="text-xs font-black uppercase tracking-widest text-slate-500">{t('dash.social.hook')}</span>
                                                                     {/* No tracking-* here: this renders GENERATED text, which is Arabic whenever the user
                                       generated in Arabic — independent of the UI language. The global RTL guard keys on
                                       the wrapper's dir, so it does not fire on the English surface and the tracking lands
                                       on joined Arabic glyphs. Measured on the history title: -0.4px under the English UI. */}
-                                  <p className="text-lg sm:text-2xl font-black text-white leading-tight sm:leading-none italic uppercase">&quot;{results.viralScript?.hook}&quot;</p>
+                                  <p className="text-base font-black text-white leading-tight sm:leading-none italic uppercase">&quot;{results.viralScript?.hook}&quot;</p>
                                </Card>
                                <div className="grid md:grid-cols-2 gap-6">
                                   <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-8 space-y-4">
-                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('dash.social.concept')}</span>
+                                     <span className="text-xs font-black uppercase tracking-widest text-slate-500">{t('dash.social.concept')}</span>
                                      <p className="text-slate-400 font-medium leading-relaxed">{results.viralScript?.concept}</p>
                                   </Card>
                                   <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-8 space-y-4">
-                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{t('dash.social.tags')}</span>
+                                     <span className="text-xs font-black uppercase tracking-widest text-slate-500">{t('dash.social.tags')}</span>
                                      <div className="flex flex-wrap gap-2">
                                         {results.socialMediaTags?.map(t => (
                                           <span key={t} className="px-3 py-1 bg-violet-600/10 border border-violet-500/20 rounded-lg text-xs font-bold text-violet-400">{t}</span>
@@ -1052,12 +1061,12 @@ export default function DashboardClient({
                                   { l: t('dash.data.care'), v: results.structuredData?.careInstructions }
                                 ].map((d, i) => (
                                   <Card key={i} className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-8 flex flex-col justify-between">
-                                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-4">{d.l}</span>
+                                     <span className="text-xs font-black uppercase tracking-widest text-slate-500 mb-4">{d.l}</span>
                                                                           {/* No tracking-* here: this renders GENERATED text, which is Arabic whenever the user
                                          generated in Arabic — independent of the UI language. The global RTL guard keys on
                                          the wrapper's dir, so it does not fire on the English surface and the tracking lands
                                          on joined Arabic glyphs. Measured on the history title: -0.4px under the English UI. */}
-                                     <p className="text-white font-black text-lg uppercase">{d.v}</p>
+                                     <p className="text-white font-black text-base uppercase">{d.v}</p>
                                   </Card>
                                 ))}
                              </div>
@@ -1075,7 +1084,7 @@ export default function DashboardClient({
                         <MessagesSquare className="w-4 h-4 text-violet-500" />
                         {t('dash.stealthConsole')}
                      </h3>
-                     <span className="text-[8px] font-black uppercase tracking-widest text-slate-600 animate-pulse">{t('dash.matrixSync')}</span>
+                     <span className="text-xs font-black uppercase tracking-widest text-slate-600 animate-pulse">{t('dash.matrixSync')}</span>
                   </div>
 
                   <Card className="bg-black/60 border border-white/5 rounded-[2rem] flex flex-col h-[650px] overflow-hidden shadow-2xl">
@@ -1090,7 +1099,7 @@ export default function DashboardClient({
                              }`}>
                                 {msg.message}
                              </div>
-                             <span className="text-[8px] font-black text-slate-600 uppercase mt-2 px-1 tracking-widest">
+                             <span className="text-xs font-black text-slate-600 uppercase mt-2 px-1 tracking-widest">
                                 {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {msg.role === 'user' ? t('dash.vectorSent') : t('dash.matrixRefined')}
                              </span>
                           </div>
@@ -1111,7 +1120,7 @@ export default function DashboardClient({
                                key={c.l}
                                onClick={() => handleRefine(c.v)}
                                disabled={isRefining}
-                               className="px-3 py-1.5 bg-white/5 border border-white/5 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white hover:border-violet-500/50 transition-all active:scale-95 disabled:opacity-50"
+                               className="px-3 py-1.5 bg-white/5 border border-white/5 rounded-lg text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white hover:border-violet-500/50 transition-all active:scale-95 disabled:opacity-50"
                              >
                                {c.l}
                              </button>
@@ -1169,7 +1178,7 @@ export default function DashboardClient({
                       className="flex flex-col items-center justify-center gap-12 py-12"
                     >
                        <div className="text-center space-y-3">
-                          <h2 className="text-slate-400 font-black uppercase tracking-widest text-[10px]">{t('dash.inputSource')}</h2>
+                          <h2 className="text-[32px] leading-[1.15] font-black text-white">{t('dash.inputSource')}</h2>
                        </div>
 
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl px-4">
@@ -1183,8 +1192,8 @@ export default function DashboardClient({
                                 <UploadCloud className="w-8 h-8 text-violet-400" />
                              </div>
                              <div className="text-center relative">
-                                <h3 className="text-lg font-black text-white uppercase tracking-tight">{t('dash.uploadBtn')}</h3>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{t('dash.uploadFormat')}</p>
+                                <h3 className="text-base font-black text-white uppercase tracking-tight">{t('dash.uploadBtn')}</h3>
+                                <p className="text-xs font-black text-slate-500 uppercase tracking-widest mt-1">{t('dash.uploadFormat')}</p>
                              </div>
                           </button>
 
@@ -1198,15 +1207,15 @@ export default function DashboardClient({
                                 <Camera className="w-8 h-8 text-violet-400" />
                              </div>
                              <div className="text-center relative">
-                                <h3 className="text-lg font-black text-white uppercase tracking-tight">{t('dash.cameraBtn')}</h3>
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">{t('dash.cameraSub')}</p>
+                                <h3 className="text-base font-black text-white uppercase tracking-tight">{t('dash.cameraBtn')}</h3>
+                                <p className="text-xs font-black text-slate-500 uppercase tracking-widest mt-1">{t('dash.cameraSub')}</p>
                              </div>
                           </button>
                        </div>
 
                        <div className="flex gap-2 flex-wrap justify-center opacity-50">
                           {[t('dash.badge.edge'), t('dash.badge.vercel'), t('dash.badge.gemini')].map(b => (
-                            <span key={b} className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500">{b}</span>
+                            <span key={b} className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-slate-500">{b}</span>
                           ))}
                        </div>
                        <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
@@ -1245,7 +1254,7 @@ export default function DashboardClient({
                             {/* No tracking-* here: hotspot labels are GENERATED text and are Arabic
                                 whenever the user generated in Arabic, independent of the UI language.
                                 The global RTL guard keys on the wrapper's dir and misses that. */}
-                            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/hotspot:opacity-100 transition-all pointer-events-none bg-black/80 backdrop-blur-xl text-white text-[10px] font-black uppercase px-4 py-2 rounded-xl border border-white/10 shadow-2xl whitespace-nowrap">
+                            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/hotspot:opacity-100 transition-all pointer-events-none bg-black/80 backdrop-blur-xl text-white text-xs font-black uppercase px-4 py-2 rounded-xl border border-white/10 shadow-2xl whitespace-nowrap">
                               {hotspot.label}
                             </div>
                           </div>
@@ -1269,7 +1278,7 @@ export default function DashboardClient({
                       {/* Right: Requirements & Action */}
                       <div className="min-w-0 space-y-8 h-full flex flex-col justify-between">
                          <div className="space-y-6">
-                            <h3 className="text-xl font-black text-white uppercase tracking-tighter">{t('dash.readyTitle')}</h3>
+                            <h3 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.readyTitle')}</h3>
                             <div className="space-y-4">
                                {[
                                  { label: t('dash.step.image'), sub: t('dash.step.imageSub'), status: 'done' },
@@ -1282,8 +1291,8 @@ export default function DashboardClient({
                                        {item.status === 'done' ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : item.status === 'loading' ? <Loader2 className="w-5 h-5 text-violet-500 animate-spin" /> : item.status === 'platform' ? <Target className="w-5 h-5 text-violet-500" /> : <div className="w-5 h-5 rounded-full border-2 border-slate-700 animate-pulse" />}
                                     </div>
                                     <div>
-                                       <p className={`text-sm font-black uppercase tracking-widest ${item.status === 'done' ? 'text-emerald-400' : item.status === 'platform' ? 'text-violet-400' : item.status === 'loading' ? 'text-violet-400' : 'text-slate-500'}`}>{item.label}</p>
-                                       <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">{item.sub}</p>
+                                       <p className={`text-base font-black uppercase tracking-widest ${item.status === 'done' ? 'text-emerald-400' : item.status === 'platform' ? 'text-violet-400' : item.status === 'loading' ? 'text-violet-400' : 'text-slate-500'}`}>{item.label}</p>
+                                       <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-widest">{item.sub}</p>
                                     </div>
                                  </div>
                                ))}
@@ -1292,13 +1301,13 @@ export default function DashboardClient({
 
                          {/* 3. PLATFORM SELECTOR */}
                          <div className="space-y-4">
-                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">{t('dash.platform')}</span>
+                            <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-500">{t('dash.platform')}</span>
                             <div className="grid grid-cols-2 gap-2">
                                {platforms.map(p => (
                                  <button
                                    key={p.id}
                                    onClick={() => setSelectedPlatform(p.id)}
-                                   className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                                   className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${
                                      selectedPlatform === p.id 
                                      ? `border-${p.color}-500/50 bg-${p.color}-500/10 text-${p.color}-300 shadow-[0_0_15px_rgba(var(--${p.color}-rgb),0.2)] scale-[1.02]` 
                                      : 'border-white/5 bg-white/5 text-slate-500 hover:border-white/20'
@@ -1310,7 +1319,7 @@ export default function DashboardClient({
                                       color: `var(--${p.id}-color-text)`
                                    } : {}}
                                  >
-                                    <span className="text-lg">{p.emoji}</span>
+                                    <span className="text-base">{p.emoji}</span>
                                     {p.label}
                                  </button>
                                ))}
@@ -1347,7 +1356,7 @@ export default function DashboardClient({
                             ) : initialCredits <= 0 ? (
                                <div className="flex flex-col items-center gap-3">
                                   <AlertCircle className="w-5 h-5 text-red-500/50" />
-                                  <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest text-center px-2">
+                                  <p className="text-xs font-medium text-slate-500 uppercase tracking-widest text-center px-2">
                                     {isNative
                                       // NATIVE: neutral, steers nowhere (Play policy). Do not
                                       // swap this for dash.noCredits, which upsells.
@@ -1363,11 +1372,27 @@ export default function DashboardClient({
                                </div>
                             ) : (
                               <>
-                                 <span className="relative z-10 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                                 {/* 🔴 THE HERO STEP IS FOR CONTENT, NOT FOR CONTROLS — content can
+                                     reflow, a control cannot. This label sat at the ladder's 32px top
+                                     step and CLIPPED: the button above is w-full h-20 overflow-hidden
+                                     with a nowrap flex row, so there is nothing to give. Measured at
+                                     vw 500, below every breakpoint and the narrowest this button ever
+                                     gets: inner box 339px, and icon 20 + gap 8 + the English label at
+                                     32px = 369px. The sparkle was cut in half on the left and
+                                     the final T of CONTENT sliced on the right. At 16px the same row
+                                     measures 199px, a 140px margin that survives a longer string or a
+                                     new locale. The other three 32px sites are content and absorb the
+                                     pressure by wrapping; this one had no such move.
+                                     Do NOT raise this back to a large step to "finish" the ladder, and
+                                     do not buy the room by cutting a word — the Arabic string at :506
+                                     was shortened because the short form is the FAITHFUL translation,
+                                     not to make it fit, and that distinction is the whole reason it
+                                     was acceptable. */}
+                                 <span className="relative z-10 text-base leading-[1.15] font-black uppercase flex items-center gap-2">
                                    <Sparkles className="w-5 h-5 animate-pulse" />
                                    {t('dash.generate').split(' — ')[0]}
                                  </span>
-                                 <span className="relative z-10 text-[9px] font-bold uppercase tracking-widest text-white/60">
+                                 <span className="relative z-10 text-xs font-bold uppercase tracking-widest text-white/60">
                                    {t('dash.consuming')}
                                  </span>
                                  <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-white/10 to-black/0 translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-1000" />
@@ -1389,14 +1414,22 @@ export default function DashboardClient({
                     <History className="w-6 h-6 text-violet-400" />
                  </div>
                  <div className="space-y-1">
-                    <h2 className="text-3xl font-black text-white tracking-tighter uppercase">{t('dash.history')}</h2>
+                    {/* TOP STEP, not decoration. At text-base this heading computed 16px — the
+                        SAME size and the SAME colour as the row titles inside the table it labels,
+                        which carry no size class and inherit 16px. Measured: heading 16/900/#fff,
+                        row title 16/700/#fff, both uppercase. Under RTL the global letter-spacing
+                        rule zeroes tracking and `uppercase` does nothing to Arabic glyphs, so in
+                        Arabic the two were separated by font-weight ALONE. It was text-3xl (30px)
+                        before the ladder. Do not send it back to the label tier to tidy the ladder:
+                        a section heading in the same tier as its own contents has no step. */}
+                    <h2 className="text-[32px] leading-[1.15] font-black text-white tracking-tighter uppercase">{t('dash.history')}</h2>
                     <p className="text-xs font-medium text-slate-500 tracking-widest uppercase">{t('dash.productionHistory')}</p>
                  </div>
               </div>
               <div className="flex gap-2">
                  <Button 
                    onClick={() => downloadCSV(history, `unicornapps-export-${new Date().toISOString().split('T')[0]}.csv`)}
-                   className="h-12 px-6 bg-white/5 border border-white/10 hover:border-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#c8cfe0] flex items-center gap-2 transition-all"
+                   className="h-12 px-6 bg-white/5 border border-white/10 hover:border-white/20 rounded-xl text-xs font-black uppercase tracking-widest text-[#c8cfe0] flex items-center gap-2 transition-all"
                  >
                     <FileDown className="w-4 h-4" />
                     {t('dash.exportCsv')}
@@ -1409,11 +1442,11 @@ export default function DashboardClient({
                  <table className="w-full text-left border-collapse">
                     <thead className="bg-white/5 border-b border-white/5">
                        <tr>
-                          <th className="px-4 sm:px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.asset')}</th>
-                          <th className="px-4 sm:px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.platformName')}</th>
-                          <th className="px-4 sm:px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.matrixSignature')}</th>
-                          <th className="px-4 sm:px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.timestamp')}</th>
-                          <th className="px-4 sm:px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 text-right">{t('dash.action')}</th>
+                          <th className="px-4 sm:px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.asset')}</th>
+                          <th className="px-4 sm:px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.platformName')}</th>
+                          <th className="px-4 sm:px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.matrixSignature')}</th>
+                          <th className="px-4 sm:px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500">{t('dash.timestamp')}</th>
+                          <th className="px-4 sm:px-8 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500 text-right">{t('dash.action')}</th>
                        </tr>
                     </thead>
                     <tbody>
@@ -1438,7 +1471,7 @@ export default function DashboardClient({
                                </div>
                             </td>
                             <td className="px-4 sm:px-8 py-4">
-                               <span className={`px-4 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-widest ${platformBadge(item.platform)}`}>
+                               <span className={`px-4 py-1.5 rounded-lg border text-xs font-black uppercase tracking-widest ${platformBadge(item.platform)}`}>
                                   {item.platform || 'amazon'}
                                </span>
                             </td>
@@ -1449,11 +1482,11 @@ export default function DashboardClient({
                                       the wrapper's dir, so it does not fire on the English surface and the tracking lands
                                       on joined Arabic glyphs. Measured on the history title: -0.4px under the English UI. */}
                                   <p className="text-white font-bold truncate group-hover:text-violet-400 transition-colors uppercase">{item.content.seoTitle}</p>
-                                  <p className="text-[10px] font-medium text-slate-600 mt-1 uppercase tracking-widest">{t('dash.id')}: {item.id.slice(0, 8)}</p>
+                                  <p className="text-xs font-medium text-slate-600 mt-1 uppercase tracking-widest">{t('dash.id')}: {item.id.slice(0, 8)}</p>
                                </div>
                             </td>
                             <td className="px-4 sm:px-8 py-4">
-                               <div className="flex items-center gap-2 text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                               <div className="flex items-center gap-2 text-slate-500 text-xs font-black uppercase tracking-widest">
                                   <Clock className="w-3.5 h-3.5" />
                                   {new Date(item.created_at).toLocaleDateString()}
                                </div>
@@ -1472,8 +1505,8 @@ export default function DashboardClient({
                                      <Database className="w-10 h-10 text-slate-700" />
                                   </div>
                                   <div className="space-y-2">
-                                     <p className="text-xl font-bold text-slate-500 uppercase tracking-tighter">{t('dash.noHistory')}</p>
-                                     <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">{t('dash.noSignatures')}</p>
+                                     <p className="text-base font-bold text-slate-500 uppercase tracking-tighter">{t('dash.noHistory')}</p>
+                                     <p className="text-xs font-black text-slate-700 uppercase tracking-widest">{t('dash.noSignatures')}</p>
                                   </div>
                                </div>
                             </td>
@@ -1496,7 +1529,7 @@ export default function DashboardClient({
             >
               <div className="absolute top-8 mt-safe left-0 right-0 z-10 text-center">
                 <p className="text-xs font-black uppercase tracking-[0.3em] text-white/40 mb-2">{t('dash.cameraVision')}</p>
-                <h3 className="text-xl font-black text-white uppercase tracking-tighter">{t('dash.cameraPoint')}</h3>
+                <h3 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.cameraPoint')}</h3>
               </div>
 
               <video 
