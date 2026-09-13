@@ -502,7 +502,15 @@ const translations = {
     'dash.title': 'محرك المنتجات الذكي',
     'dash.upload': 'أسقط صورة منتجك هنا',
     'dash.uploadSub': 'سيقوم Gemini بتحليل المواد والألوان والجمهور المستهدف',
-    'dash.generate': 'توليد المحتوى بالذكاء الاصطناعي',
+    // Shortened to match the English ("Generate Content"). The previous string said
+    // "...with artificial intelligence", which the English never claimed.
+    // 🔴 THE REASON IS FIDELITY, NOT FIT — this is the faithful translation, not a
+    // truncation to make it fit, and it stands on that alone. It also stopped a clip
+    // (417px inside a 371px overflow-hidden button) at the 32px step the button briefly
+    // carried, but that step is gone and the old string would fit again at today's size.
+    // Do not restore the longer string on the grounds that it now fits: it was never
+    // shortened to fit.
+    'dash.generate': 'توليد المحتوى',
     'dash.credits': 'الرصيد المتبقي',
     'dash.platform': 'المنصة المستهدفة',
     'dash.history': 'سجل العمليات',
