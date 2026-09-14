@@ -28,8 +28,6 @@ import {
   Play,
   Globe,
   BadgeCheck,
-  Search,
-  Hash,
   Database,
   Smartphone,
   Store,
@@ -131,7 +129,10 @@ export default function DashboardClient({
   const [error, setError] = useState<string | null>(null)
   const [copySuccess, setCopySuccess] = useState<string | null>(null)
   const [history, setHistory] = useState<Generation[]>(initialHistory)
-  const [activeTab, setActiveTab] = useState<'seo' | 'shopify' | 'amazon' | 'social' | 'data'>('seo')
+  // 'preview' joined this union when the raw/live-preview selector was folded into
+  // the destination grid. It is a sixth destination, not a second mode, so there is
+  // one piece of state describing what the user is looking at instead of two.
+  const [activeTab, setActiveTab] = useState<'seo' | 'shopify' | 'amazon' | 'social' | 'data' | 'preview'>('seo')
   
   // Royal Obsidian State
   const [displayCredits, setDisplayCredits] = useState(0)
@@ -145,7 +146,6 @@ export default function DashboardClient({
   ])
   const [refineInput, setRefineInput] = useState('')
   const [isRefining, setIsRefining] = useState(false)
-  const [viewMode, setViewMode] = useState<'raw' | 'preview'>('raw')
   const [shopifyViewMode, setShopifyViewMode] = useState<'preview' | 'code'>('preview')
   const chatEndRef = useRef<HTMLDivElement>(null)
   const errorRef = useRef<HTMLDivElement>(null)
@@ -828,8 +828,19 @@ export default function DashboardClient({
 
       <div className="max-w-7xl mx-auto space-y-12 relative z-10">
         
-        {/* 1. CREDITS HEADER BAR */}
-        <motion.div 
+        {/* 1. CREDITS HEADER BAR — PRE-GENERATION ONLY.
+            🔴 IT DOES NOT RENDER ONCE `results` EXIST, AND THAT IS THE POINT.
+            Measured at 411 content width: this bar is 246px (en) / 230px (ar) and sits
+            above the thing the user spent a credit on, so 54-56% of a 771px phone
+            viewport was spent before the results zone began and NOT ONE CHARACTER of
+            the selected tab's payload was on screen at rest. Removing it from this one
+            state is what puts the first generated line above the fold.
+            The credit count did not vanish with it: Navbar.tsx now renders it at every
+            width (it was `hidden sm:flex`, i.e. invisible on every phone). Keep the two
+            in step — if that navbar change is reverted, a phone user loses the number
+            entirely. */}
+        {!results && (
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative flex flex-col md:flex-row justify-between items-center gap-4 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-4 sm:p-6 shadow-[0_0_40px_-15px_rgba(124,58,237,0.2)] overflow-hidden"
@@ -854,38 +865,17 @@ export default function DashboardClient({
                       {t('dash.creditsWord')}
                     </span>
                  </div>
-                 {!isNative && (
-                   <>
-                     <div className="hidden sm:block h-4 w-px bg-white/10" />
-                     <div className="flex items-center gap-2">
-                       {/* Both CTAs reuse openCheckout from lib/checkout.ts. */}
-                       <button
-                         type="button"
-                         onClick={() => void handlePaid('pack')}
-                         disabled={checkoutPending !== null}
-                         aria-busy={checkoutPending === 'pack'}
-                         className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                       >
-                         {checkoutPending === 'pack' ? t('checkout.pending') : t('dash.cta.pack')}
-                       </button>
-                       <button
-                         type="button"
-                         onClick={() => void handlePaid('sub')}
-                         disabled={checkoutPending !== null}
-                         aria-busy={checkoutPending === 'sub'}
-                         className="bg-violet-600/10 border border-violet-500/30 text-violet-300 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-lg hover:bg-violet-600 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                       >
-                         {checkoutPending === 'sub' ? t('checkout.pending') : t('dash.cta.sub')}
-                       </button>
-                     </div>
-                   </>
-                 )}
+                 {/* The two purchase CTAs used to live here. They now render ONCE, in
+                     the band below the results zone — see PURCHASE BAND. Intent to buy
+                     forms after the user has seen what a credit bought, and this bar is
+                     the pre-generation screen, i.e. the one audience that has not. */}
               </div>
              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:border-white/30" onClick={() => router.refresh()}>
                <Clock className="w-4 h-4" />
              </Button>
           </div>
         </motion.div>
+        )}
 
         {/* Banner row. Both banners share ONE container + tone vocabulary, held
             in lib/dashboard-banner.ts, so the error state cannot drift into a
@@ -934,101 +924,120 @@ export default function DashboardClient({
         {results && (
            <div className="grid lg:grid-cols-[1fr,360px] gap-8 items-start">
               <div className="min-w-0 space-y-6">
-                {/* Visual View Mode Selector */}
-                <div className="flex justify-between items-center bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-2">
-                   <div className="flex gap-1">
-                      <button onClick={() => setViewMode('raw')} className={`px-4 sm:px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'raw' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>{t('dash.raw')}</button>
-                      <button onClick={() => setViewMode('preview')} className={`px-4 sm:px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${viewMode === 'preview' ? 'bg-white text-slate-950' : 'text-slate-500 hover:text-white'}`}>{t('dash.preview')}</button>
-                   </div>
-                   <div className="hidden sm:flex items-center gap-2 px-4 text-xs font-black uppercase tracking-widest text-emerald-400">
-                      <CheckCircle2 className="w-4 h-4" />
-                      {t('dash.stable')}
-                   </div>
-                </div>
-
-                <AnimatePresence mode="wait">
-                  {viewMode === 'preview' ? (
-                     <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }} className="space-y-12">
-                        <section className="space-y-6">
-                           <div className="flex items-center gap-3">
-                              <div className="p-2 bg-orange-500/20 rounded-lg"><ShoppingBag className="w-5 h-5 text-orange-400" /></div>
-                              <h2 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.amazon.live')}</h2>
-                           </div>
-                           <AmazonMockup />
-                        </section>
-                        <section className="space-y-6">
-                           <div className="flex items-center gap-3">
-                              <div className="p-2 bg-green-500/20 rounded-lg"><Store className="w-5 h-5 text-green-400" /></div>
-                              <h2 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.shopify.live')}</h2>
-                           </div>
-                           <ShopifyMockup />
-                        </section>
-                     </motion.div>
-                  ) : (
-                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
                        {/* HERO — the generated title, hoisted OUT of the SEO tab so that every
                            tab has a top. Three of the five tab payloads are a list or a code
                            block and have no single string to promote, so a per-tab hero would
                            leave three tabs with nothing largest. This is the one string every
-                           tab is about and the one users copy first. Node count is unchanged:
-                           the block moved, it was not duplicated. */}
+                           tab is about and the one users copy first.
+
+                           🔴 ORDER IS THE DESIGN: eyebrow, then title, then the action.
+                           Copy used to sit ABOVE the string it copies, beside the label, which
+                           asks the user to act on something they have not read yet. It is now a
+                           row of its own beneath the title — the convention every assistant UI
+                           settled on — and that row is the place regenerate and share join
+                           later, which is why it is a flex container holding one button and not
+                           a bare button. */}
                        <div className="space-y-3">
-                          <div className="flex justify-between items-center">
+                          {/* THE ONE EYEBROW ON THIS SCREEN. 17 elements page-wide carry this
+                              12px-uppercase-slate-500 style, which is why the top of the screen
+                              read as chrome: the label above the hero looked like eight other
+                              labels that mean nothing in particular. An eyebrow belongs above
+                              the TITLE of a piece of content, once. Every other field now names
+                              itself BELOW its own value, paired with that value's copy action. */}
+                          <div className="flex items-center">
                              <span className="text-xs font-black uppercase tracking-widest text-slate-500">{t('dash.seo.target')}</span>
-                             <Button variant="ghost" size="sm" onClick={() => copyToClipboard(results.seoTitle, 't')} className="h-8 px-3 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 text-xs font-black uppercase">
-                                {copySuccess === 't' ? t('dash.copied') : t('dash.seo.copy')}
-                             </Button>
                           </div>
                           {/* No tracking-* — this renders model output. See the RTL note elsewhere
                               in this file: the global guard keys on the wrapper dir, not the script. */}
                           <p className="text-[32px] leading-[1.15] font-bold text-white break-words">{results.seoTitle}</p>
+                          <div className="flex items-center gap-2 pt-1">
+                             <Button variant="ghost" size="sm" onClick={() => copyToClipboard(results.seoTitle, 't')} className="h-11 px-5 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 text-xs font-black uppercase">
+                                {copySuccess === 't' ? t('dash.copied') : t('dash.seo.copy')}
+                             </Button>
+                          </div>
                        </div>
 
-                       {/* 5. TABS UPGRADE */}
-                       <div className="relative">
-                          <div className="flex gap-2 p-1 bg-black/40 border border-white/5 rounded-2xl overflow-x-auto no-scrollbar">
-                             {[
-                               { id: 'seo', label: t('dash.tab.seo'), icon: <Search className="w-3.5 h-3.5" /> },
-                               { id: 'shopify', label: t('dash.tab.shopify'), icon: <Store className="w-3.5 h-3.5" /> },
-                               { id: 'amazon', label: t('dash.tab.amazon'), icon: <ShoppingBag className="w-3.5 h-3.5" /> },
-                               { id: 'social', label: t('dash.tab.social'), icon: <Hash className="w-3.5 h-3.5" /> },
-                               { id: 'data', label: t('dash.tab.data'), icon: <Database className="w-3.5 h-3.5" /> }
-                             ].map(t => (
-                               <button
-                                 key={t.id}
-                                 onClick={() => setActiveTab(t.id as any)}
-                                 className={`flex items-center gap-2 px-4 sm:px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all relative ${activeTab === t.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
-                               >
-                                  {t.icon}
-                                  {t.label}
-                                  {activeTab === t.id && (
-                                    <motion.div layoutId="tab-active" className="absolute inset-0 bg-white/5 border border-white/10 rounded-xl -z-10 shadow-[0_0_15px_rgba(124,58,237,0.3)]">
-                                       <div className="absolute bottom-0 left-1/4 right-1/4 h-[2px] bg-violet-400" />
-                                    </motion.div>
-                                  )}
-                               </button>
-                             ))}
-                          </div>
-                          {/* scroll affordance: fade on the trailing edge, mobile only */}
-                          <div className="pointer-events-none absolute inset-y-1 right-1 w-10 rounded-r-2xl bg-gradient-to-l from-[#070710] to-transparent lg:hidden rtl:hidden" />
-                          <div className="pointer-events-none absolute inset-y-1 left-1 w-10 rounded-l-2xl bg-gradient-to-r from-[#070710] to-transparent hidden rtl:block rtl:lg:hidden" />
+                       {/* 5. DESTINATION GRID — 3 ACROSS, 2 DOWN, NEVER A SCROLLER.
+                           🔴 A ONE-ROW STRIP IS ARITHMETICALLY DEAD AT THIS WIDTH, so do not
+                           "fix" this by tuning padding or tracking and putting the row back.
+                           Measured at 411 content width: the five labels total 516px before
+                           gaps and container padding, inside a 345px box — a 211px (en) /
+                           128px (ar) overflow that hid SOCIAL and DATA entirely, in BOTH
+                           languages, behind a suppressed scrollbar and a 40px gradient. No
+                           padding value closes a 211px gap. Material 3 says the same thing in
+                           words: fixed tabs are for 3-5 destinations, and a scrollable strip
+                           costs discoverability because users who do not scroll never learn
+                           the options exist.
+
+                           The sixth cell is PREVIEW, which absorbs the old raw/live-preview
+                           selector above this block. That is why six destinations cost ~6px
+                           more than five did: two rows replace one row PLUS a 36px control
+                           and its 24px gap. Equal columns and no icons are what make three
+                           labels fit 107px cells; 44px cells are the AAA/platform target size
+                           (WCAG 2.5.8 AA is 24, so this was never an AA failure). */}
+                       <div className="grid grid-cols-3 gap-2 p-1 bg-black/40 border border-white/5 rounded-2xl">
+                          {[
+                            { id: 'seo', label: t('dash.tab.seo') },
+                            { id: 'shopify', label: t('dash.tab.shopify') },
+                            { id: 'amazon', label: t('dash.tab.amazon') },
+                            { id: 'social', label: t('dash.tab.social') },
+                            { id: 'data', label: t('dash.tab.data') },
+                            { id: 'preview', label: t('dash.tab.preview') }
+                          ].map(t => (
+                            <button
+                              key={t.id}
+                              onClick={() => setActiveTab(t.id as any)}
+                              className={`flex items-center justify-center h-11 px-3 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all relative ${activeTab === t.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                            >
+                               {t.label}
+                               {activeTab === t.id && (
+                                 <motion.div layoutId="tab-active" className="absolute inset-0 bg-white/5 border border-white/10 rounded-xl -z-10 shadow-[0_0_15px_rgba(124,58,237,0.3)]">
+                                    <div className="absolute bottom-0 left-1/4 right-1/4 h-[2px] bg-violet-400" />
+                                 </motion.div>
+                               )}
+                            </button>
+                          ))}
                        </div>
 
                        <div className="grid gap-6">
+                          {/* PREVIEW is a destination, not a mode. It used to be half of a
+                              separate two-way control ABOVE the title, which asked the user to
+                              choose a view of content they had not seen. Folding it in here is
+                              what pays for the second row of the grid. */}
+                          {activeTab === 'preview' && (
+                             <div className="space-y-12">
+                                <section className="space-y-6">
+                                   <div className="flex items-center gap-3">
+                                      <div className="p-2 bg-orange-500/20 rounded-lg"><ShoppingBag className="w-5 h-5 text-orange-400" /></div>
+                                      <h2 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.amazon.live')}</h2>
+                                   </div>
+                                   <AmazonMockup />
+                                </section>
+                                <section className="space-y-6">
+                                   <div className="flex items-center gap-3">
+                                      <div className="p-2 bg-green-500/20 rounded-lg"><Store className="w-5 h-5 text-green-400" /></div>
+                                      <h2 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.shopify.live')}</h2>
+                                   </div>
+                                   <ShopifyMockup />
+                                </section>
+                             </div>
+                          )}
+                          {/* The CardHeader is gone: it restated the tab selected one row
+                              above it ("SEO" -> "SEO & Metadata"), which made three labels for
+                              one payload. The field now names itself underneath, beside its own
+                              copy action, exactly as the hero does. */}
                           {activeTab === 'seo' && (
                              <Card className="bg-white/[0.03] border-white/10 rounded-3xl overflow-hidden">
-                                <CardHeader className="border-b border-white/5 py-5 px-5 sm:py-8 sm:px-10">
-                                   <CardTitle className="text-white font-black text-base uppercase tracking-tighter">{t('dash.seo.title')}</CardTitle>
-                                </CardHeader>
                                 <CardContent className="p-5 sm:p-10 space-y-8 sm:space-y-10">
                                    <div className="space-y-4">
+                                      <p className="text-slate-400 leading-relaxed font-medium">{results.metaDescription}</p>
                                       <div className="flex justify-between items-center">
                                          <span className="text-xs font-black uppercase tracking-widest text-slate-500">{t('dash.seo.meta')}</span>
-                                         <Button variant="ghost" size="sm" onClick={() => copyToClipboard(results.metaDescription, 'm')} className="h-8 px-3 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 text-xs font-black uppercase">
+                                         <Button variant="ghost" size="sm" onClick={() => copyToClipboard(results.metaDescription, 'm')} className="h-11 px-5 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 text-xs font-black uppercase">
                                             {copySuccess === 'm' ? t('dash.copied') : t('dash.copyLogic')}
                                          </Button>
                                       </div>
-                                      <p className="text-slate-400 leading-relaxed font-medium">{results.metaDescription}</p>
                                    </div>
                                 </CardContent>
                              </Card>
@@ -1151,8 +1160,6 @@ export default function DashboardClient({
                           )}
                        </div>
                     </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
 
               {/* 6. REFINE CONSOLE */}
@@ -1162,7 +1169,13 @@ export default function DashboardClient({
                         <MessagesSquare className="w-4 h-4 text-violet-500" />
                         {t('dash.stealthConsole')}
                      </h3>
-                     <span className="text-xs font-black uppercase tracking-widest text-slate-600 animate-pulse">{t('dash.matrixSync')}</span>
+                     {/* "AI assistant ready" was removed here. It asserted a readiness
+                         nothing on the page verifies: it renders identically when the
+                         API key is absent, when the limiter is throttling and when the
+                         daily quota is spent — all three of which end in a banner, not
+                         in a refinement. A pulsing green-ish claim that is right by
+                         luck is worse than no claim. Its key is gone from both
+                         dictionaries; this was its only call site. */}
                   </div>
 
                   <Card className="bg-black/60 border border-white/5 rounded-[2rem] flex flex-col h-[650px] overflow-hidden shadow-2xl">
@@ -1226,6 +1239,50 @@ export default function DashboardClient({
                   </Card>
               </div>
            </div>
+        )}
+
+        {/* PURCHASE BAND — THE ONLY CALL SITE FOR THE TWO CTAs.
+            They used to sit in the credits header bar, i.e. above the result, shown to
+            someone who had not yet seen what a credit buys. They now render once, here,
+            after the user has read the output. `results &&` is load-bearing: on the
+            pre-generation screen there is nothing to have been convinced by.
+
+            🔴 NEVER RENDER THESE TWICE. The same rule the Generate button carries: two
+            call sites for one action is a defect in the UI, and it also makes any
+            querySelector/.find() probe silently measure whichever comes first.
+
+            Not a Card, on its own ground, between hairlines, with SUBSCRIBE as the one
+            filled brand surface on the screen — every piece of generated output here
+            lives inside a card, so "not a card" is the screen's own vocabulary for
+            "this is the app talking, not the model".
+
+            `!isNative` per the Android architecture: the app ships payment-free, so on
+            every Play install this block does not exist and the screen simply ends at
+            the results. */}
+        {results && !isNative && (
+          <div className="border-y border-white/10 bg-white/[0.02] px-4 py-6 space-y-4">
+            <span className="block text-xs font-black uppercase tracking-widest text-slate-500">{t('dash.addCredits')}</span>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => void handlePaid('pack')}
+                disabled={checkoutPending !== null}
+                aria-busy={checkoutPending === 'pack'}
+                className="h-12 rounded-xl border border-white/20 text-[#c8cfe0] hover:border-white/40 hover:text-white text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {checkoutPending === 'pack' ? t('checkout.pending') : t('dash.cta.pack')}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handlePaid('sub')}
+                disabled={checkoutPending !== null}
+                aria-busy={checkoutPending === 'sub'}
+                className="h-12 rounded-xl bg-brand hover:bg-brand/90 text-white text-xs font-black uppercase tracking-widest shadow-glow-brand transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {checkoutPending === 'sub' ? t('checkout.pending') : t('dash.cta.sub')}
+              </button>
+            </div>
+          </div>
         )}
 
         {/* 2. UPLOAD & PLATFORM CONTROL ZONE */}
