@@ -94,6 +94,15 @@ PROJECT-JOURNAL.md
 BACKLOG.md
 BACKLOG.md.bak*
 CLAUDE.md.bak*
+# AGENTS.md appeared untracked on 2026-09-13 as a near-identical mirror of the
+# assistant working documents above, differing by one self-referential line, and
+# carrying the same material they are ignored for. It was NOT covered, because every
+# rule above matches a literal filename and a copy under a different name inherits
+# none of the protection. Found by hand, not by any guard.
+# The same hole is still open for a third name or a different extension: these rules
+# match on identity, and what is being protected is content.
+AGENTS.md
+AGENTS.md.bak*
 
 # `*.bak` (in the signing-material block above) matches only names
 # ENDING in .bak, so a timestamped backup such as
