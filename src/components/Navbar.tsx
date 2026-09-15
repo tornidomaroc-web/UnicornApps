@@ -5,6 +5,7 @@ import { logout } from "@/app/(auth)/login/actions";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Zap, LogOut, User } from "lucide-react";
 import { useLang } from '@/lib/i18n/LanguageContext';
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User as AuthUser } from "@supabase/supabase-js";
 import { deriveNavView, reconcileNavState } from "./navbar-auth";
@@ -38,6 +39,10 @@ export default function Navbar({
   }, [initialCredits]);
 
   const view = deriveNavView(user);
+  // Exact match only: /dashboard is the sole route this bar links to, and a
+  // startsWith would also swallow any future /dashboard/* child that still wants
+  // the link back to the root.
+  const onDashboard = usePathname() === '/dashboard';
 
   return (
     <nav className="fixed top-0 w-full z-50 pt-safe border-b border-white/5 bg-[#070710]/80 backdrop-blur-xl transition-all duration-500 hover:bg-[#070710]/95">
@@ -77,19 +82,30 @@ export default function Navbar({
             />
           ) : view === 'authed' ? (
             <div className="flex items-center gap-2 sm:gap-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-1.5 sm:pl-4 transition-all hover:border-brand/30">
-              <div className="hidden sm:flex items-center gap-2">
+              {/* The credit count is the one number a signed-in user needs on every
+                  screen, and it was hidden on every phone: `hidden sm:flex` means it
+                  never rendered below 640px, which is every install. The dashboard
+                  compensated with a header bar of its own; this is what lets that bar
+                  go. 12px, not 10px — 10 is not a step on this scale. */}
+              <div className="flex items-center gap-2">
                 <Zap className="w-3.5 h-3.5 text-brand animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#c8cfe0]">
+                <span className="text-xs font-black uppercase tracking-widest text-[#c8cfe0]">
                   {credits} <span className="text-slate-500">{t('nav.credits')}</span>
                 </span>
               </div>
               <div className="hidden sm:block h-6 w-px bg-white/10 mx-1" />
               <div className="flex items-center gap-2">
+                {/* A link to the page you are already on is the cheapest thing in this
+                    bar to give up, and giving it up is what pays for the credit count
+                    above at 411px. It is also the only element on the dashboard that
+                    rendered text below 12px. */}
+                {!onDashboard && (
                 <Link href="/dashboard">
                   <Button size="sm" className="h-8 px-4 rounded-xl bg-brand hover:bg-brand/90 text-white text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgb(var(--ua-brand-glow)/0.3)] border-none transition-all hover:scale-105 active:scale-95">
                     {t('nav.dashboard')}
                   </Button>
                 </Link>
+                )}
                 <Link href="/account" aria-label={t('nav.account')}>
                   <Button variant="ghost" size="icon" className="w-8 h-8 rounded-xl text-ink-2 hover:text-brand hover:bg-brand/10 transition-all">
                     <User aria-hidden className="w-3.5 h-3.5" />
