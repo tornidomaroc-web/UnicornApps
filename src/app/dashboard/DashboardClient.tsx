@@ -1178,13 +1178,7 @@ export default function DashboardClient({
             not yet seen what a credit buys. They now render once, here, after the user
             has read the output. `results &&` is load-bearing: on the pre-generation
             screen there is nothing to have been convinced by. That header bar has since
-            been deleted outright, so this gate is now the ONLY thing deciding whether a
-            purchase is reachable from the dashboard at all.
-
-            🔴 KNOWN GAP, recorded and deliberately NOT closed here: a WEB user at zero
-            credits with an empty history reaches no purchase surface, because Generate
-            is disabled and nothing else sets `results`. Do NOT close it by weakening
-            this gate — that re-creates the second call site the rule below bars.
+            been deleted outright.
 
             🔴 NEVER RENDER THESE TWICE. The same rule the Generate button carries: two
             call sites for one action is a defect in the UI, and it also makes any
