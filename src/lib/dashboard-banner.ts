@@ -28,7 +28,12 @@ export type BannerTone = 'success' | 'pending' | 'failure'
  * failure tone the checkout banner already uses.
  */
 export const BANNER_CONTAINER_CLASS =
-  'max-w-2xl mx-auto mb-8 rounded-2xl border px-6 py-4 text-center text-sm font-medium'
+  // text-base, not text-sm: 14px was a fourth step on a screen whose scale is
+  // 12/16/32, and this is the one element on it carrying role="alert" — the last
+  // place that can afford a size nothing else uses. It costs height (measured on
+  // the dashboard at 411: the container goes 54px -> 74px, because the English
+  // copy wraps to a second line) and the first generated line still clears the fold.
+  'max-w-2xl mx-auto mb-8 rounded-2xl border px-6 py-4 text-center text-base font-medium'
 
 const TONE_CLASS: Record<BannerTone, string> = {
   success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200',
