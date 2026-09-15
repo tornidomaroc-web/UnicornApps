@@ -83,7 +83,6 @@ const translations = {
     'hero.trust2': 'Amazon & Shopify ready',
     'hero.trust3': 'Free to start',
     // Dashboard
-    'dash.title': 'AI Product Engine',
     'dash.upload': 'Drop Your Product Image Here',
     'dash.uploadSub': 'Gemini will analyze materials, colors & audience',
     'dash.generate': 'Generate Content',
@@ -170,7 +169,6 @@ const translations = {
     'dash.cta.sub': 'Subscribe $9.99 ↗',
     'dash.addCredits': 'Add credits',
     'dash.cta.pack': 'Credit Pack $4.99',
-    'dash.creditsWord': 'Credits',
     'dash.refine.prof': 'Professional',
     'dash.refine.short': 'Shorten',
     'dash.refine.luxury': 'Luxury',
@@ -488,7 +486,6 @@ const translations = {
     'hero.trust2': 'جاهز لـ Amazon و Shopify',
     'hero.trust3': 'مجاني للبدء',
     // Dashboard
-    'dash.title': 'محرك المنتجات الذكي',
     'dash.upload': 'أسقط صورة منتجك هنا',
     'dash.uploadSub': 'سيقوم Gemini بتحليل المواد والألوان والجمهور المستهدف',
     // Shortened to match the English ("Generate Content"). The previous string said
@@ -560,7 +557,6 @@ const translations = {
     'dash.cta.sub': 'اشترك بـ 9.99$ ↗',
     'dash.addCredits': 'إضافة أرصدة',
     'dash.cta.pack': 'حزمة أرصدة 4.99$',
-    'dash.creditsWord': 'رصيد',
     'dash.refine.prof': 'احترافي',
     'dash.refine.short': 'تقصير',
     'dash.refine.luxury': 'فاخر',

@@ -82,11 +82,13 @@ export default function Navbar({
             />
           ) : view === 'authed' ? (
             <div className="flex items-center gap-2 sm:gap-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-1.5 sm:pl-4 transition-all hover:border-brand/30">
-              {/* The credit count is the one number a signed-in user needs on every
-                  screen, and it was hidden on every phone: `hidden sm:flex` means it
-                  never rendered below 640px, which is every install. The dashboard
-                  compensated with a header bar of its own; this is what lets that bar
-                  go. 12px, not 10px — 10 is not a step on this scale. */}
+              {/* 🔴 THIS IS THE ONLY PLACE A CREDIT BALANCE RENDERS ANYWHERE IN THE APP.
+                  The dashboard used to carry a header bar of its own; that bar has been
+                  deleted outright, so there is no second surface to fall back on. This
+                  element was `hidden sm:flex`, i.e. it never rendered below 640px — every
+                  phone width. Putting ANY breakpoint gate back on it leaves a phone user
+                  with no credit count at all, on every screen, and nothing else will show
+                  it to them. 12px, not 10px — 10 is not a step on this scale. */}
               <div className="flex items-center gap-2">
                 <Zap className="w-3.5 h-3.5 text-brand animate-pulse" />
                 <span className="text-xs font-black uppercase tracking-widest text-[#c8cfe0]">

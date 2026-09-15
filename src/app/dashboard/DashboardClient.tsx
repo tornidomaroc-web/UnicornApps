@@ -10,7 +10,6 @@ import {
   Download,
   History,
   FileDown,
-  Zap,
   CreditCard as CreditCardIcon,
   Sparkles,
   Send,
@@ -124,7 +123,8 @@ export default function DashboardClient({
   const [preview, setPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<GeneratedContent | null>(null)
-  // Rendered by the banner below the credits header. Every write goes through
+  // Rendered by the banner row, which is now the FIRST element in the page container:
+  // the credits header bar that used to sit above it is gone. Every write goes through
   // nextDashboardError so the clearing rules stay in one place (lib/dashboard-banner.ts).
   const [error, setError] = useState<string | null>(null)
   const [copySuccess, setCopySuccess] = useState<string | null>(null)
@@ -135,7 +135,6 @@ export default function DashboardClient({
   const [activeTab, setActiveTab] = useState<'seo' | 'shopify' | 'amazon' | 'social' | 'data' | 'preview'>('seo')
   
   // Royal Obsidian State
-  const [displayCredits, setDisplayCredits] = useState(0)
   const [selectedPlatform, setSelectedPlatform] = useState('amazon')
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
     { 
@@ -337,24 +336,6 @@ export default function DashboardClient({
     setStream(null)
     setShowCamera(false)
   }
-
-  // Animated Credit Counter
-  useEffect(() => {
-    let start = 0
-    const end = initialCredits
-    const duration = 1000
-    const step = end / (duration / 16)
-    const timer = setInterval(() => {
-      start += step
-      if (start >= end) { 
-        setDisplayCredits(end)
-        clearInterval(timer) 
-      } else {
-        setDisplayCredits(Math.floor(start))
-      }
-    }, 16)
-    return () => clearInterval(timer)
-  }, [initialCredits])
 
   // Scroll to bottom of chat
   useEffect(() => {
@@ -828,55 +809,6 @@ export default function DashboardClient({
 
       <div className="max-w-7xl mx-auto space-y-12 relative z-10">
         
-        {/* 1. CREDITS HEADER BAR — PRE-GENERATION ONLY.
-            🔴 IT DOES NOT RENDER ONCE `results` EXIST, AND THAT IS THE POINT.
-            Measured at 411 content width: this bar is 246px (en) / 230px (ar) and sits
-            above the thing the user spent a credit on, so 54-56% of a 771px phone
-            viewport was spent before the results zone began and NOT ONE CHARACTER of
-            the selected tab's payload was on screen at rest. Removing it from this one
-            state is what puts the first generated line above the fold.
-            The credit count did not vanish with it: Navbar.tsx now renders it at every
-            width (it was `hidden sm:flex`, i.e. invisible on every phone). Keep the two
-            in step — if that navbar change is reverted, a phone user loses the number
-            entirely. */}
-        {!results && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative flex flex-col md:flex-row justify-between items-center gap-4 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-4 sm:p-6 shadow-[0_0_40px_-15px_rgba(124,58,237,0.2)] overflow-hidden"
-        >
-          <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
-          
-          <div className="flex items-center gap-4 mb-2 md:mb-0">
-             <div className="w-10 h-10 bg-white text-slate-950 flex items-center justify-center rounded-xl text-base font-black shadow-[0_0_20px_rgba(255,255,255,0.1)]">U</div>
-             <h1 className="text-base font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-violet-400">
-               {t('dash.title').toUpperCase()}
-             </h1>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-3">
-             <div className="bg-black/40 border border-white/10 rounded-2xl px-4 sm:px-5 py-2.5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 backdrop-blur-xl">
-                 <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-amber-400 animate-pulse" />
-                    <span className="text-base font-black text-white">
-                      {displayCredits}
-                    </span>
-                    <span className="text-xs font-black uppercase tracking-widest text-slate-400">
-                      {t('dash.creditsWord')}
-                    </span>
-                 </div>
-                 {/* The two purchase CTAs used to live here. They now render ONCE, in
-                     the band below the results zone — see PURCHASE BAND. Intent to buy
-                     forms after the user has seen what a credit bought, and this bar is
-                     the pre-generation screen, i.e. the one audience that has not. */}
-              </div>
-             <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:border-white/30" onClick={() => router.refresh()}>
-               <Clock className="w-4 h-4" />
-             </Button>
-          </div>
-        </motion.div>
-        )}
-
         {/* Banner row. Both banners share ONE container + tone vocabulary, held
             in lib/dashboard-banner.ts, so the error state cannot drift into a
             second visual language. They can co-exist: a checkout outcome and a
@@ -1242,10 +1174,17 @@ export default function DashboardClient({
         )}
 
         {/* PURCHASE BAND — THE ONLY CALL SITE FOR THE TWO CTAs.
-            They used to sit in the credits header bar, i.e. above the result, shown to
-            someone who had not yet seen what a credit buys. They now render once, here,
-            after the user has read the output. `results &&` is load-bearing: on the
-            pre-generation screen there is nothing to have been convinced by.
+            They used to sit in a header bar above the result, shown to someone who had
+            not yet seen what a credit buys. They now render once, here, after the user
+            has read the output. `results &&` is load-bearing: on the pre-generation
+            screen there is nothing to have been convinced by. That header bar has since
+            been deleted outright, so this gate is now the ONLY thing deciding whether a
+            purchase is reachable from the dashboard at all.
+
+            🔴 KNOWN GAP, recorded and deliberately NOT closed here: a WEB user at zero
+            credits with an empty history reaches no purchase surface, because Generate
+            is disabled and nothing else sets `results`. Do NOT close it by weakening
+            this gate — that re-creates the second call site the rule below bars.
 
             🔴 NEVER RENDER THESE TWICE. The same rule the Generate button carries: two
             call sites for one action is a defect in the UI, and it also makes any
