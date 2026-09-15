@@ -726,14 +726,27 @@ export default function DashboardClient({
      so re-generating after a result still works. It is never rendered twice —
      two Generate buttons would be a defect in the UI and would also make any
      `querySelector`/`.find()` probe silently measure whichever came first. */
-  const generateButton = (
+  // PRIMARY ACTION — ONE definition, TWO render sites, and they are mutually exclusive
+  // by construction: in flow once `results` exist, in the fixed bar while
+  // `preview && !results`. `allowPurchase` is passed EXPLICITLY at each site rather than
+  // inferred from `results`, so this control never depends on a gate written hundreds of
+  // lines away that a later edit could quietly move out from under it.
+  const primaryAction = ({ allowPurchase }: { allowPurchase: boolean }) => {
+    const outOfCredits = initialCredits <= 0
+    // The box becomes a purchase ONLY in the bar, ONLY on web, ONLY at zero credits.
+    // `!isNative` is the Android architecture, not a preference: that build ships
+    // payment-free, so on a Play install this branch must never exist and the neutral
+    // out-of-credits state below renders instead.
+    const purchaseHere = allowPurchase && outOfCredits && !isNative
+    const busy = checkoutPending !== null
+    return (
     <Button
-      onClick={handleGenerate}
-      disabled={loading || initialCredits <= 0}
+      onClick={purchaseHere ? () => void handlePaid('pack') : handleGenerate}
+      disabled={loading || (purchaseHere ? busy : outOfCredits)}
       className={`w-full h-20 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-500 group relative overflow-hidden ${
         loading 
         ? 'bg-black border border-violet-500/50' 
-        : initialCredits <= 0 
+        : (outOfCredits && !purchaseHere)
           ? 'bg-red-500/10 border border-red-500/20 text-red-400' 
           : 'bg-gradient-to-r from-violet-600 to-indigo-600 hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_40px_-5px_rgba(124,58,237,0.5)]'
       }`}
@@ -747,7 +760,20 @@ export default function DashboardClient({
                <motion.div className="h-full bg-violet-500" animate={{ x: ['-100%', '100%'] }} transition={{ repeat: Infinity, duration: 1.5 }} />
             </div>
          </div>
-       ) : initialCredits <= 0 ? (
+       ) : purchaseHere ? (
+          <>
+            {/* The SAME 16px nowrap row as the generate label below, for the same reason:
+                this box is w-full h-20 overflow-hidden, so a control cannot reflow out of
+                trouble. Measured at vw 500, the narrowest this box ever gets. Do NOT raise
+                it to the 32px step, and do not buy room by shortening the price — the
+                price is the part the user needs before tapping, not after. */}
+            <span className="relative z-10 text-base leading-[1.15] font-black uppercase flex items-center gap-2">
+              <CreditCardIcon className="w-5 h-5" />
+              {busy ? t('checkout.pending') : t('dash.cta.pack')}
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-white/10 to-black/0 translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-1000" />
+          </>
+       ) : outOfCredits ? (
           <div className="flex flex-col items-center gap-3">
              <AlertCircle className="w-5 h-5 text-red-500/50" />
              <p className="text-xs font-medium text-slate-500 uppercase tracking-widest text-center px-2">
@@ -797,7 +823,8 @@ export default function DashboardClient({
          </>
        )}
     </Button>
-  )
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#070710] text-[#c8cfe0] selection:bg-violet-500/30 selection:text-white px-4 py-8 md:px-8">
@@ -1173,16 +1200,19 @@ export default function DashboardClient({
            </div>
         )}
 
-        {/* PURCHASE BAND — THE ONLY CALL SITE FOR THE TWO CTAs.
+        {/* PURCHASE BAND — the two-CTA pair, and the only place BOTH tiers are offered.
             They used to sit in a header bar above the result, shown to someone who had
             not yet seen what a credit buys. They now render once, here, after the user
             has read the output. `results &&` is load-bearing: on the pre-generation
             screen there is nothing to have been convinced by. That header bar has since
             been deleted outright.
 
-            🔴 NEVER RENDER THESE TWICE. The same rule the Generate button carries: two
-            call sites for one action is a defect in the UI, and it also makes any
-            querySelector/.find() probe silently measure whichever comes first.
+            🔴 ONE ACTION, NEVER TWO ON A SCREEN. A second purchase call site exists:
+            `primaryAction({ allowPurchase: true })` in the fixed bar, offering the pack
+            tier alone. The two can never co-render — this block requires `results`, that
+            bar requires `preview && !results` — and that exclusivity is the whole reason
+            the rule still holds. It is also what stops a querySelector/.find() probe
+            silently measuring whichever comes first. Break the exclusivity, break both.
 
             Not a Card, on its own ground, between hairlines, with SUBSCRIBE as the one
             filled brand surface on the screen — every piece of generated output here
@@ -1418,8 +1448,8 @@ export default function DashboardClient({
                          </div>
 
                          {/* 4. PRIMARY ACTION — in flow only once results exist; otherwise it
-                             lives in the fixed bar. See `generateButton`. */}
-                         {results && generateButton}
+                             lives in the fixed bar. See `primaryAction`. */}
+                         {results && primaryAction({ allowPurchase: false })}
                       </div>
                    </div>
                    </>
@@ -1625,7 +1655,7 @@ export default function DashboardClient({
           <div aria-hidden className="h-[105px] mb-safe" />
           <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#070710]/95 backdrop-blur-xl border-t border-white/10 px-4 pt-3 pb-3">
             <div className="max-w-7xl mx-auto">
-              {generateButton}
+              {primaryAction({ allowPurchase: true })}
             </div>
             {/* zero-height; carries ONLY the inset, so it adds to pb-3 rather than
                 replacing it and vanishes cleanly when env() is unsupported */}
