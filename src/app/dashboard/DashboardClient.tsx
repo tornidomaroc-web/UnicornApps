@@ -44,6 +44,8 @@ import { takePicture } from '@/lib/capacitor'
 import Link from 'next/link'
 import { openCheckout } from '@/lib/checkout'
 import { useCreditGrantPoll } from '@/hooks/useCreditGrantPoll'
+import { refreshCredits } from '@/lib/credits-bus'
+import { localGenerationRow, prependGeneration } from '@/lib/dashboard-history'
 import { resolveApiError } from '@/lib/api-error'
 import { prepareImageForUpload } from '@/lib/prepare-image'
 import { MAX_SOURCE_FILE_BYTES } from '@/lib/image-budget'
@@ -370,10 +372,20 @@ export default function DashboardClient({
       scrollToResults.current = true
       setResults(data)
 
-      // Add to history locally for immediate feedback if needed, 
-      // but router.refresh() will handle the actual data sync
-      router.refresh() 
-      
+      // NO router.refresh() here, and none after refine. It used to carry two
+      // things — the new history row and the spent credit — by re-rendering the
+      // server tree. On this Next.js version the first refresh after this page
+      // mounts REMOUNTS it (measured live, 2026-09-26), which threw away `results`
+      // the instant they appeared: the user paid a credit and watched the answer
+      // vanish. Both things now arrive without a re-render: the row is built
+      // here from what we already hold (the server list replaces it on the next
+      // visit), and the balance is read and published on lib/credits-bus.ts,
+      // which the navbar counter and the out-of-credits gate both follow.
+      setHistory((prev) =>
+        prependGeneration(prev, localGenerationRow(data, preview, selectedPlatform))
+      )
+      void refreshCredits()
+
       setChatHistory(prev => [...prev, {
         role: 'ai',
         message: t('dash.analysisComplete').replace('{platform}', selectedPlatform.toUpperCase()),
@@ -437,7 +449,9 @@ export default function DashboardClient({
 
       setResults(data)
       setRefineInput('')
-      router.refresh()
+      // Refine writes no history row; the only thing the old refresh carried was
+      // the spent credit. See the note in handleGenerate for why no refresh.
+      void refreshCredits()
 
       // Add AI response to chat history
       setChatHistory(prev => [...prev, {

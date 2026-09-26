@@ -60,9 +60,14 @@ export interface CreditPollLock {
 }
 
 export interface CreditPollDeps {
-  /** Re-run the server component (router.refresh()). Fire-and-forget. */
+  /**
+   * Start one balance read (fetch /api/credits and publish it). Fire-and-forget.
+   * NEVER a server re-render: the first router.refresh() after a page mounts
+   * remounts it on this Next.js version, which is how the first version of
+   * this poll lost itself mid-purchase.
+   */
   refresh: () => void
-  /** Read the LATEST server-rendered credit value (via a ref, never a stale closure). */
+  /** Read the LATEST known credit value (via a ref, never a stale closure). */
   readCredits: () => number
   /** Resolve after ms. Must resolve — not hang — when the caller cancels it. */
   sleep: (ms: number) => Promise<void>

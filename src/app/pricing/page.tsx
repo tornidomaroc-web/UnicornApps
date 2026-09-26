@@ -34,9 +34,9 @@ export default async function PricingPage() {
   let initialUserId: string | null = null
   // The server-rendered balance, read the same way the root layout reads it for
   // the navbar counter (RLS-scoped "select own"). It is the post-purchase poll's
-  // stop condition: after checkout, router.refresh() re-runs this page and the
-  // hook watches this value leave its baseline. Failure degrades to 0, which is
-  // only ever a baseline — a grant still moves the value.
+  // BASELINE: the number the buyer is looking at when checkout completes. The
+  // poll then reads /api/credits, never a server re-render. Failure degrades to
+  // 0, which is only ever a baseline — a grant still moves the value.
   let initialCredits = 0
   try {
     const supabase = createClient()

@@ -350,7 +350,8 @@ describe('useCreditGrantPoll never re-renders the server tree', () => {
 
   it('reads the balance through the credits bus instead', () => {
     expect(code).toMatch(/from\s+['"]@\/lib\/credits-bus['"]/)
-    expect(code).toMatch(/fetchCredits\s*\(/)
-    expect(code).toMatch(/publishCredits\s*\(/)
+    // refreshCredits = fetch + publish in one call (lib/credits-bus.ts).
+    expect(code).toMatch(/refreshCredits\s*\(/)
+    expect(code).toMatch(/subscribeCredits\s*\(/)
   })
 })
