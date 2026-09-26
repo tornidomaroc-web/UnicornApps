@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Card,
   CardContent,
@@ -16,13 +16,19 @@ import { Check, Sparkles, Zap, Shield, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLang } from "@/lib/i18n/LanguageContext";
 import { useIsNative } from "@/hooks/useIsNative";
-import { openCheckout, checkoutStatusForEvent, type CheckoutStatus } from "@/lib/checkout";
-import { PADDLE_EVENT } from "@/lib/paddle";
+import { openCheckout } from "@/lib/checkout";
+import { useCreditGrantPoll } from "@/hooks/useCreditGrantPoll";
+import { bannerToneClass, checkoutBannerTone } from "@/lib/dashboard-banner";
 
 export default function PricingClient({
   initialUserId,
+  initialCredits,
 }: {
   initialUserId: string | null;
+  // The server-rendered balance (same read the navbar counter is seeded from).
+  // The post-purchase poll watches THIS prop move; without it, a buyer who paid
+  // here saw the counter frozen until a full reload.
+  initialCredits: number;
 }) {
   const { t } = useLang();
   // Backstop: the server already redirects /pricing → / on native, but if that
@@ -39,29 +45,16 @@ export default function PricingClient({
   // transitions navigate away from /pricing, so a one-time seed is enough — no
   // reconcile effect needed.
   const [userId] = useState<string | null>(initialUserId);
-  const [status, setStatus] = useState<CheckoutStatus | null>(null);
+  // Checkout lifecycle + post-purchase credit reconciliation: one shared hook
+  // with the dashboard (hooks/useCreditGrantPoll.ts), so the two surfaces
+  // cannot drift and the poll's stop condition is the same server-rendered
+  // value on both.
+  const { checkoutStatus: status, setCheckoutStatus: setStatus } = useCreditGrantPoll(initialCredits);
   // Which tier is opening, from the click until Paddle's overlay is up (or the
   // attempt failed). Both paid CTAs disable so the dynamic-import + CDN
   // round-trip cannot be clicked through twice, but only the clicked one shows
   // the pending label. lib/checkout.ts holds the real interlock (see there).
   const [pending, setPending] = useState<'sub' | 'pack' | null>(null);
-
-  // Surface the Paddle checkout lifecycle (re-broadcast as PADDLE_EVENT by
-  // lib/paddle.ts). The overlay stays in-page; we show a transitional banner.
-  // The credit grant is applied by the Paddle webhook, asynchronously, hence
-  // the "appear shortly" copy.
-  //
-  // Event-name → status lives in lib/checkout.ts so this page and the dashboard
-  // cannot drift, and so the full CheckoutEventNames set is covered by tests.
-  useEffect(() => {
-    const onPaddle = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { name?: string } | undefined;
-      const next = checkoutStatusForEvent(detail?.name);
-      if (next) setStatus(next);
-    };
-    window.addEventListener(PADDLE_EVENT, onPaddle);
-    return () => window.removeEventListener(PADDLE_EVENT, onPaddle);
-  }, []);
 
   const handlePaid = async (kind: 'sub' | 'pack') => {
     if (pending) return;
@@ -187,19 +180,20 @@ export default function PricingClient({
           </motion.p>
         </motion.div>
 
+        {/* Same container and tone table as the dashboard's checkout banner
+            (lib/dashboard-banner.ts): green only once the grant has been SEEN,
+            amber while waiting, red on failure. */}
         {status && (
-          <div
-            className={`max-w-2xl mx-auto mb-12 rounded-2xl border px-6 py-4 text-center text-sm font-medium ${
-              status === 'success'
-                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                : 'border-red-500/30 bg-red-500/10 text-red-200'
-            }`}
-          >
+          <div className={`${bannerToneClass(checkoutBannerTone(status))} mb-12`}>
             {status === 'success'
               ? t('pricing.banner.success')
-              : status === 'error'
-                ? t('pricing.banner.error')
-                : t('pricing.banner.failed')}
+              : status === 'confirmed'
+                ? t('pricing.banner.confirmed')
+                : status === 'success_pending'
+                  ? t('pricing.banner.successPending')
+                  : status === 'error'
+                    ? t('pricing.banner.error')
+                    : t('pricing.banner.failed')}
           </div>
         )}
 

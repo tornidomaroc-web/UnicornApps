@@ -68,9 +68,17 @@ describe('appearance - the error banner reuses the checkout banner vocabulary', 
     expect(bannerToneClass(ERROR_BANNER_TONE)).not.toBe(bannerToneClass('pending'))
   })
 
-  it('maps every CheckoutStatus to a tone, with success_pending kept distinct', () => {
-    const all: CheckoutStatus[] = ['success', 'success_pending', 'failed', 'error']
-    expect(all.map(checkoutBannerTone)).toEqual(['success', 'pending', 'failure', 'failure'])
+  it('maps every CheckoutStatus to a tone; only an OBSERVED grant is green', () => {
+    const all: CheckoutStatus[] = ['success', 'confirmed', 'success_pending', 'failed', 'error']
+    expect(all.map(checkoutBannerTone)).toEqual(['pending', 'success', 'pending', 'failure', 'failure'])
+  })
+
+  it("Paddle's own success signal never earns the done tone by itself", () => {
+    // 'success' means the overlay reported payment; the credits have not been
+    // seen. Green beside an unmoved counter is the lie this surface exists to
+    // prevent, so it must share the waiting tone with success_pending.
+    expect(checkoutBannerTone('success')).toBe(checkoutBannerTone('success_pending'))
+    expect(checkoutBannerTone('confirmed')).not.toBe(checkoutBannerTone('success'))
   })
 })
 

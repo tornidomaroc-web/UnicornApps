@@ -48,8 +48,12 @@ export function bannerToneClass(tone: BannerTone): string {
 }
 
 export function checkoutBannerTone(status: CheckoutStatus): BannerTone {
-  if (status === 'success') return 'success'
-  if (status === 'success_pending') return 'pending'
+  // Only an OBSERVED grant earns the done tone. 'success' is Paddle's word that
+  // the payment went through; the credits have not been seen yet, so it waits
+  // in amber like success_pending does — a green banner beside an unmoved
+  // credit count is the exact lie this surface is built to avoid.
+  if (status === 'confirmed') return 'success'
+  if (status === 'success' || status === 'success_pending') return 'pending'
   // 'failed' (payment declined) and 'error' (Paddle never loaded) are both
   // failures; the copy distinguishes them, the tone does not.
   return 'failure'

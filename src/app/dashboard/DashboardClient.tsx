@@ -42,8 +42,8 @@ import { Button } from '@/components/ui/button'
 import { useLang } from '@/lib/i18n/LanguageContext'
 import { takePicture } from '@/lib/capacitor'
 import Link from 'next/link'
-import { openCheckout, checkoutStatusForEvent, type CheckoutStatus } from '@/lib/checkout'
-import { pollForCreditGrant, type CreditPollLock } from '@/lib/credit-refresh'
+import { openCheckout } from '@/lib/checkout'
+import { useCreditGrantPoll } from '@/hooks/useCreditGrantPoll'
 import { resolveApiError } from '@/lib/api-error'
 import { prepareImageForUpload } from '@/lib/prepare-image'
 import { MAX_SOURCE_FILE_BYTES } from '@/lib/image-budget'
@@ -56,7 +56,6 @@ import {
   ERROR_BANNER_TONE,
   UserFacingError,
 } from '@/lib/dashboard-banner'
-import { PADDLE_EVENT } from '@/lib/paddle'
 import {
   Card,
   CardContent,
@@ -169,87 +168,13 @@ export default function DashboardClient({
     checkNative()
   }, [])
 
-  // Paddle checkout feedback: same PADDLE_EVENT bridge (lib/paddle.ts) used by
-  // the pricing page. The credit grant is applied by the Paddle webhook,
-  // asynchronously, hence the transitional banner.
-  //
-  // Event-name → status lives in lib/checkout.ts so this page and /pricing
-  // cannot drift, and so the full CheckoutEventNames set is covered by tests.
-  const [checkoutStatus, setCheckoutStatus] = useState<CheckoutStatus | null>(null)
-
-  // --- Post-purchase credit reconciliation (see lib/credit-refresh.ts) --------
-  // checkout.completed fires in the browser; the grant happens server-side when
-  // Paddle delivers transaction.completed to the webhook. Nothing orders those
-  // two, so a single router.refresh() usually re-renders the SAME stale count.
-  //
-  // Always read through a ref, never a closure: the poll outlives the render it
-  // was started from, and the whole point is to observe the prop CHANGING.
-  const creditsRef = useRef(initialCredits)
-  useEffect(() => {
-    creditsRef.current = initialCredits
-  }, [initialCredits])
-
-  // Held in a ref so the listener effect below can depend on NOTHING and never
-  // re-run. If it depended on `router` and that identity ever changed, the
-  // cleanup would cancel a poll that is legitimately still in flight.
-  const routerRef = useRef(router)
-  useEffect(() => {
-    routerRef.current = router
-  }, [router])
-
-  // Mutable across renders and readable from inside the running poll.
-  const pollActiveRef = useRef(true)
-  const pollLockRef = useRef<CreditPollLock>({ busy: false })
-  // Lets unmount wake a sleeping poll immediately instead of leaving a timer
-  // pending for up to 8s. Resolves (never hangs) so the loop can observe
-  // isActive() === false and unwind.
-  const cancelSleepRef = useRef<(() => void) | null>(null)
-
-  useEffect(() => {
-    // Re-armed on mount, not just initialised, so React StrictMode's
-    // mount→unmount→mount in dev doesn't leave this permanently false.
-    pollActiveRef.current = true
-
-    const onPaddle = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { name?: string } | undefined
-      const next = checkoutStatusForEvent(detail?.name)
-      if (!next) return
-      setCheckoutStatus(next)
-      if (next !== 'success') return
-
-      // Baseline = the number the user is looking at right now.
-      void pollForCreditGrant(creditsRef.current, {
-        refresh: () => routerRef.current.refresh(),
-        readCredits: () => creditsRef.current,
-        sleep: (ms) =>
-          new Promise<void>((resolve) => {
-            const id = setTimeout(resolve, ms)
-            cancelSleepRef.current = () => {
-              clearTimeout(id)
-              resolve()
-            }
-          }),
-        isActive: () => pollActiveRef.current,
-        lock: pollLockRef.current,
-      }).then((outcome) => {
-        // 'confirmed' — the count moved on its own; the success banner is true.
-        // 'cancelled' / 'skipped' — must not touch state.
-        if (outcome === 'exhausted' && pollActiveRef.current) {
-          setCheckoutStatus('success_pending')
-        }
-      })
-    }
-
-    window.addEventListener(PADDLE_EVENT, onPaddle)
-    return () => {
-      window.removeEventListener(PADDLE_EVENT, onPaddle)
-      pollActiveRef.current = false
-      cancelSleepRef.current?.()
-    }
-    // Intentionally empty: every value used inside is reached through a ref, so
-    // this listener is installed once per mount and a poll is never cancelled by
-    // an unrelated re-render.
-  }, [])
+  // Paddle checkout feedback + post-purchase credit reconciliation. The whole
+  // mechanism (event bridge, poll, focus catch-up, late-landing detection) is
+  // hooks/useCreditGrantPoll.ts, shared with /pricing so the two surfaces
+  // cannot drift. `initialCredits` is the server-rendered balance this page was
+  // given; the navbar counter is seeded from the same read, so when it moves
+  // here, it moves there.
+  const { checkoutStatus, setCheckoutStatus } = useCreditGrantPoll(initialCredits)
 
   // Which product is opening, from the click until Paddle's overlay is up (or
   // the attempt failed). Both CTAs disable so the dynamic-import + CDN
@@ -846,11 +771,13 @@ export default function DashboardClient({
           <div className={bannerToneClass(checkoutBannerTone(checkoutStatus))}>
             {checkoutStatus === 'success'
               ? t('pricing.banner.success')
-              : checkoutStatus === 'success_pending'
-                ? t('pricing.banner.successPending')
-                : checkoutStatus === 'error'
-                  ? t('pricing.banner.error')
-                  : t('pricing.banner.failed')}
+              : checkoutStatus === 'confirmed'
+                ? t('pricing.banner.confirmed')
+                : checkoutStatus === 'success_pending'
+                  ? t('pricing.banner.successPending')
+                  : checkoutStatus === 'error'
+                    ? t('pricing.banner.error')
+                    : t('pricing.banner.failed')}
           </div>
         )}
 
