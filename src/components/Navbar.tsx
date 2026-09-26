@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User as AuthUser } from "@supabase/supabase-js";
 import { deriveNavView, reconcileNavState } from "./navbar-auth";
+import { subscribeCredits } from "@/lib/credits-bus";
 
 export default function Navbar({
   initialUser = null,
@@ -37,6 +38,11 @@ export default function Navbar({
   useEffect(() => {
     setCredits(initialCredits);
   }, [initialCredits]);
+  // A purchase moves this number WITHOUT a server re-render: the post-purchase
+  // poll (hooks/useCreditGrantPoll.ts) reads /api/credits and publishes the
+  // balance on lib/credits-bus.ts. Re-rendering the server tree instead was
+  // what remounted the page mid-purchase and lost the banner (2026-09-26).
+  useEffect(() => subscribeCredits(setCredits), []);
 
   const view = deriveNavView(user);
   // Exact match only: /dashboard is the sole route this bar links to, and a

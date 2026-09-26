@@ -171,10 +171,11 @@ export default function DashboardClient({
   // Paddle checkout feedback + post-purchase credit reconciliation. The whole
   // mechanism (event bridge, poll, focus catch-up, late-landing detection) is
   // hooks/useCreditGrantPoll.ts, shared with /pricing so the two surfaces
-  // cannot drift. `initialCredits` is the server-rendered balance this page was
-  // given; the navbar counter is seeded from the same read, so when it moves
-  // here, it moves there.
-  const { checkoutStatus, setCheckoutStatus } = useCreditGrantPoll(initialCredits)
+  // cannot drift. `initialCredits` seeds it; `credits` is the live balance
+  // (server prop, or a post-purchase read published on lib/credits-bus.ts) and
+  // is what the out-of-credits gate below must read, so a purchase made at zero
+  // flips the bar back to Generate without a server re-render.
+  const { checkoutStatus, setCheckoutStatus, credits } = useCreditGrantPoll(initialCredits)
 
   // Which product is opening, from the click until Paddle's overlay is up (or
   // the attempt failed). Both CTAs disable so the dynamic-import + CDN
@@ -658,7 +659,7 @@ export default function DashboardClient({
   // inferred from `results`, so this control never depends on a gate written hundreds of
   // lines away that a later edit could quietly move out from under it.
   const primaryAction = ({ allowPurchase }: { allowPurchase: boolean }) => {
-    const outOfCredits = initialCredits <= 0
+    const outOfCredits = credits <= 0
     // The box becomes a purchase ONLY in the bar, ONLY on web, ONLY at zero credits.
     // `!isNative` is the Android architecture, not a preference: that build ships
     // payment-free, so on a Play install this branch must never exist and the neutral
