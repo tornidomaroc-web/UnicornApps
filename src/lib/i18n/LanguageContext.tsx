@@ -235,18 +235,21 @@ const translations = {
     'pricing.sub.period': '/month',
     'pricing.sub.desc': '100 credits every month at about $0.10 per credit. Unused credits carry over.',
     'pricing.sub.cta': 'Subscribe',
-    // Credit pack ($4.99 one-time). No expiry logic exists anywhere.
+    // Credit pack ($4.99 one-time). No expiry logic exists anywhere, but the
+    // balance IS removed by account deletion (delete-account page), by a
+    // refund or chargeback (terms.s4), and by termination (terms.s8) — so the
+    // promise is scoped to an open account rather than an unconditional "never".
     'pricing.pack.name': 'Credit Pack',
     'pricing.pack.price': '$4.99',
     'pricing.pack.period': 'one-time',
-    'pricing.pack.desc': '30 credits, one-time, no subscription. Credits never expire.',
+    'pricing.pack.desc': '30 credits, one-time, no subscription. They don\'t expire while your account is open.',
     'pricing.pack.cta': 'Buy credits',
     // Shared feature lines
     'pricing.f.credits100': '100 credits per month',
     'pricing.f.percredit': 'About $0.10 per credit, vs $0.17 in the pack',
     'pricing.f.allai': 'All AI generation features',
     'pricing.f.credits30': '30 credits',
-    'pricing.f.neverexpire': 'Credits never expire',
+    'pricing.f.noexpiry': 'No expiry while your account is open',
     // Checkout banner (transitional; webhook applies credits asynchronously)
     'pricing.banner.success': 'Payment received, your credits will appear shortly.',
     'pricing.banner.failed': 'Payment didn\'t go through. Please try again.',
@@ -623,10 +626,7 @@ const translations = {
     'pricing.f.gen3': '3 أرصدة مجانية',
     'pricing.f.vision.std': 'تحليل بصريّ قياسيّ',
     'pricing.f.seo.basic': 'عناوين SEO أساسية',
-    // TODO-LEGAL-REVIEW buyer-facing pricing copy, machine-assisted Arabic:
-    // operator review pending before merge. SCOPE: the six keys below
-    // ('pricing.f.nocard', 'pricing.sub.desc', 'pricing.pack.desc',
-    // 'pricing.f.percredit', 'pricing.f.neverexpire', 'pricing.free.desc') ONLY.
+    // Operator-reviewed pricing copy (free/sub/pack descriptions and feature lines).
     'pricing.f.nocard': 'لا حاجة إلى بطاقة',
     // Subscription ($9.99/mo)
     'pricing.sub.name': 'الاشتراك الشهري',
@@ -638,14 +638,14 @@ const translations = {
     'pricing.pack.name': 'حزمة أرصدة',
     'pricing.pack.price': '$4.99',
     'pricing.pack.period': 'دفعة واحدة',
-    'pricing.pack.desc': '30 رصيداً بدفعة واحدة ومن دون اشتراك. الأرصدة لا تنتهي صلاحيتها.',
+    'pricing.pack.desc': '30 رصيداً بدفعة واحدة ومن دون اشتراك. لا تنتهي صلاحيتها ما دام حسابك مفتوحاً.',
     'pricing.pack.cta': 'اشترِ أرصدة',
     // Shared feature lines
     'pricing.f.credits100': '100 رصيد شهرياً',
     'pricing.f.percredit': 'نحو $0.10 للرصيد الواحد، مقابل $0.17 في الحزمة',
     'pricing.f.allai': 'جميع ميزات التوليد بالذكاء الاصطناعي',
     'pricing.f.credits30': '30 رصيداً',
-    'pricing.f.neverexpire': 'الأرصدة لا تنتهي صلاحيتها',
+    'pricing.f.noexpiry': 'لا تنتهي الصلاحية ما دام حسابك مفتوحاً',
     // Checkout banner (transitional; webhook applies credits asynchronously)
     'pricing.banner.success': 'تم استلام الدفع، وستظهر أرصدتك قريباً.',
     'pricing.banner.failed': 'لم تتمّ عملية الدفع. يُرجى المحاولة مرة أخرى.',

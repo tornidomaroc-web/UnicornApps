@@ -125,7 +125,7 @@ export default function PricingClient({
       description: t('pricing.pack.desc'),
       features: [
         t('pricing.f.credits30'),
-        t('pricing.f.neverexpire'),
+        t('pricing.f.noexpiry'),
         t('pricing.f.allai'),
       ],
       cta: t('pricing.pack.cta'),
