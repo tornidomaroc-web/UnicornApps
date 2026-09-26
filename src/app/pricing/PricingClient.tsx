@@ -48,8 +48,8 @@ export default function PricingClient({
 
   // Surface the Paddle checkout lifecycle (re-broadcast as PADDLE_EVENT by
   // lib/paddle.ts). The overlay stays in-page; we show a transitional banner.
-  // Real credit/ad-free changes are applied by the (not-yet-built) webhook,
-  // asynchronously, hence the "appear shortly" copy.
+  // The credit grant is applied by the Paddle webhook, asynchronously, hence
+  // the "appear shortly" copy.
   //
   // Event-name → status lives in lib/checkout.ts so this page and the dashboard
   // cannot drift, and so the full CheckoutEventNames set is covered by tests.
@@ -79,8 +79,9 @@ export default function PricingClient({
     }
   };
 
-  // Three cards: Free (signup credits, ad-supported) + the two locked paid
-  // products. All copy is sourced from LanguageContext (EN + AR).
+  // Three cards: Free (signup credits) + the two locked paid products. All copy
+  // is sourced from LanguageContext (EN + AR). The app shows no ads anywhere, so
+  // no card may claim an ad-related benefit in either direction.
   const tiers: {
     name: string; price: string; period: string; description: string;
     features: string[]; cta: string; featured: boolean;
@@ -95,7 +96,7 @@ export default function PricingClient({
         t('pricing.f.gen3'),
         t('pricing.f.vision.std'),
         t('pricing.f.seo.basic'),
-        t('pricing.f.adssupported'),
+        t('pricing.f.nocard'),
       ],
       cta: t('pricing.cta.free'),
       featured: false,
@@ -109,7 +110,7 @@ export default function PricingClient({
       description: t('pricing.sub.desc'),
       features: [
         t('pricing.f.credits100'),
-        t('pricing.f.adfree'),
+        t('pricing.f.percredit'),
         t('pricing.f.allai'),
       ],
       cta: t('pricing.sub.cta'),
@@ -124,7 +125,7 @@ export default function PricingClient({
       description: t('pricing.pack.desc'),
       features: [
         t('pricing.f.credits30'),
-        t('pricing.f.onetime'),
+        t('pricing.f.noexpiry'),
         t('pricing.f.allai'),
       ],
       cta: t('pricing.pack.cta'),
