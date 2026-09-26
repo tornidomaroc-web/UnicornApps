@@ -263,7 +263,7 @@ const translations = {
     // the count on screen has not moved, so a bare success line would be a lie.
     // The only banner allowed to claim the credits arrived: set when the
     // server-rendered count has been SEEN to move (hooks/useCreditGrantPoll.ts).
-    'pricing.banner.confirmed': 'Payment received — your credits have been added.',
+    'pricing.banner.confirmed': 'Payment received. Your credits have been added.',
     // Shown after the 24s reconciliation window with the count still unmoved.
     // Names the receipt (Paddle emails one for every paid purchase) and a way to
     // get help, and stops asking for a reload: the page now catches up by itself
@@ -657,11 +657,9 @@ const translations = {
     'pricing.banner.success': 'تم استلام الدفع، وستظهر أرصدتك قريباً.',
     'pricing.banner.failed': 'لم تتمّ عملية الدفع. يُرجى المحاولة مرة أخرى.',
     'pricing.banner.error': 'تعذّر فتح صفحة الدفع، ولم يُخصم منك أيّ مبلغ. أعد تحميل الصفحة ثمّ حاول مرّة أخرى.',
-    // TODO-LEGAL-REVIEW buyer-facing checkout copy, machine-assisted Arabic:
-    // operator review pending before merge. SCOPE: 'pricing.banner.confirmed'
-    // and 'pricing.banner.successPending' ONLY.
+    // Operator-reviewed checkout copy ('pricing.banner.confirmed' / '.successPending').
     'pricing.banner.confirmed': 'تمّ استلام الدفع، وأُضيفت أرصدتك إلى حسابك.',
-    'pricing.banner.successPending': 'تمّ استلام الدفع. لا تزال أرصدتك في طريقها إليك وستظهر هنا فور تطبيقها، وقد أرسلت Paddle إيصالك بالبريد الإلكتروني. إذا لم تصل خلال ساعة، راسلنا على support@unicornapps.app مرفقاً ذلك الإيصال.',
+    'pricing.banner.successPending': 'تمّ استلام الدفع. لا تزال أرصدتك في طريقها إليك وستظهر هنا فور إضافتها، وقد أرسلت Paddle إيصالك بالبريد الإلكتروني. إذا لم تصل خلال ساعة، راسلنا على support@unicornapps.app وأرفق الإيصال.',
     // TODO-LEGAL-REVIEW n/a. UI copy, but still machine-assisted Arabic (item 20).
     // SCOPE: 'checkout.pending' ONLY. 'pricing.banner.error' and
     // 'pricing.banner.successPending' above were operator-reviewed in 13b2ff6 (PR #60)
