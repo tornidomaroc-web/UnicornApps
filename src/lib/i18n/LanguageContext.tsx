@@ -647,9 +647,9 @@ const translations = {
     // 'pricing.banner.successPending' above were operator-reviewed in 13b2ff6 (PR #60)
     // and are NOT covered by this marker.
     'checkout.pending': 'جارٍ فتح صفحة الدفع…',
-    // TODO-LEGAL-REVIEW payment-path copy, machine-assisted Arabic: operator review
-    // pending before merge. SCOPE: 'checkout.mor' ONLY.
-    'checkout.mor': 'تُعالَج المدفوعات عبر Paddle، التاجر المسجَّل لدينا. يصدر إيصالك من Paddle باسم KnowFlow، وتظهر عمليات الدفع في كشف البطاقة باسم PADDLE.NET* KNOWFLOW.',
+    // Operator-reviewed. "البائع الرسميّ لهذا الطلب" is deliberate: a literal
+    // calque of "merchant of record" reads as jargon to an Arabic buyer.
+    'checkout.mor': 'يتمّ الدفع عبر Paddle، وهي البائع الرسميّ لهذا الطلب. يصلك الإيصال من Paddle باسم KnowFlow، ويظهر المبلغ في كشف البطاقة باسم PADDLE.NET* KNOWFLOW.',
     // About
     'about.badge': 'قصة يونيكورن',
     'about.title1': 'بنيت لـ',
