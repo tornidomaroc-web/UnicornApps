@@ -293,6 +293,20 @@ export default function PricingClient({
           ))}
         </motion.div>
 
+        {/* Merchant-of-record disclosure. Inside the SAME `showPaid` gate as the
+            paid CTAs it describes: native never reaches this page at all
+            (middleware + server redirect), and showPaid is the client backstop —
+            payment copy must not outlive the buttons it belongs to. The Refund
+            Policy link adds navigation only, no new claim. */}
+        {showPaid && (
+          <p className="mt-8 mx-auto max-w-2xl text-center text-xs leading-relaxed text-slate-500">
+            {t('checkout.mor')}{' '}
+            <Link href="/refund" className="underline underline-offset-4 hover:text-white transition-colors">
+              {t('refund.title')}
+            </Link>
+          </p>
+        )}
+
         {showPaid && (
         <motion.div
           initial={{ opacity: 0 }}

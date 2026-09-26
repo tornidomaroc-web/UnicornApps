@@ -41,6 +41,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { useLang } from '@/lib/i18n/LanguageContext'
 import { takePicture } from '@/lib/capacitor'
+import Link from 'next/link'
 import { openCheckout, checkoutStatusForEvent, type CheckoutStatus } from '@/lib/checkout'
 import { pollForCreditGrant, type CreditPollLock } from '@/lib/credit-refresh'
 import { resolveApiError } from '@/lib/api-error'
@@ -1245,6 +1246,17 @@ export default function DashboardClient({
                 {checkoutPending === 'sub' ? t('checkout.pending') : t('dash.cta.sub')}
               </button>
             </div>
+            {/* Merchant-of-record disclosure. Lives inside this block's
+                `results && !isNative` gate on purpose — it is payment copy and
+                must never exist on a Play install. The fixed-bar pack button
+                (primaryAction, purchaseHere) carries no disclosure: that control
+                is a fixed-height nowrap box with nothing to give. */}
+            <p className="text-xs leading-relaxed text-slate-500">
+              {t('checkout.mor')}{' '}
+              <Link href="/refund" className="underline underline-offset-4 hover:text-white transition-colors">
+                {t('refund.title')}
+              </Link>
+            </p>
           </div>
         )}
 
