@@ -322,3 +322,35 @@ describe('shouldCatchUpOnFocus — after the ceiling, re-read on return, not on 
     expect(FOCUS_CATCH_UP_MIN_GAP_MS).toBeGreaterThan(Math.max(...CREDIT_REFRESH_DELAYS_MS))
   })
 })
+
+// --- The wiring must never re-render the server tree -------------------------
+// hooks/useCreditGrantPoll.ts is React wiring the node environment cannot
+// render, but the property that failed live is a property of its SOURCE: it
+// re-read the balance with router.refresh(). On this Next.js version the first
+// refresh after a page segment mounts remounts the segment (measured live with
+// a bare refresh: /pricing and /dashboard, hard load and client navigation
+// alike), which threw the hook's state away mid-poll. The balance must reach
+// the page as a number, never as a re-render.
+import { readFileSync } from 'fs'
+import { join } from 'path'
+
+describe('useCreditGrantPoll never re-renders the server tree', () => {
+  const source = readFileSync(join(process.cwd(), 'src/hooks/useCreditGrantPoll.ts'), 'utf8')
+  // Strip comments so the prose explaining the rule cannot satisfy or break it.
+  const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+
+  it('does not import the router', () => {
+    expect(code).not.toMatch(/from\s+['"]next\/navigation['"]/)
+    expect(code).not.toMatch(/useRouter\s*\(/)
+  })
+
+  it('never calls refresh()', () => {
+    expect(code).not.toMatch(/\.refresh\s*\(/)
+  })
+
+  it('reads the balance through the credits bus instead', () => {
+    expect(code).toMatch(/from\s+['"]@\/lib\/credits-bus['"]/)
+    expect(code).toMatch(/fetchCredits\s*\(/)
+    expect(code).toMatch(/publishCredits\s*\(/)
+  })
+})
