@@ -170,8 +170,8 @@ export default function DashboardClient({
   }, [])
 
   // Paddle checkout feedback: same PADDLE_EVENT bridge (lib/paddle.ts) used by
-  // the pricing page. Real credit/ad-free changes are applied by the
-  // (not-yet-built) webhook, asynchronously, hence the transitional banner.
+  // the pricing page. The credit grant is applied by the Paddle webhook,
+  // asynchronously, hence the transitional banner.
   //
   // Event-name → status lives in lib/checkout.ts so this page and /pricing
   // cannot drift, and so the full CheckoutEventNames set is covered by tests.

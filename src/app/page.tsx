@@ -296,7 +296,7 @@ export default function Home() {
                 <div className="text-4xl font-black text-white mb-6">{t('pricing.sub.price')} <span className="text-sm font-medium text-slate-500 uppercase">{t('pricing.sub.period')}</span></div>
                 <ul className="space-y-4 mb-8 text-sm font-medium">
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand" /> {t('pricing.f.credits100')}</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand" /> {t('pricing.f.adfree')}</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand" /> {t('pricing.f.percredit')}</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-brand" /> {t('pricing.f.allai')}</li>
                 </ul>
                 <a href="/pricing" className="block">
