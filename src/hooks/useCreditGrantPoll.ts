@@ -10,7 +10,7 @@ import {
   statusAfterPoll,
   type CreditPollLock,
 } from '@/lib/credit-refresh'
-import { fetchCredits, publishCredits, subscribeCredits } from '@/lib/credits-bus'
+import { refreshCredits, subscribeCredits } from '@/lib/credits-bus'
 
 /**
  * Post-purchase credit reconciliation, shared by every surface that opens a
@@ -81,11 +81,11 @@ export function useCreditGrantPoll(initialCredits: number) {
     // mount→unmount→mount in dev doesn't leave this permanently false.
     pollActiveRef.current = true
 
-    // One read, published to every subscriber (this hook included).
+    // One read, published to every subscriber (this hook included). Publishing
+    // after this component is gone is harmless: the navbar still listens.
     const readAndPublish = async () => {
       lastReadAtRef.current = Date.now()
-      const n = await fetchCredits()
-      if (n !== null && pollActiveRef.current) publishCredits(n)
+      await refreshCredits()
     }
 
     // Phase 3, and the counter: every published balance lands here.

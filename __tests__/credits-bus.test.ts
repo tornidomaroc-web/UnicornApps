@@ -3,6 +3,7 @@ import {
   subscribeCredits,
   latestCredits,
   fetchCredits,
+  refreshCredits,
   resetCreditsBusForTests,
 } from '@/lib/credits-bus'
 
@@ -83,5 +84,25 @@ describe('fetchCredits — "no answer" is indistinguishable from "no change"', (
     }) as unknown as typeof fetch
     await fetchCredits(spy)
     expect(calls[0]).toEqual(['/api/credits', { cache: 'no-store', credentials: 'same-origin' }])
+  })
+})
+
+describe('refreshCredits — one read, published on success, silent on failure', () => {
+  it('publishes the balance it read', async () => {
+    const seen: number[] = []
+    subscribeCredits((n) => seen.push(n))
+    const ok = (async () => ({ ok: true, status: 200, json: async () => ({ credits: 171 }) })) as unknown as typeof fetch
+    await expect(refreshCredits(ok)).resolves.toBe(171)
+    expect(seen).toEqual([171])
+    expect(latestCredits()).toBe(171)
+  })
+
+  it('publishes nothing when the read fails, so a stale counter is never overwritten with garbage', async () => {
+    const seen: number[] = []
+    subscribeCredits((n) => seen.push(n))
+    const bad = (async () => ({ ok: false, status: 500, json: async () => ({ code: 'X' }) })) as unknown as typeof fetch
+    await expect(refreshCredits(bad)).resolves.toBeNull()
+    expect(seen).toEqual([])
+    expect(latestCredits()).toBeNull()
   })
 })

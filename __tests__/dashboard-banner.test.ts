@@ -377,3 +377,32 @@ describe('the generic dash.error template is gone', () => {
     }
   })
 })
+
+// --- The dashboard must never re-render the server tree after a spend --------
+// On this Next.js version the first router.refresh() after the page mounts
+// REMOUNTS it (measured live, 2026-09-26, with a bare refresh: hard load and
+// client navigation alike). DashboardClient called it right after setResults()
+// on generate and on refine, so the results the user had just paid a credit
+// for were discarded the instant they appeared. The two things that refresh
+// carried — the new history row and the spent credit — now arrive without a
+// re-render. jsdom cannot reproduce the router cache, so this pins the SOURCE:
+// it proves the trigger is gone and the replacements are wired, not that React
+// keeps the state; the live generation proves that.
+describe('DashboardClient never calls router.refresh()', () => {
+  const src = readFileSync(join(process.cwd(), 'src/app/dashboard/DashboardClient.tsx'), 'utf8')
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+
+  it('has no refresh() call left anywhere in the component', () => {
+    expect(code).not.toMatch(/\.refresh\s*\(/)
+  })
+
+  it('prepends the generation to history locally instead', () => {
+    expect(code).toMatch(/prependGeneration\s*\(/)
+    expect(code).toMatch(/localGenerationRow\s*\(/)
+  })
+
+  it('publishes the spent balance through the credits bus, on generate and on refine', () => {
+    const calls = code.match(/refreshCredits\s*\(/g) ?? []
+    expect(calls.length).toBeGreaterThanOrEqual(2)
+  })
+})

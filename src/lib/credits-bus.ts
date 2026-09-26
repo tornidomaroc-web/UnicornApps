@@ -59,6 +59,17 @@ export async function fetchCredits(fetchImpl: typeof fetch = fetch): Promise<num
   }
 }
 
+/**
+ * Read the balance and publish it if the read succeeded. The one call every
+ * spend and every purchase makes to move the counter WITHOUT a server
+ * re-render. Resolves to what was published, or null when nothing was.
+ */
+export async function refreshCredits(fetchImpl: typeof fetch = fetch): Promise<number | null> {
+  const n = await fetchCredits(fetchImpl)
+  if (n !== null) publishCredits(n)
+  return n
+}
+
 /** Test seam: forget every listener and the last value. */
 export function resetCreditsBusForTests(): void {
   listeners.clear()
