@@ -4,17 +4,22 @@ export type CheckoutKind = 'sub' | 'pack'
 
 /**
  * What the UI should show about the last checkout attempt.
- *   success         — Paddle says the payment went through AND the credit grant
- *                     has been observed server-side.
+ *   success         — Paddle's overlay reported the payment went through. The
+ *                     credit grant has NOT been observed yet: it lands by
+ *                     webhook, and lib/credit-refresh.ts is now watching for it.
+ *                     Rendered in the waiting tone, never the done tone.
+ *   confirmed       — the server-rendered credit count moved off its baseline:
+ *                     the grant has landed. The only status that may claim it.
+ *                     UI-only, set by the poll (or by a late landing observed
+ *                     after the poll gave up), never by checkoutStatusForEvent.
  *   success_pending — payment went through, but the grant had not landed by the
- *                     time lib/credit-refresh.ts hit its ceiling. UI-only: never
- *                     returned by checkoutStatusForEvent, only set by the poll.
- *                     Exists so a bare "success" is never shown beside a credit
- *                     count that has not moved.
+ *                     time lib/credit-refresh.ts hit its ceiling. UI-only, set
+ *                     by the poll. Exists so a bare "success" is never shown
+ *                     beside a credit count that has not moved.
  *   failed          — Paddle says the payment did not go through.
  *   error           — we never got as far as a payment: Paddle.js failed to load.
  */
-export type CheckoutStatus = 'success' | 'success_pending' | 'failed' | 'error'
+export type CheckoutStatus = 'success' | 'confirmed' | 'success_pending' | 'failed' | 'error'
 
 // Paddle's CheckoutEventNames (verified against @paddle/paddle-js dist) contains
 // FIVE outcome events, not the three we used to listen for. 'checkout.failed'

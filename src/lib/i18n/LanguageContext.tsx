@@ -261,7 +261,14 @@ const translations = {
     // Payment confirmed, but the webhook grant had not landed before the
     // reconciliation ceiling. Deliberately does NOT claim the credits arrived —
     // the count on screen has not moved, so a bare success line would be a lie.
-    'pricing.banner.successPending': 'Payment received. Your credits are still being applied — please reload this page in a moment to see them.',
+    // The only banner allowed to claim the credits arrived: set when the
+    // server-rendered count has been SEEN to move (hooks/useCreditGrantPoll.ts).
+    'pricing.banner.confirmed': 'Payment received. Your credits have been added.',
+    // Shown after the 24s reconciliation window with the count still unmoved.
+    // Names the receipt (Paddle emails one for every paid purchase) and a way to
+    // get help, and stops asking for a reload: the page now catches up by itself
+    // when the tab is next focused, and on any navigation.
+    'pricing.banner.successPending': "Payment received. Your credits are still on their way and will show up here once applied; Paddle has emailed your receipt. If they haven't arrived within an hour, email support@unicornapps.app with that receipt.",
     'checkout.pending': 'Opening checkout…',
     // Merchant-of-record disclosure, rendered beside every web purchase surface.
     // The receipt name and the card descriptor are Paddle ACCOUNT facts (the
@@ -650,7 +657,9 @@ const translations = {
     'pricing.banner.success': 'تم استلام الدفع، وستظهر أرصدتك قريباً.',
     'pricing.banner.failed': 'لم تتمّ عملية الدفع. يُرجى المحاولة مرة أخرى.',
     'pricing.banner.error': 'تعذّر فتح صفحة الدفع، ولم يُخصم منك أيّ مبلغ. أعد تحميل الصفحة ثمّ حاول مرّة أخرى.',
-    'pricing.banner.successPending': 'تمّ استلام الدفع، ولا تزال أرصدتك في طريقها إليك. أعد تحميل هذه الصفحة بعد قليل لتظهر.',
+    // Operator-reviewed checkout copy ('pricing.banner.confirmed' / '.successPending').
+    'pricing.banner.confirmed': 'تمّ استلام الدفع، وأُضيفت أرصدتك إلى حسابك.',
+    'pricing.banner.successPending': 'تمّ استلام الدفع. لا تزال أرصدتك في طريقها إليك وستظهر هنا فور إضافتها، وقد أرسلت Paddle إيصالك بالبريد الإلكتروني. إذا لم تصل خلال ساعة، راسلنا على support@unicornapps.app وأرفق الإيصال.',
     // TODO-LEGAL-REVIEW n/a. UI copy, but still machine-assisted Arabic (item 20).
     // SCOPE: 'checkout.pending' ONLY. 'pricing.banner.error' and
     // 'pricing.banner.successPending' above were operator-reviewed in 13b2ff6 (PR #60)

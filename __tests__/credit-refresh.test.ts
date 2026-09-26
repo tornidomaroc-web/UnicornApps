@@ -261,3 +261,64 @@ describe('pollForCreditGrant — does not run twice concurrently', () => {
     await expect(pollForCreditGrant(33, h.deps)).resolves.toBe('exhausted')
   })
 })
+
+// --- Status derivation after the poll, and the two catch-up paths ------------
+// Pure helpers consumed by hooks/useCreditGrantPoll.ts. The hook itself is React
+// wiring the node environment cannot render; these are the decisions it makes.
+import {
+  statusAfterPoll,
+  statusAfterLateCredits,
+  shouldCatchUpOnFocus,
+  FOCUS_CATCH_UP_MIN_GAP_MS,
+} from '@/lib/credit-refresh'
+
+describe('statusAfterPoll', () => {
+  it('confirmed -> confirmed, exhausted -> success_pending', () => {
+    expect(statusAfterPoll('confirmed')).toBe('confirmed')
+    expect(statusAfterPoll('exhausted')).toBe('success_pending')
+  })
+
+  it('cancelled and skipped return null — the caller must not touch state', () => {
+    expect(statusAfterPoll('cancelled')).toBeNull()
+    expect(statusAfterPoll('skipped')).toBeNull()
+  })
+})
+
+describe('statusAfterLateCredits — a grant landing after the poll gave up', () => {
+  it('flips success_pending to confirmed the moment the value leaves its baseline', () => {
+    expect(statusAfterLateCredits('success_pending', 82, 112)).toBe('confirmed')
+    // A decrease is still a reconciliation (refund reversal); the server spoke.
+    expect(statusAfterLateCredits('success_pending', 82, 52)).toBe('confirmed')
+  })
+
+  it('leaves success_pending alone while the value sits on its baseline', () => {
+    expect(statusAfterLateCredits('success_pending', 82, 82)).toBe('success_pending')
+  })
+
+  it('never promotes without a baseline, and never touches any other status', () => {
+    expect(statusAfterLateCredits('success_pending', null, 112)).toBe('success_pending')
+    for (const s of ['success', 'confirmed', 'failed', 'error', null] as const) {
+      expect(statusAfterLateCredits(s, 82, 112)).toBe(s)
+    }
+  })
+})
+
+describe('shouldCatchUpOnFocus — after the ceiling, re-read on return, not on a timer', () => {
+  it('only ever fires while pending', () => {
+    for (const s of ['success', 'confirmed', 'failed', 'error', null] as const) {
+      expect(shouldCatchUpOnFocus(s, null, 1_000_000)).toBe(false)
+    }
+    expect(shouldCatchUpOnFocus('success_pending', null, 1_000_000)).toBe(true)
+  })
+
+  it('coalesces a flurry of focus events into one refresh per gap', () => {
+    const t0 = 1_000_000
+    expect(shouldCatchUpOnFocus('success_pending', t0, t0 + FOCUS_CATCH_UP_MIN_GAP_MS - 1)).toBe(false)
+    expect(shouldCatchUpOnFocus('success_pending', t0, t0 + FOCUS_CATCH_UP_MIN_GAP_MS)).toBe(true)
+  })
+
+  it('the gap is longer than the poll ceiling gap, so it can never out-poll the poll', () => {
+    // The last backoff gap is 8s; a focus catch-up must be rarer than that.
+    expect(FOCUS_CATCH_UP_MIN_GAP_MS).toBeGreaterThan(Math.max(...CREDIT_REFRESH_DELAYS_MS))
+  })
+})
