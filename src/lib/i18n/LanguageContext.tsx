@@ -255,6 +255,13 @@ const translations = {
     // the count on screen has not moved, so a bare success line would be a lie.
     'pricing.banner.successPending': 'Payment received. Your credits are still being applied — please reload this page in a moment to see them.',
     'checkout.pending': 'Opening checkout…',
+    // Merchant-of-record disclosure, rendered beside every web purchase surface.
+    // The receipt name and the card descriptor are Paddle ACCOUNT facts (the
+    // descriptor is one account-wide field, max 10 chars), so they are quoted
+    // verbatim, never paraphrased: a buyer who does not recognise the charge
+    // searches for the exact string. "card statements" is deliberate — PayPal
+    // shows no seller name at all, so "your statement" would be false there.
+    'checkout.mor': 'Payments are processed by Paddle, our merchant of record. Your receipt is issued by Paddle under the name KnowFlow, and card statements show PADDLE.NET* KNOWFLOW.',
     // About
     'about.badge': 'The Unicorn Story',
     'about.title1': 'Built for',
@@ -640,6 +647,9 @@ const translations = {
     // 'pricing.banner.successPending' above were operator-reviewed in 13b2ff6 (PR #60)
     // and are NOT covered by this marker.
     'checkout.pending': 'جارٍ فتح صفحة الدفع…',
+    // Operator-reviewed. "البائع الرسميّ لهذا الطلب" is deliberate: a literal
+    // calque of "merchant of record" reads as jargon to an Arabic buyer.
+    'checkout.mor': 'يتمّ الدفع عبر Paddle، وهي البائع الرسميّ لهذا الطلب. يصلك الإيصال من Paddle باسم KnowFlow، ويظهر المبلغ في كشف البطاقة باسم PADDLE.NET* KNOWFLOW.',
     // About
     'about.badge': 'قصة يونيكورن',
     'about.title1': 'بنيت لـ',
