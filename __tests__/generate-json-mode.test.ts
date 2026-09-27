@@ -47,10 +47,8 @@ jest.mock('@/lib/credits', () => ({
   ...jest.requireActual('@/lib/credits'),
   createServiceClient: jest.fn(),
 }))
-jest.mock('@/lib/gemini', () => ({
-  ...jest.requireActual('@/lib/gemini'),
-  resolveGeminiModels: jest.fn(),
-}))
+// @/lib/gemini is REAL: the models are pinned in code, so there is no network
+// model-list call to stub.
 
 const mockGenerateContent = jest.fn()
 // Unlike gemini-quota-fallback.test.ts, getGenerativeModel is a jest.fn() here:
@@ -64,7 +62,6 @@ jest.mock('@google/generative-ai', () => ({
 
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/credits'
-import { resolveGeminiModels } from '@/lib/gemini'
 import { POST as generatePOST } from '../src/app/api/generate/route'
 
 process.env.GEMINI_API_KEY = 'test-key'
@@ -94,7 +91,6 @@ beforeEach(() => {
   supabase.client.auth.getUser.mockResolvedValue({ data: { user: USER } })
   ;(createClient as jest.Mock).mockReturnValue(supabase.client)
   ;(createServiceClient as jest.Mock).mockReturnValue(supabase.client)
-  ;(resolveGeminiModels as jest.Mock).mockResolvedValue(['model-a', 'model-b'])
   jest.spyOn(console, 'error').mockImplementation(() => {})
 })
 

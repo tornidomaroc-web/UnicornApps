@@ -37,12 +37,9 @@ jest.mock('@/lib/credits', () => ({
   ...jest.requireActual('@/lib/credits'),
   createServiceClient: jest.fn(),
 }))
-// Keep the REAL isRetryableGeminiError — the loop's fallback decision is part of
-// what we are asserting. Only the network model-list call is stubbed.
-jest.mock('@/lib/gemini', () => ({
-  ...jest.requireActual('@/lib/gemini'),
-  resolveGeminiModels: jest.fn(),
-}))
+// @/lib/gemini is REAL: the models are pinned in code, so there is no network
+// model-list call to stub, and the loop's fallback decision is part of what
+// we are asserting.
 
 const mockGenerateContent = jest.fn()
 jest.mock('@google/generative-ai', () => ({
@@ -53,7 +50,6 @@ jest.mock('@google/generative-ai', () => ({
 
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/credits'
-import { resolveGeminiModels } from '@/lib/gemini'
 import { POST as generatePOST, maxDuration as generateMaxDuration } from '../src/app/api/generate/route'
 import { POST as refinePOST, maxDuration as refineMaxDuration } from '../src/app/api/refine/route'
 
@@ -105,7 +101,6 @@ beforeEach(() => {
   supabase.client.auth.getUser.mockResolvedValue({ data: { user: USER } })
   ;(createClient as jest.Mock).mockReturnValue(supabase.client)
   ;(createServiceClient as jest.Mock).mockReturnValue(supabase.client)
-  ;(resolveGeminiModels as jest.Mock).mockResolvedValue(['model-a', 'model-b', 'model-c'])
 })
 
 afterEach(() => {
@@ -215,8 +210,8 @@ describe('/api/generate deadline', () => {
   })
 
   it('never STARTS an attempt below the single-attempt floor', async () => {
-    // model-a burns 55s then fails retryably. Only ~1s of budget is left, so
-    // model-b must never be attempted.
+    // The primary burns 55s then fails retryably. Only ~1s of budget is left,
+    // so the fallback must never be attempted.
     mockGenerateContent.mockImplementationOnce(
       (_req: unknown, opts: { signal: AbortSignal }) =>
         new Promise((_resolve, reject) => {

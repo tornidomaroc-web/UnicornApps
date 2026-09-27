@@ -31,14 +31,6 @@ process.env.PADDLE_WEBHOOK_SECRET = 'mock_secret'
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://mock-url'
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'mock_service_key'
 
-// Mock global fetch for dynamic model lookup
-global.fetch = jest.fn().mockResolvedValue({
-  ok: true, // resolveGeminiModels() short-circuits on !res.ok before reading json
-  json: () => Promise.resolve({
-    models: [{ name: 'models/gemini-1.5-flash', supportedGenerationMethods: ['generateContent'] }]
-  })
-}) as jest.Mock
-
 import { createClient } from '../src/lib/supabase/server'
 import { createClient as createClientJS } from '@supabase/supabase-js'
 

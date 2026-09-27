@@ -39,12 +39,9 @@ jest.mock('@/lib/credits', () => ({
   ...jest.requireActual('@/lib/credits'),
   createServiceClient: jest.fn(),
 }))
-// Keep the REAL classifyGeminiError — the loop's fallback decision is the thing
-// under test. Only the network model-list call is stubbed.
-jest.mock('@/lib/gemini', () => ({
-  ...jest.requireActual('@/lib/gemini'),
-  resolveGeminiModels: jest.fn(),
-}))
+// @/lib/gemini is REAL: the models are pinned in code, so there is no network
+// model-list call to stub, and classifyGeminiError — the loop's fallback
+// decision — is the thing under test.
 
 const mockGenerateContent = jest.fn()
 jest.mock('@google/generative-ai', () => ({
@@ -55,7 +52,6 @@ jest.mock('@google/generative-ai', () => ({
 
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/credits'
-import { resolveGeminiModels } from '@/lib/gemini'
 import { POST as generatePOST } from '../src/app/api/generate/route'
 import { POST as refinePOST } from '../src/app/api/refine/route'
 
@@ -107,9 +103,8 @@ beforeEach(() => {
   supabase.client.auth.getUser.mockResolvedValue({ data: { user: USER } })
   ;(createClient as jest.Mock).mockReturnValue(supabase.client)
   ;(createServiceClient as jest.Mock).mockReturnValue(supabase.client)
-  // Three resolvable models — MORE than MAX_MODEL_ATTEMPTS on purpose, so the
-  // slice is what bounds the fan-out, not the length of this list.
-  ;(resolveGeminiModels as jest.Mock).mockResolvedValue(['model-a', 'model-b', 'model-c'])
+  // The routes iterate the pinned list in @/lib/gemini, whose length IS
+  // MAX_MODEL_ATTEMPTS — that is what bounds the fan-out asserted below.
 })
 
 // -----------------------------------------------------------------------------
