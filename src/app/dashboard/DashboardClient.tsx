@@ -49,6 +49,7 @@ import { localGenerationRow, prependGeneration } from '@/lib/dashboard-history'
 import { resolveApiError } from '@/lib/api-error'
 import { prepareImageForUpload } from '@/lib/prepare-image'
 import { sanitizeModelHtml } from '@/lib/safe-html'
+import ResultsPanel from './ResultsPanel'
 import { MAX_SOURCE_FILE_BYTES } from '@/lib/image-budget'
 import {
   bannerToneClass,
@@ -827,242 +828,34 @@ export default function DashboardClient({
         {results && (
            <div className="grid lg:grid-cols-[1fr,360px] gap-8 items-start">
               <div className="min-w-0 space-y-6">
-                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-                       {/* HERO — the generated title, hoisted OUT of the SEO tab so that every
-                           tab has a top. Three of the five tab payloads are a list or a code
-                           block and have no single string to promote, so a per-tab hero would
-                           leave three tabs with nothing largest. This is the one string every
-                           tab is about and the one users copy first.
-
-                           🔴 ORDER IS THE DESIGN: eyebrow, then title, then the action.
-                           Copy used to sit ABOVE the string it copies, beside the label, which
-                           asks the user to act on something they have not read yet. It is now a
-                           row of its own beneath the title — the convention every assistant UI
-                           settled on — and that row is the place regenerate and share join
-                           later, which is why it is a flex container holding one button and not
-                           a bare button. */}
-                       <div className="space-y-3">
-                          {/* THE ONE EYEBROW ON THIS SCREEN. 17 elements page-wide carry this
-                              12px-uppercase-slate-500 style, which is why the top of the screen
-                              read as chrome: the label above the hero looked like eight other
-                              labels that mean nothing in particular. An eyebrow belongs above
-                              the TITLE of a piece of content, once. Every other field now names
-                              itself BELOW its own value, paired with that value's copy action. */}
-                          <div className="flex items-center">
-                             <span className="text-xs font-black uppercase tracking-widest text-slate-500">{t('dash.seo.target')}</span>
-                          </div>
-                          {/* No tracking-* — this renders model output. See the RTL note elsewhere
-                              in this file: the global guard keys on the wrapper dir, not the script. */}
-                          <p className="text-[32px] leading-[1.15] font-bold text-white break-words">{results.seoTitle}</p>
-                          <div className="flex items-center gap-2 pt-1">
-                             <Button variant="ghost" size="sm" onClick={() => copyToClipboard(results.seoTitle, 't')} className="h-11 px-5 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 text-xs font-black uppercase">
-                                {copySuccess === 't' ? t('dash.copied') : t('dash.seo.copy')}
-                             </Button>
-                          </div>
-                       </div>
-
-                       {/* 5. DESTINATION GRID — 3 ACROSS, 2 DOWN, NEVER A SCROLLER.
-                           🔴 A ONE-ROW STRIP IS ARITHMETICALLY DEAD AT THIS WIDTH, so do not
-                           "fix" this by tuning padding or tracking and putting the row back.
-                           Measured at 411 content width: the five labels total 516px before
-                           gaps and container padding, inside a 345px box — a 211px (en) /
-                           128px (ar) overflow that hid SOCIAL and DATA entirely, in BOTH
-                           languages, behind a suppressed scrollbar and a 40px gradient. No
-                           padding value closes a 211px gap. Material 3 says the same thing in
-                           words: fixed tabs are for 3-5 destinations, and a scrollable strip
-                           costs discoverability because users who do not scroll never learn
-                           the options exist.
-
-                           The sixth cell is PREVIEW, which absorbs the old raw/live-preview
-                           selector above this block. That is why six destinations cost ~6px
-                           more than five did: two rows replace one row PLUS a 36px control
-                           and its 24px gap. Equal columns and no icons are what make three
-                           labels fit 107px cells; 44px cells are the AAA/platform target size
-                           (WCAG 2.5.8 AA is 24, so this was never an AA failure). */}
-                       <div className="grid grid-cols-3 gap-2 p-1 bg-black/40 border border-white/5 rounded-2xl">
-                          {[
-                            { id: 'seo', label: t('dash.tab.seo') },
-                            { id: 'shopify', label: t('dash.tab.shopify') },
-                            { id: 'amazon', label: t('dash.tab.amazon') },
-                            { id: 'social', label: t('dash.tab.social') },
-                            { id: 'data', label: t('dash.tab.data') },
-                            { id: 'preview', label: t('dash.tab.preview') }
-                          ].map(t => (
-                            <button
-                              key={t.id}
-                              onClick={() => setActiveTab(t.id as any)}
-                              className={`flex items-center justify-center h-11 px-3 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all relative ${activeTab === t.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
-                            >
-                               {t.label}
-                               {activeTab === t.id && (
-                                 <motion.div layoutId="tab-active" className="absolute inset-0 bg-white/5 border border-white/10 rounded-xl -z-10 shadow-[0_0_15px_rgba(124,58,237,0.3)]">
-                                    <div className="absolute bottom-0 left-1/4 right-1/4 h-[2px] bg-violet-400" />
-                                 </motion.div>
-                               )}
-                            </button>
-                          ))}
-                       </div>
-
-                       <div className="grid gap-6">
-                          {/* PREVIEW is a destination, not a mode. It used to be half of a
-                              separate two-way control ABOVE the title, which asked the user to
-                              choose a view of content they had not seen. Folding it in here is
-                              what pays for the second row of the grid. */}
-                          {activeTab === 'preview' && (
-                             <div className="space-y-12">
-                                <section className="space-y-6">
-                                   <div className="flex items-center gap-3">
-                                      <div className="p-2 bg-orange-500/20 rounded-lg"><ShoppingBag className="w-5 h-5 text-orange-400" /></div>
-                                      <h2 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.amazon.live')}</h2>
-                                   </div>
-                                   <AmazonMockup />
-                                </section>
-                                <section className="space-y-6">
-                                   <div className="flex items-center gap-3">
-                                      <div className="p-2 bg-green-500/20 rounded-lg"><Store className="w-5 h-5 text-green-400" /></div>
-                                      <h2 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.shopify.live')}</h2>
-                                   </div>
-                                   <ShopifyMockup />
-                                </section>
+                    {/* The generated product page. Presentation only: every piece of
+                        state and every handler stays in this file and is passed down.
+                        Why one stacked column with a copy action per part, and why the
+                        old 3x2 tab grid is gone, is written at the top of ResultsPanel. */}
+                    <ResultsPanel
+                      results={results}
+                      t={t}
+                      copiedId={copySuccess}
+                      onCopy={copyToClipboard}
+                      previewSlot={
+                        <>
+                          <section className="space-y-6">
+                             <div className="flex items-center gap-3">
+                                <div className="p-2 bg-orange-500/20 rounded-lg"><ShoppingBag className="w-5 h-5 text-orange-400" /></div>
+                                <h2 className="text-base font-black text-white uppercase">{t('dash.amazon.live')}</h2>
                              </div>
-                          )}
-                          {/* The CardHeader is gone: it restated the tab selected one row
-                              above it ("SEO" -> "SEO & Metadata"), which made three labels for
-                              one payload. The field now names itself underneath, beside its own
-                              copy action, exactly as the hero does. */}
-                          {activeTab === 'seo' && (
-                             <Card className="bg-white/[0.03] border-white/10 rounded-3xl overflow-hidden">
-                                <CardContent className="p-5 sm:p-10 space-y-8 sm:space-y-10">
-                                   <div className="space-y-4">
-                                      <p className="text-slate-400 leading-relaxed font-medium">{results.metaDescription}</p>
-                                      <div className="flex justify-between items-center">
-                                         <span className="text-xs font-black uppercase tracking-widest text-slate-500">{t('dash.seo.meta')}</span>
-                                         <Button variant="ghost" size="sm" onClick={() => copyToClipboard(results.metaDescription, 'm')} className="h-11 px-5 rounded-lg bg-white/5 border border-white/5 hover:border-white/20 text-xs font-black uppercase">
-                                            {copySuccess === 'm' ? t('dash.copied') : t('dash.copyLogic')}
-                                         </Button>
-                                      </div>
-                                   </div>
-                                </CardContent>
-                             </Card>
-                          )}
-                          {/* Shopify Redesign */}
-                          {activeTab === 'shopify' && (
-                            <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-10 space-y-6 sm:space-y-8">
-                               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6">
-                                  <div className="space-y-1">
-                                     <h3 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.shopify.title')}</h3>
-                                     <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{t('dash.liquidData')}</p>
-                                  </div>
-                                  <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
-                                     <button 
-                                       onClick={() => setShopifyViewMode('preview')}
-                                       className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${shopifyViewMode === 'preview' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-slate-500 hover:text-white'}`}
-                                     >
-                                        {t('dash.shopify.preview')}
-                                     </button>
-                                     <button 
-                                       onClick={() => setShopifyViewMode('code')}
-                                       className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${shopifyViewMode === 'code' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-slate-500 hover:text-white'}`}
-                                     >
-                                        {t('dash.shopify.code')}
-                                     </button>
-                                  </div>
-                                  <Button onClick={() => copyToClipboard(results.shopifyHtml || '', 'sh')} className="bg-white/5 border border-white/10 hover:border-white/20 text-white text-xs font-black uppercase rounded-xl px-6 h-10">
-                                     {copySuccess === 'sh' ? t('dash.copied') : <><Copy className="w-3.5 h-3.5 mr-2" /> {t('dash.copyCode')}</>}
-                                  </Button>
-                               </div>
-
-                               <AnimatePresence mode="wait">
-                                  {shopifyViewMode === 'preview' ? (
-                                    <motion.div 
-                                      key="preview"
-                                      initial={{ opacity: 0, scale: 0.98 }}
-                                      animate={{ opacity: 1, scale: 1 }}
-                                      exit={{ opacity: 0, scale: 1.02 }}
-                                      className="bg-black/60 rounded-[2rem] p-5 sm:p-10 border border-white/5 h-[500px] overflow-auto custom-scrollbar"
-                                    >
-                                       <div className="prose prose-invert max-w-none prose-p:text-slate-300 prose-headings:text-white prose-strong:text-violet-400 prose-ul:text-slate-400 prose-li:marker:text-violet-500">
-                                          <div dangerouslySetInnerHTML={{ __html: sanitizeModelHtml(results.shopifyHtml || '') }} />
-                                       </div>
-                                    </motion.div>
-                                  ) : (
-                                    <motion.div 
-                                      key="code"
-                                      initial={{ opacity: 0, scale: 0.98 }}
-                                      animate={{ opacity: 1, scale: 1 }}
-                                      exit={{ opacity: 0, scale: 1.02 }}
-                                      className="bg-black/80 rounded-[2rem] p-5 sm:p-8 border border-white/5 font-mono text-xs text-violet-300/80 h-[500px] overflow-auto custom-scrollbar relative"
-                                    >
-                                       <pre className="whitespace-pre-wrap break-words">{results.shopifyHtml}</pre>
-                                       <div className="absolute top-4 right-4 text-xs font-black uppercase tracking-[0.2em] text-slate-700 pointer-events-none">{t('dash.liquidSig')}</div>
-                                    </motion.div>
-                                  )}
-                               </AnimatePresence>
-                            </Card>
-                          )}
-                          {/* Amazon Redesign */}
-                          {activeTab === 'amazon' && (
-                            <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-10 space-y-6 sm:space-y-8">
-                               <h3 className="text-base font-black text-white uppercase tracking-tighter">{t('dash.amazon.title')}</h3>
-                               <div className="space-y-4">
-                                  {results.amazonBullets?.map((b, i) => (
-                                    <div key={i} className="flex items-start gap-3 sm:gap-4 p-4 sm:p-5 bg-white/5 border border-white/5 rounded-2xl group hover:border-violet-500/30 transition-all">
-                                       <span className="text-violet-500 font-bold mt-1">✦</span>
-                                       <p className="text-slate-300 font-medium group-hover:text-white transition-colors">{b}</p>
-                                    </div>
-                                  ))}
-                               </div>
-                            </Card>
-                          )}
-                          {/* Social Redesign */}
-                          {activeTab === 'social' && (
-                            <div className="grid gap-6">
-                               <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-10 space-y-4 sm:space-y-6">
-                                  <span className="text-xs font-black uppercase tracking-widest text-slate-500">{t('dash.social.hook')}</span>
-                                                                    {/* No tracking-* here: this renders GENERATED text, which is Arabic whenever the user
-                                      generated in Arabic — independent of the UI language. The global RTL guard keys on
-                                      the wrapper's dir, so it does not fire on the English surface and the tracking lands
-                                      on joined Arabic glyphs. Measured on the history title: -0.4px under the English UI. */}
-                                  <p className="text-base font-black text-white leading-tight sm:leading-none italic uppercase">&quot;{results.viralScript?.hook}&quot;</p>
-                               </Card>
-                               <div className="grid md:grid-cols-2 gap-6">
-                                  <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-8 space-y-4">
-                                     <span className="text-xs font-black uppercase tracking-widest text-slate-500">{t('dash.social.concept')}</span>
-                                     <p className="text-slate-400 font-medium leading-relaxed">{results.viralScript?.concept}</p>
-                                  </Card>
-                                  <Card className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-8 space-y-4">
-                                     <span className="text-xs font-black uppercase tracking-widest text-slate-500">{t('dash.social.tags')}</span>
-                                     <div className="flex flex-wrap gap-2">
-                                        {results.socialMediaTags?.map(t => (
-                                          <span key={t} className="px-3 py-1 bg-violet-600/10 border border-violet-500/20 rounded-lg text-xs font-bold text-violet-400">{t}</span>
-                                        ))}
-                                     </div>
-                                  </Card>
-                               </div>
-                            </div>
-                          )}
-                          {/* Data Redesign */}
-                          {activeTab === 'data' && (
-                             <div className="grid md:grid-cols-2 gap-6">
-                                {[
-                                  { l: t('dash.data.material'), v: results.structuredData?.material },
-                                  { l: t('dash.data.color'), v: results.structuredData?.dominantColor },
-                                  { l: t('dash.data.audience'), v: results.structuredData?.targetAudience },
-                                  { l: t('dash.data.care'), v: results.structuredData?.careInstructions }
-                                ].map((d, i) => (
-                                  <Card key={i} className="bg-white/[0.03] border-white/10 rounded-3xl p-5 sm:p-8 flex flex-col justify-between">
-                                     <span className="text-xs font-black uppercase tracking-widest text-slate-500 mb-4">{d.l}</span>
-                                                                          {/* No tracking-* here: this renders GENERATED text, which is Arabic whenever the user
-                                         generated in Arabic — independent of the UI language. The global RTL guard keys on
-                                         the wrapper's dir, so it does not fire on the English surface and the tracking lands
-                                         on joined Arabic glyphs. Measured on the history title: -0.4px under the English UI. */}
-                                     <p className="text-white font-black text-base uppercase">{d.v}</p>
-                                  </Card>
-                                ))}
+                             <AmazonMockup />
+                          </section>
+                          <section className="space-y-6">
+                             <div className="flex items-center gap-3">
+                                <div className="p-2 bg-green-500/20 rounded-lg"><Store className="w-5 h-5 text-green-400" /></div>
+                                <h2 className="text-base font-black text-white uppercase">{t('dash.shopify.live')}</h2>
                              </div>
-                          )}
-                       </div>
-                    </motion.div>
+                             <ShopifyMockup />
+                          </section>
+                        </>
+                      }
+                    />
               </div>
 
               {/* 6. REFINE CONSOLE */}
