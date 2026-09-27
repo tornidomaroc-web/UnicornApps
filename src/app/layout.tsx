@@ -4,8 +4,10 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Providers from "@/components/Providers";
+import { cookies, headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { isNativeRequest } from "@/lib/native-request";
+import { LANG_COOKIE, resolveInitialLang } from "@/lib/i18n/initial-lang";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -83,8 +85,18 @@ export default async function RootLayout({
   // Costs nothing — this layout already reads cookies, so it is already dynamic.
   const isNative = isNativeRequest();
 
+  // First-paint language. Read here, on the server, so the HTML already carries
+  // it: no English flash before Arabic, on web or in the Android shell. This
+  // layout already reads cookies (getNavSeed) and headers (isNativeRequest), so
+  // every route is dynamic already and these two reads cost nothing new.
+  const initialLang = resolveInitialLang(
+    cookies().get(LANG_COOKIE)?.value,
+    headers().get("accept-language")
+  );
+  const initialDir = initialLang === "ar" ? "rtl" : "ltr";
+
   return (
-    <html lang="en">
+    <html lang={initialLang}>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -92,8 +104,14 @@ export default async function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
       </head>
-      <body className={`${inter.className} ${ibmPlexArabic.variable}`}>
-        <Providers>
+      {/* dir and lang on <body>, not only on the provider's wrapper: anything
+          rendered at body level (a portal, a toast) inherits the direction, and
+          the Arabic letter-spacing rule in globals.css (`html [dir='rtl'] *`)
+          matches <body> as a descendant of <html>, so it keeps working with no
+          change to the rule or its test. The provider keeps these in sync after
+          a toggle. */}
+      <body dir={initialDir} lang={initialLang} className={`${inter.className} ${ibmPlexArabic.variable}`}>
+        <Providers initialLang={initialLang}>
           <div className="flex min-h-screen flex-col relative">
             <div className="matrix-glow-shell" />
             <Navbar initialUser={user} initialCredits={credits} />

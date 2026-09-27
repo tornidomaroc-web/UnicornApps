@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
 import { initializeApp } from '@/lib/capacitor'
+import type { Lang } from '@/lib/i18n/initial-lang'
 
 // Client-only shell extracted from RootLayout so that `layout.tsx` can become a
 // server component and read the auth session for the navbar seed. This holds the
@@ -10,10 +11,17 @@ import { initializeApp } from '@/lib/capacitor'
 // back-button/app-state listeners; a no-op on web) and the language context that
 // the navbar and every page consume via useLang(). Behavior is identical to the
 // previous in-layout wiring — same provider, same mount-time initializeApp().
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({
+  children,
+  initialLang,
+}: {
+  children: React.ReactNode
+  /** Decided by the server layout; see lib/i18n/initial-lang.ts. */
+  initialLang: Lang
+}) {
   useEffect(() => {
     initializeApp()
   }, [])
 
-  return <LanguageProvider>{children}</LanguageProvider>
+  return <LanguageProvider initialLang={initialLang}>{children}</LanguageProvider>
 }

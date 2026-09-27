@@ -1,7 +1,6 @@
 'use client'
-import { createContext, useContext, useState, ReactNode } from 'react'
-
-type Lang = 'en' | 'ar'
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { langCookieString, type Lang } from '@/lib/i18n/initial-lang'
 type LanguageContextType = {
   lang: Lang
   toggleLang: () => void
@@ -841,12 +840,48 @@ const translations = {
 
 const LanguageContext = createContext<LanguageContextType | null>(null)
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>('en')
-  const toggleLang = () => setLang(prev => prev === 'en' ? 'ar' : 'en')
+export function LanguageProvider({
+  children,
+  initialLang,
+}: {
+  children: ReactNode
+  /**
+   * Chosen by the server (lib/i18n/initial-lang.ts) from the cookie or the
+   * device's Accept-Language, and already applied to <html lang> and
+   * <body dir lang> in the server HTML. Starting from it here means the first
+   * paint is in the right language and hydration changes nothing. It used to be
+   * a hard-coded 'en', which is why the app forgot Arabic on every launch.
+   */
+  initialLang: Lang
+}) {
+  const [lang, setLang] = useState<Lang>(initialLang)
+  const toggleLang = () =>
+    setLang((prev) => {
+      const next: Lang = prev === 'en' ? 'ar' : 'en'
+      // The toggle is the only thing that writes the cookie: a device-language
+      // default is recomputed each visit, an explicit choice sticks for a year.
+      document.cookie = langCookieString(next, window.location.protocol === 'https:')
+      return next
+    })
   const t = (key: string) => translations[lang][key as keyof typeof translations['en']] || key
+
+  // <body> and <html> are rendered by the server layout, outside this tree, so
+  // a toggle has to reach them by hand. On mount this re-applies what the
+  // server already set (a no-op); on toggle it flips them. Keeping dir on
+  // <body> is what lets anything rendered at body level (a dialog, a toast)
+  // inherit RTL without knowing about this provider.
+  useEffect(() => {
+    const dir = lang === 'ar' ? 'rtl' : 'ltr'
+    document.body.setAttribute('dir', dir)
+    document.body.setAttribute('lang', lang)
+    document.documentElement.setAttribute('lang', lang)
+  }, [lang])
+
   return (
     <LanguageContext.Provider value={{ lang, toggleLang, t }}>
+      {/* The wrapper stays: globals.css keys the Arabic letter-spacing rule on a
+          [dir] ancestor, and its test pins that. Removing this would not break
+          the rule (body now carries dir too) but nothing would be gained. */}
       <div dir={lang === 'ar' ? 'rtl' : 'ltr'} lang={lang} className={lang === 'ar' ? 'font-arabic' : ''}>
         {children}
       </div>
