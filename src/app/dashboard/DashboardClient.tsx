@@ -48,6 +48,7 @@ import { refreshCredits } from '@/lib/credits-bus'
 import { localGenerationRow, prependGeneration } from '@/lib/dashboard-history'
 import { resolveApiError } from '@/lib/api-error'
 import { prepareImageForUpload } from '@/lib/prepare-image'
+import { sanitizeModelHtml } from '@/lib/safe-html'
 import { MAX_SOURCE_FILE_BYTES } from '@/lib/image-budget'
 import {
   bannerToneClass,
@@ -581,7 +582,7 @@ export default function DashboardClient({
 
             <div className="prose prose-zinc max-w-none prose-p:text-zinc-600 prose-headings:text-zinc-900">
               {results?.shopifyHtml ? (
-                <div dangerouslySetInnerHTML={{ __html: results.shopifyHtml }} />
+                <div dangerouslySetInnerHTML={{ __html: sanitizeModelHtml(results.shopifyHtml) }} />
               ) : (
                 <p>{results?.productDescription}</p>
               )}
@@ -981,7 +982,7 @@ export default function DashboardClient({
                                       className="bg-black/60 rounded-[2rem] p-5 sm:p-10 border border-white/5 h-[500px] overflow-auto custom-scrollbar"
                                     >
                                        <div className="prose prose-invert max-w-none prose-p:text-slate-300 prose-headings:text-white prose-strong:text-violet-400 prose-ul:text-slate-400 prose-li:marker:text-violet-500">
-                                          <div dangerouslySetInnerHTML={{ __html: results.shopifyHtml || '' }} />
+                                          <div dangerouslySetInnerHTML={{ __html: sanitizeModelHtml(results.shopifyHtml || '') }} />
                                        </div>
                                     </motion.div>
                                   ) : (
