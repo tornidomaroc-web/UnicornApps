@@ -1,8 +1,7 @@
 'use client'
 
-import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useFormStatus } from 'react-dom'
 import { SURFACE } from '@/app/dashboard/surface'
 import type { Feedback } from '@/lib/auth-errors'
@@ -34,21 +33,12 @@ export function AuthShell({
   footer?: ReactNode
 }) {
   return (
-    <main className="min-h-[100dvh] bg-[#070710] px-4 pb-10 pt-6 sm:flex sm:items-center sm:justify-center sm:py-12">
+    <main className="min-h-[100dvh] bg-[#070710] px-4 pb-10 pt-10 sm:flex sm:items-center sm:justify-center sm:py-12">
       <div className="mx-auto w-full max-w-md">
-        {/* w-fit is load-bearing: a stretched link would make the whole blank
-            row a tap target, and a stray tap would leave mid-form. */}
-        <Link
-          href="/"
-          className="flex w-fit items-center gap-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
-        >
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-white">
-            <Sparkles className="h-4 w-4" aria-hidden />
-          </span>
-          <span className="text-sm font-semibold text-slate-200">UnicornApps</span>
-        </Link>
-
-        <section className={`${SURFACE} mt-6 p-5 sm:p-8`}>
+        {/* No brand mark of its own: the site navbar above already carries the
+            logo and the home link, and a second lockup cost ~70px of a phone
+            screen above the first field. */}
+        <section className={`${SURFACE} p-5 sm:p-8`}>
           <h1 className="text-2xl font-bold leading-tight text-white sm:text-3xl">{title}</h1>
           {sub && <p className="mt-2 text-[15px] leading-relaxed text-slate-400">{sub}</p>}
           <div className="mt-6">{children}</div>

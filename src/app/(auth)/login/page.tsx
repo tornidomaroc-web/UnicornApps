@@ -24,7 +24,7 @@ export default function LoginPage({
 }: {
   searchParams: { error?: string | string[]; mode?: string | string[] }
 }) {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const requestedMode = Array.isArray(searchParams.mode) ? searchParams.mode[0] : searchParams.mode
   const [mode, setMode] = useState<Mode>(
     MODES.includes(requestedMode as Mode) ? (requestedMode as Mode) : 'signin'
@@ -85,7 +85,9 @@ export default function LoginPage({
       <Link href="/terms" className="underline underline-offset-4 hover:text-slate-300">
         {t('login.terms')}
       </Link>{' '}
-      {t('login.and')}{' '}
+      {/* Arabic "و" is written joined to the word it introduces. */}
+      {t('login.and')}
+      {lang === 'ar' ? '' : ' '}
       <Link href="/privacy" className="underline underline-offset-4 hover:text-slate-300">
         {t('login.privacy')}
       </Link>
