@@ -1,120 +1,66 @@
 "use client"
 
 import { useState } from 'react'
-import { useFormState, useFormStatus } from 'react-dom'
+import { useFormState } from 'react-dom'
 import Link from 'next/link'
+import { Eye, EyeOff } from 'lucide-react'
 import { updatePassword } from '../login/actions'
-import type { AuthResult } from '../login/actions'
+import { LINK_ERROR_CODES, resolveFeedback, type AuthErrorCode } from '@/lib/auth-errors'
 import { useLang } from '@/lib/i18n/LanguageContext'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Eye, EyeOff, Loader2, Sparkles } from 'lucide-react'
-
-function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
-  const { pending } = useFormStatus()
-  return (
-    <Button
-      type="submit"
-      disabled={pending}
-      className="w-full h-12 bg-brand hover:bg-brand/90 text-white font-semibold text-base rounded-xl shadow-[0_0_24px_-6px_rgb(var(--ua-brand-glow)/0.7)] transition-all active:scale-[0.99] disabled:opacity-70"
-    >
-      {pending ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          {pendingLabel}
-        </>
-      ) : (
-        label
-      )}
-    </Button>
-  )
-}
+import { AuthBanner, AuthShell, FIELD, LABEL, SubmitButton } from '@/components/auth/AuthShell'
 
 export default function UpdatePasswordPage() {
   const { t } = useLang()
   const [showPassword, setShowPassword] = useState(false)
   const [state, action] = useFormState(updatePassword, undefined)
-
-  let feedback: string | null = null
-  if (state) {
-    feedback = state.code === 'unknown' && state.detail ? state.detail : t(`login.err.${state.code}`)
-  }
+  const feedback = resolveFeedback(state)
+  // Without a recovery session there is nothing to save to: the way forward is
+  // a fresh link, not another attempt at this form.
+  const offerNewLink = feedback?.kind === 'error' && LINK_ERROR_CODES.includes(feedback.code as AuthErrorCode)
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#070710] px-4 py-10 sm:py-12 relative overflow-hidden">
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] bg-brand/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-15%] right-[-10%] w-[45%] h-[45%] bg-brand/10 rounded-full blur-[120px]" />
-      </div>
+    <AuthShell title={t('login.updateTitle')} sub={t('login.updateSub')}>
+      <form action={action} className="space-y-4">
+        <div>
+          <label htmlFor="password" className={LABEL}>
+            {t('login.newPassword')}
+          </label>
+          <div className="relative">
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              required
+              minLength={6}
+              className={`${FIELD} pe-12`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
+              className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-brand"
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
+            </button>
+          </div>
+        </div>
 
-      <Card className="w-full max-w-md bg-white/[0.04] backdrop-blur-2xl border-white/10 shadow-[0_0_60px_-25px_rgb(var(--ua-brand-glow)/0.45)] rounded-2xl overflow-hidden relative z-10">
-        <CardHeader className="space-y-3 pb-6 pt-8">
-          {/* Brand mark — home link. w-fit is load-bearing: CardHeader is a flex
-              COLUMN, so a stretched <a> would make the whole blank header row
-              clickable and a stray tap would navigate away mid-reset, discarding
-              the typed password. Bound the target to the lockup itself. */}
-          <Link
-            href="/"
-            className="flex w-fit items-center gap-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
-          >
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-white shadow-[0_0_18px_-4px_rgb(var(--ua-brand-glow)/0.6)]">
-              <Sparkles className="h-4 w-4" />
-            </span>
-            <span className="text-sm font-semibold tracking-wide text-slate-200">UnicornApps</span>
-          </Link>
-          <CardTitle className="text-3xl font-bold tracking-tight text-white">
-            {t('login.updateTitle')}
-          </CardTitle>
-          <CardDescription className="text-slate-400 text-[15px] leading-relaxed">
-            {t('login.updateSub')}
-          </CardDescription>
-        </CardHeader>
+        {feedback && (
+          <AuthBanner
+            feedback={feedback}
+            action={
+              offerNewLink ? (
+                <Link href="/login?mode=reset" className="text-sm font-semibold text-white underline underline-offset-4">
+                  {t('login.action.send_new_link')}
+                </Link>
+              ) : undefined
+            }
+          />
+        )}
 
-        <CardContent>
-          <form action={action} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-sm font-medium text-slate-300">
-                {t('login.newPassword')}
-              </Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  required
-                  minLength={6}
-                  className="bg-black/40 border-white/10 text-white placeholder:text-slate-600 focus:border-brand/60 focus:ring-brand/20 transition-all h-12 rounded-xl ltr:pr-12 rtl:pl-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((s) => !s)}
-                  aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
-                  className="absolute top-1/2 -translate-y-1/2 ltr:right-3 rtl:left-3 text-slate-500 hover:text-brand transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            {feedback && (
-              <div role="alert" className="rounded-xl bg-red-500/10 border border-red-500/25 px-4 py-3 text-sm text-red-300">
-                {feedback}
-              </div>
-            )}
-
-            <SubmitButton label={t('login.updateButton')} pendingLabel={t('login.updatePending')} />
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+        <SubmitButton label={t('login.updateButton')} pendingLabel={t('login.updatePending')} />
+      </form>
+    </AuthShell>
   )
 }
