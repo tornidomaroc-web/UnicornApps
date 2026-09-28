@@ -159,8 +159,13 @@ describe('the rule is the ONLY thing covering unguarded tracking utilities', () 
     const { total, unguarded } = collectTracking()
     // Not pinned to an exact count — that would fail on every unrelated UI edit.
     // The point is that the codebase relies on the CSS rule, not on ltr: guards.
-    expect(total).toBeGreaterThan(100)
-    expect(unguarded).toBeGreaterThan(100)
+    // The floor is an order-of-magnitude guard against a vacuous pass (141 sites
+    // when written; 99 after the dashboard input and history moved to
+    // sentence-case type with no tracking on any surface that renders model
+    // output). It is not a quota: fewer tracking utilities is the direction the
+    // Arabic surface wants.
+    expect(total).toBeGreaterThan(50)
+    expect(unguarded).toBeGreaterThan(50)
   })
 
   it('the CSS rule that covers them is present (fails loudly if it is removed)', () => {

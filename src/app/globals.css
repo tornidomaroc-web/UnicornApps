@@ -64,6 +64,30 @@
   to { transform: translateX(-50%); }
 }
 
+/* Dashboard input: the line that sweeps the photo while the model reads it,
+   and the bar inside the loading button. Translate only — never scaleX, which
+   distorts cursive joins if it ever lands on text — so both stay cheap on a
+   phone WebView. The sweep element is a full-height box parked one height
+   above its container; translating it by 100% of itself drags its bottom edge
+   from the top of the photo to the bottom. */
+@keyframes sweep-y {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+@keyframes slide-x {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(300%); }
+}
+
+.animate-sweep-y {
+  animation: sweep-y 2.4s linear infinite;
+}
+
+.animate-slide-x {
+  animation: slide-x 1.4s ease-in-out infinite;
+}
+
 .animate-marquee {
   animation: marquee 20s linear infinite;
 }

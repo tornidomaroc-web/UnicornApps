@@ -25,11 +25,16 @@ export const HISTORY_LIMIT = 10
  * Build the local row for a generation that just succeeded. The id is local
  * and unique per call so React keys never collide with server ids or with a
  * second generation in the same session.
+ *
+ * `platform` is optional and, when absent, the key is absent too: the
+ * dashboard no longer asks the user to pick one (every result covers every
+ * platform), and a row must not carry a value nobody chose. Older server rows
+ * may still have it.
  */
 export function localGenerationRow<TContent>(
   content: TContent,
   imageUrl: string,
-  platform: string,
+  platform?: string,
   now: Date = new Date(),
   seq: number = now.getTime()
 ): HistoryRow<TContent> {
@@ -38,7 +43,7 @@ export function localGenerationRow<TContent>(
     created_at: now.toISOString(),
     content,
     image_url: imageUrl,
-    platform,
+    ...(platform !== undefined ? { platform } : {}),
   }
 }
 
