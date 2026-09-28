@@ -2,9 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { REFINE_CREDIT_COST, createServiceClient } from '@/lib/credits'
 import {
   classifyGeminiError,
-  resolveGeminiModels,
-  MAX_MODEL_ATTEMPTS,
-  ModelResolutionError,
+  formatModelNotFound,
+  GEMINI_MODELS,
+  ModelNotFoundError,
   QuotaExhaustedError,
 } from '@/lib/gemini'
 import { checkRateLimit } from '@/lib/rate-limit'
@@ -23,8 +23,8 @@ import { NextResponse } from 'next/server'
 export const maxDuration = 60
 
 export async function POST(req: Request) {
-  // Start the clock before ANY awaited work — the model-list call below is an
-  // unbounded network round-trip and spends this budget too.
+  // Start the clock before ANY awaited work — everything awaited below, auth
+  // and credit reserve included, spends the same budget as the Gemini call.
   const deadline = createDeadline()
 
   try {
@@ -52,11 +52,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ code: 'INVALID_REQUEST' }, { status: 400 })
     }
 
-    // Rate limit BEFORE any Gemini work (incl. the resolveGeminiModels ListModels
-    // quota call) and BEFORE reserve_credit: a throttled request does zero Gemini
-    // work and never touches a credit. The 429 maps to dash.aiBusy (EN/AR) via
-    // src/lib/api-error.ts by STATUS, so no new UX is needed. checkRateLimit fails
-    // OPEN on any error, so a limiter fault can never block refinement here.
+    // Rate limit BEFORE any Gemini work and BEFORE reserve_credit: a throttled
+    // request does zero Gemini work and never touches a credit. The 429 maps to
+    // dash.aiBusy (EN/AR) via src/lib/api-error.ts by STATUS, so no new UX is
+    // needed. checkRateLimit fails OPEN on any error, so a limiter fault can
+    // never block refinement here.
     const rateLimit = await checkRateLimit(user.id)
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -76,16 +76,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ code: 'AI_UNAVAILABLE' }, { status: 500 })
     }
 
-    // Same dynamic model lookup as the generate route — never pin a version.
-    // Resolved BEFORE the reserve so a resolution failure touches NO credit.
-    // Passing the deadline bounds the ListModels round-trip (RESOLVE_TIMEOUT_MS,
-    // clamped to what is left of the wall): unbounded, a hang here ran to the
-    // platform kill, which is not a JS exception, so no catch ran and the user
-    // waited ~60s for an opaque 504.
-    const candidates = (await resolveGeminiModels(geminiApiKey, deadline)).slice(
-      0,
-      MAX_MODEL_ATTEMPTS
-    )
+    // The models this request may call are pinned by name in @/lib/gemini and
+    // tried in order, exactly as in the generate route. There is no list call
+    // and no choice made here: the first entry serves unless it is transiently
+    // overloaded, and a model Google no longer serves fails loud
+    // (ModelNotFoundError) rather than handing the request to something unpriced.
 
     const prompt = `You are an elite E-commerce Growth Architect. You are refining existing product copy based on a user instruction.
     ${languageInstruction}
@@ -178,15 +173,15 @@ export async function POST(req: Request) {
     // refunds. Content is NEVER returned on a Gemini/parse failure.
     let settled = false
     try {
-      // Try candidates in order; fall back when a model is over capacity.
+      // Try the pinned models in order; fall back only when one is over capacity.
       let apiResponse: Response | null = null
       let data: any = null
-      // Telemetry bookkeeping (item 23). `modelName` is loop-scoped and dies with
-      // the iteration, so the model that actually served the call is NOT in scope
+      // Telemetry bookkeeping. `modelName` is loop-scoped and dies with the
+      // iteration, so the model that actually served the call is NOT in scope
       // at the capture sites below. Inert: nothing reads these except recordUsage.
       let usedModel: string | null = null
       let attempts = 0
-      for (const modelName of candidates) {
+      for (const modelName of GEMINI_MODELS) {
         usedModel = modelName
         attempts++
         // Never START an attempt we cannot finish inside the wall. Throws
@@ -224,6 +219,12 @@ export async function POST(req: Request) {
         // the same quota bucket and would fail too. Stop now rather than burn
         // another call. Thrown from INSIDE this try so `finally` still refunds.
         if (errorClass === 'quota') throw new QuotaExhaustedError()
+        // A pinned model Google does not serve for this key. Not an outage, so
+        // no other model is tried. Thrown from INSIDE this try so `finally`
+        // refunds; the outer catch logs the one greppable line.
+        if (errorClass === 'model_not_found') {
+          throw new ModelNotFoundError(modelName, apiResponse.status, message)
+        }
         // 'fatal' breaks to the existing !ok throw below -> 500, as before.
         if (errorClass === 'fatal') break
         console.warn(`Gemini ${modelName} overloaded (${apiResponse.status}), trying next model`)
@@ -352,16 +353,16 @@ export async function POST(req: Request) {
         { status: 503, headers: { 'Retry-After': '30' } }
       )
     }
-    if (error instanceof ModelResolutionError) {
-      // Could not list models and had no cached list. 503 maps to dash.aiBusy
-      // (EN/AR) by STATUS in src/lib/api-error.ts; previously this fell through
-      // to the 500 below, which answers the generic dash.requestFailed.
-      // Nothing was reserved (resolution runs BEFORE reserve_credit), so there
-      // is no credit to refund on this path.
-      console.error('Gemini model resolution failed:', error.message)
+    if (error instanceof ModelNotFoundError) {
+      // A pinned model is gone: retired, renamed, or not enabled for this key.
+      // ONE line, greppable by MODEL_NOT_FOUND_TAG, naming the model and the
+      // pinned list. 503 maps to dash.aiBusy (EN/AR) by STATUS in
+      // src/lib/api-error.ts. The inner `finally` has already refunded the
+      // credit; nothing was billed, because Google served nothing.
+      console.error(formatModelNotFound('refine', error))
       return NextResponse.json(
-        { error: 'AI service is busy', code: 'MODEL_RESOLUTION_FAILED' },
-        { status: 503, headers: { 'Retry-After': '30' } }
+        { error: 'AI service is busy', code: 'MODEL_NOT_FOUND' },
+        { status: 503, headers: { 'Retry-After': '60' } }
       )
     }
     // THE FULL DETAIL STAYS HERE, SERVER SIDE. The response carries no prose.
@@ -374,8 +375,7 @@ export async function POST(req: Request) {
     // internal failure text to anyone who could make this route throw.
     //
     // With no `error` field the client falls through to the translated
-    // dash.requestFailed, which is what the ModelResolutionError comment above
-    // already claimed this 500 did.
+    // dash.requestFailed.
     console.error('Refinement error:', error)
     return NextResponse.json({ code: 'INTERNAL_ERROR' }, { status: 500 })
   }
