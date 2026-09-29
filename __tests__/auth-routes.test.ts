@@ -1,12 +1,12 @@
 /**
- * /auth/callback and /auth/confirm, as plain route handlers with the server
- * Supabase client mocked at the module boundary.
+ * /auth/callback as a plain route handler with the server Supabase client
+ * mocked at the module boundary. /auth/confirm is a page plus an action now
+ * and lives in auth-confirm.test.ts.
  */
 jest.mock('@/lib/supabase/server', () => ({ createClient: jest.fn() }))
 
 import { createClient } from '@/lib/supabase/server'
 import { GET as callback } from '../src/app/auth/callback/route'
-import { GET as confirm } from '../src/app/auth/confirm/route'
 
 const mockedCreateClient = createClient as unknown as jest.Mock
 const ORIGIN = 'https://www.unicornapps.app'
@@ -95,44 +95,3 @@ describe('/auth/callback', () => {
   })
 })
 
-describe('/auth/confirm (token_hash + verifyOtp)', () => {
-  it('verifies a recovery token and lands on /update-password with NO token in the URL', async () => {
-    const sb = fakeSupabase()
-    mockedCreateClient.mockReturnValue(sb)
-    const res = await confirm(get('/auth/confirm?token_hash=th_123&type=recovery&next=/update-password'))
-    expect(sb.auth.verifyOtp).toHaveBeenCalledWith({ type: 'recovery', token_hash: 'th_123' })
-    const to = location(res)
-    expect(to.href).toBe(`${ORIGIN}/update-password`)
-    expect(res.headers.get('location')).not.toMatch(/token_hash|th_123|type=/)
-  })
-
-  it('defaults a recovery link to /update-password when next is missing', async () => {
-    mockedCreateClient.mockReturnValue(fakeSupabase())
-    const res = await confirm(get('/auth/confirm?token_hash=th&type=recovery'))
-    expect(location(res).pathname).toBe('/update-password')
-  })
-
-  it.each(['@evil.com', '//evil.com', 'https://evil.com'])('next=%p stays on the site', async (next) => {
-    mockedCreateClient.mockReturnValue(fakeSupabase())
-    const res = await confirm(get(`/auth/confirm?token_hash=th&type=recovery&next=${encodeURIComponent(next)}`))
-    expect(location(res).origin).toBe(ORIGIN)
-    expect(location(res).pathname).toBe('/update-password')
-  })
-
-  it.each([
-    ['no token', '/auth/confirm?type=recovery'],
-    ['no type', '/auth/confirm?token_hash=th'],
-    ['an invented type', '/auth/confirm?token_hash=th&type=admin'],
-  ])('%s -> link_expired without calling Supabase', async (_label, path) => {
-    const res = await confirm(get(path))
-    expect(location(res).search).toBe('?error=link_expired')
-    expect(mockedCreateClient).not.toHaveBeenCalled()
-  })
-
-  it('an expired or used token is link_expired, with no Supabase text', async () => {
-    mockedCreateClient.mockReturnValue(fakeSupabase({ verifyError: { code: 'otp_expired', message: 'Email link is invalid or has expired' } }))
-    const res = await confirm(get('/auth/confirm?token_hash=th&type=recovery'))
-    expect(location(res).search).toBe('?error=link_expired')
-    expect(res.headers.get('location')).not.toMatch(/invalid|expired\b.*link/i)
-  })
-})
