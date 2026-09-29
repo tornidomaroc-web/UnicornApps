@@ -3,40 +3,29 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { mapSupabaseAuthError, type AuthResult } from '@/lib/auth-errors'
+import { AUTH_PROVIDERS, isSocialProvider } from '@/lib/auth-providers'
+import { isNativeRequest } from '@/lib/native-request'
+
+export type { AuthResult } from '@/lib/auth-errors'
 
 /**
- * Result returned by the email/password + reset actions.
- * `code` is a stable, language-agnostic key the client maps to translated copy
- * (see `login.err.*` / `login.msg.*` in LanguageContext). `detail` carries the
- * raw Supabase message only for the `unknown` fallback so no information is lost.
+ * Every result is a CODE (see auth-errors.ts) that the screen maps to
+ * translated copy. The raw Supabase message is logged on the server for an
+ * unmapped error and never returned: it is English, and it is not ours.
  */
-export type AuthResult = { code: string; detail?: string }
 
 const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
-/** Map a raw Supabase auth error into a stable, translatable code. */
-function mapError(message: string): AuthResult {
-  const m = (message || '').toLowerCase()
-  if (m.includes('email not confirmed')) return { code: 'email_not_confirmed' }
-  if (m.includes('invalid login credentials')) return { code: 'invalid_credentials' }
-  if (m.includes('already registered') || m.includes('already been registered'))
-    return { code: 'already_registered' }
-  if (m.includes('password should be') || m.includes('at least'))
-    return { code: 'weak_password' }
-  if (m.includes('rate limit') || m.includes('too many') || m.includes('429'))
-    return { code: 'rate_limited' }
-  // Network / DNS / backend-unreachable (e.g. a deleted Supabase project).
-  if (
-    m.includes('fetch') ||
-    m.includes('network') ||
-    m.includes('timeout') ||
-    m.includes('enotfound') ||
-    m.includes('econnrefused') ||
-    m.includes('getaddrinfo') ||
-    m.includes('dns')
-  )
-    return { code: 'server_unreachable' }
-  return { code: 'unknown', detail: message }
+function fail(error: { message?: string; code?: string } | null | undefined): AuthResult {
+  const code = mapSupabaseAuthError(error?.message, error?.code)
+  if (code === 'unknown') console.error('[auth] unmapped error:', error?.code ?? '', error?.message ?? '')
+  return { code }
+}
+
+function unreachable(e: unknown): AuthResult {
+  console.error('[auth] backend unreachable:', (e as Error)?.message)
+  return { code: 'server_unreachable' }
 }
 
 export async function login(
@@ -53,12 +42,12 @@ export async function login(
   let result
   try {
     result = await supabase.auth.signInWithPassword({ email, password })
-  } catch (e: any) {
+  } catch (e) {
     // A dead/unreachable backend throws here rather than returning an error.
-    return { code: 'server_unreachable', detail: e?.message }
+    return unreachable(e)
   }
 
-  if (result.error) return mapError(result.error.message)
+  if (result.error) return fail(result.error)
 
   revalidatePath('/', 'layout')
   redirect('/dashboard')
@@ -83,11 +72,11 @@ export async function signup(
       password,
       options: { emailRedirectTo: `${siteUrl()}/auth/callback` },
     })
-  } catch (e: any) {
-    return { code: 'server_unreachable', detail: e?.message }
+  } catch (e) {
+    return unreachable(e)
   }
 
-  if (result.error) return mapError(result.error.message)
+  if (result.error) return fail(result.error)
 
   // When "Confirm email" is enabled, signUp succeeds but returns no session.
   // Tell the user to check their inbox instead of bouncing them to /dashboard
@@ -110,14 +99,17 @@ export async function requestPasswordReset(
 
   let result
   try {
+    // redirectTo stays on /auth/callback: it is what the CURRENT email
+    // template sends people to. Once the template links to /auth/confirm with
+    // a token_hash, the template decides the target and this value is unused.
     result = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${siteUrl()}/auth/callback?next=/update-password`,
     })
-  } catch (e: any) {
-    return { code: 'server_unreachable', detail: e?.message }
+  } catch (e) {
+    return unreachable(e)
   }
 
-  if (result.error) return mapError(result.error.message)
+  if (result.error) return fail(result.error)
   // Always report success-shaped copy to avoid leaking which emails exist.
   return { code: 'reset_sent' }
 }
@@ -135,11 +127,11 @@ export async function updatePassword(
   let result
   try {
     result = await supabase.auth.updateUser({ password })
-  } catch (e: any) {
-    return { code: 'server_unreachable', detail: e?.message }
+  } catch (e) {
+    return unreachable(e)
   }
 
-  if (result.error) return mapError(result.error.message)
+  if (result.error) return fail(result.error)
 
   revalidatePath('/', 'layout')
   redirect('/dashboard')
@@ -147,27 +139,34 @@ export async function updatePassword(
 
 export async function logout() {
   const supabase = createClient()
-  if (!supabase) return redirect('/login?error=Server+Configuration+Error')
+  if (!supabase) return redirect('/login?error=config_error')
   await supabase.auth.signOut()
   revalidatePath('/', 'layout')
   redirect('/login')
 }
 
-export async function signInWithGoogle() {
+/**
+ * Start an OAuth sign-in. Refused, before any provider is contacted, when the
+ * provider is not switched on in AUTH_PROVIDERS or the request comes from the
+ * native app: a hidden button is not a disabled one, and the action is
+ * reachable without the button.
+ */
+export async function signInWithProvider(provider: unknown) {
+  if (!isSocialProvider(provider) || !AUTH_PROVIDERS[provider] || isNativeRequest()) {
+    redirect('/login?error=oauth_failed')
+  }
   const supabase = createClient()
-  if (!supabase) return redirect('/login?error=Server+Configuration+Error')
+  if (!supabase) return redirect('/login?error=config_error')
+
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${siteUrl()}/auth/callback`,
-    },
+    provider,
+    options: { redirectTo: `${siteUrl()}/auth/callback` },
   })
 
-  if (error) {
-    redirect('/login?error=' + encodeURIComponent(error.message))
+  if (error || !data?.url) {
+    console.error('[auth] OAuth start failed:', provider, error?.code ?? error?.message ?? 'no url')
+    redirect('/login?error=oauth_failed')
   }
 
-  if (data.url) {
-    redirect(data.url)
-  }
+  redirect(data.url)
 }
