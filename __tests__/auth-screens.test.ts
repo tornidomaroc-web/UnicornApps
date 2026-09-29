@@ -44,7 +44,12 @@ describe('no raw text reaches an auth screen', () => {
   })
 
   it('no route or action puts a message into a /login URL', () => {
-    for (const p of ['src/app/auth/callback/route.ts', 'src/app/auth/confirm/route.ts', 'src/app/(auth)/login/actions.ts']) {
+    for (const p of [
+      'src/app/auth/callback/route.ts',
+      'src/app/auth/confirm/actions.ts',
+      'src/app/auth/confirm/page.tsx',
+      'src/app/(auth)/login/actions.ts',
+    ]) {
       const src = strip(read(p))
       expect(src).not.toMatch(/login\?error=['"`]?\s*\+/)
       expect(src).not.toMatch(/encodeURIComponent\([^)]*message/)
