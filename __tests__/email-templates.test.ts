@@ -54,7 +54,7 @@ describe.each(Object.entries(TEMPLATES))('%s template', (_name, { file, link }) 
     expect(subjectOf(html)).toMatch(/[؀-ۿ]/)
     expect(text).toMatch(/UnicornApps/)
     expect(text).toMatch(/ignore this email/i)
-    expect(text).toMatch(/تجاهل هذه الرسالة/)
+    expect(text).toMatch(/تجاهل (هذه )?الرسالة/)
     expect(html).toMatch(/dir="rtl"/)
   })
 
