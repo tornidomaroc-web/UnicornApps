@@ -62,6 +62,18 @@ export default function LoginPage({
     if (signupState?.code === 'check_email') setCheckEmailOpen(true)
   }, [signupState])
 
+  // A sent reset link gets the same full panel. The one-line banner it used to
+  // get was rendered only while `mode` was 'reset': the result and the view
+  // were coupled through a tab, so anything that moved the tab during the
+  // request left the user on the sign-in form with no confirmation at all.
+  // The panel is driven by the result alone and replaces the form, so it
+  // cannot be missed and cannot be lost to a mode change.
+  const [resetSentOpen, setResetSentOpen] = useState(false)
+  useEffect(() => {
+    if (resetState?.code === 'reset_sent') setResetSentOpen(true)
+  }, [resetState])
+  const mailPanel = checkEmailOpen ? 'check_email' : resetSentOpen ? 'reset_sent' : null
+
   const switchMode = (next: Mode) => {
     setMode(next)
     setShowPassword(false)
@@ -95,20 +107,21 @@ export default function LoginPage({
     </>
   )
 
-  if (checkEmailOpen) {
+  if (mailPanel) {
     return (
-      <AuthShell title={t('login.msg.check_email_title')} footer={footer}>
+      <AuthShell title={t(`login.msg.${mailPanel}_title`)} footer={footer}>
         <div className="flex flex-col items-center space-y-5 text-center">
           <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-300">
             <MailCheck className="h-7 w-7" aria-hidden />
           </span>
           <p role="status" className="max-w-xs text-[15px] leading-relaxed text-slate-300">
-            {t('login.msg.check_email')}
+            {t(`login.msg.${mailPanel}`)}
           </p>
           <button
             type="button"
             onClick={() => {
               setCheckEmailOpen(false)
+              setResetSentOpen(false)
               switchMode('signin')
             }}
             className="flex h-14 w-full items-center justify-center whitespace-nowrap rounded-full bg-brand px-6 text-base font-bold text-white shadow-glow-brand hover:bg-brand/90"

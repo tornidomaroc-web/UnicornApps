@@ -1,122 +1,78 @@
-"use client"
+'use client'
 
-import { Button } from "@/components/ui/button";
-import { Sparkles, BarChart3, History, Shield, Zap, Globe, Layout, Monitor, FileDown, MessagesSquare } from "lucide-react";
-import Link from "next/link";
-import { useLang } from "@/lib/i18n/LanguageContext";
-import { useIsNative } from "@/hooks/useIsNative";
+import {
+  AlignLeft,
+  Camera,
+  Code2,
+  FileText,
+  Hash,
+  History,
+  Languages,
+  List,
+  MessageSquare,
+  Palette,
+  Store,
+  Type,
+} from 'lucide-react'
+import Footer from '@/components/layout/Footer'
+import { CARD, EndCard, PAGE, PricingTeaser, SectionHead, Tile, WRAP } from '@/components/marketing/Marketing'
+import { useIsNative } from '@/hooks/useIsNative'
+import { useLang } from '@/lib/i18n/LanguageContext'
 
+/**
+ * The features page: the eight blocks one generation produces, then what
+ * sits around them (refine, history and CSV, camera, language). Same
+ * vocabulary as the landing page; every item is a feature that ships today.
+ */
 export default function FeaturesPage() {
-  const { t } = useLang();
-  const { isNative, resolved } = useIsNative();
-  const showPricing = resolved && !isNative;
+  const { t } = useLang()
+  const { isNative, resolved } = useIsNative()
+  const showPricing = resolved && !isNative
 
-  const featureGroups = [
-    {
-      title: t('features.group1.title'),
-      icon: <Sparkles className="w-8 h-8 text-brand" />,
-      features: [
-        { name: t('features.f1.name'), desc: t('features.f1.desc') },
-        { name: t('features.f2.name'), desc: t('features.f2.desc') },
-        { name: t('features.f3.name'), desc: t('features.f3.desc') }
-      ]
-    },
-    {
-      title: t('features.group2.title'),
-      icon: <Zap className="w-8 h-8 text-brand" />,
-      features: [
-        { name: t('features.f4.name'), desc: t('features.f4.desc') },
-        { name: t('features.f5.name'), desc: t('features.f5.desc') },
-        { name: t('features.f6.name'), desc: t('features.f6.desc') }
-      ]
-    },
-    {
-      title: t('features.group3.title'),
-      icon: <Layout className="w-8 h-8 text-brand" />,
-      features: [
-        { name: t('features.f7.name'), desc: t('features.f7.desc') },
-        { name: t('features.f8.name'), desc: t('features.f8.desc') },
-        { name: t('features.f9.name'), desc: t('features.f9.desc') }
-      ]
-    }
-  ];
+  const outputs = [
+    { icon: Type, key: 'title' },
+    { icon: AlignLeft, key: 'desc' },
+    { icon: List, key: 'bullets' },
+    { icon: FileText, key: 'meta' },
+    { icon: Code2, key: 'shopify' },
+    { icon: Hash, key: 'social' },
+    { icon: Palette, key: 'data' },
+    { icon: Store, key: 'preview' },
+  ] as const
+
+  const around = [
+    { icon: MessageSquare, key: 'refine' },
+    { icon: History, key: 'history' },
+    { icon: Camera, key: 'camera' },
+    { icon: Languages, key: 'lang' },
+  ] as const
 
   return (
-    <main className="min-h-screen bg-[#070710] text-[#c8cfe0] pt-32 pb-24 px-4 relative overflow-hidden">
-      {/* BACKGROUND EFFECTS */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-brand/10 rounded-full blur-[120px] animate-float-orb" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand/10 rounded-full blur-[120px] animate-float-orb-slow" />
-        <div className="absolute inset-0 opacity-[0.02]" 
-             style={{ backgroundImage: `linear-gradient(#c8cfe0 1px, transparent 1px), linear-gradient(90deg, #c8cfe0 1px, transparent 1px)`, backgroundSize: '60px 60px' }} 
-        />
+    <main className={PAGE}>
+      <div className={WRAP}>
+        <section className={CARD}>
+          <SectionHead eyebrow={t('feat.eyebrow')} title={t('feat.title')} sub={t('feat.sub')} />
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+            {outputs.map(({ icon, key }) => (
+              <Tile key={key} icon={icon} name={t(`home.out.${key}.name`)} desc={t(`home.out.${key}.desc`)} />
+            ))}
+          </ul>
+        </section>
+
+        <section className={`${CARD} mt-6`}>
+          <SectionHead title={t('feat.more.title')} />
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+            {around.map(({ icon, key }) => (
+              <Tile key={key} icon={icon} name={t(`feat.${key}.name`)} desc={t(`feat.${key}.desc`)} />
+            ))}
+          </ul>
+        </section>
+
+        {showPricing && <PricingTeaser t={t} />}
+
+        <EndCard title={t('feat.end.title')} sub={t('home.end.sub')} cta={t('home.cta')} />
       </div>
-
-      <div className="max-w-7xl mx-auto relative z-10">
-        {/* HERO */}
-        <div className="text-center mb-24">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand/10 border border-brand/30 text-brand text-[10px] font-black uppercase tracking-widest mb-6 backdrop-blur-md">
-            {t('features.badge')}
-          </div>
-          <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-8 leading-[0.9]">
-            {t('features.title1')} <br />
-            <span className="text-white italic uppercase">
-              {t('features.title2')}
-            </span>
-            <br /> {t('features.title3')}
-          </h1>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium">
-            {t('features.sub')}
-          </p>
-        </div>
-
-        {/* FEATURES GRID */}
-        <div className="space-y-24">
-           {featureGroups.map((group, groupIdx) => (
-             <div key={group.title} className="space-y-12">
-                <div className="flex items-center gap-4 border-l-4 border-brand pl-6">
-                   <div className="w-14 h-14 bg-brand/20 border border-brand/20 rounded-2xl flex items-center justify-center">
-                      {group.icon}
-                   </div>
-                   <h2 className="text-3xl font-black text-white uppercase tracking-tighter">{group.title}</h2>
-                </div>
-                
-                <div className="grid md:grid-cols-3 gap-8">
-                   {group.features.map((feature, idx) => (
-                     <div key={feature.name} className="bg-white/[0.03] border border-white/5 p-10 rounded-[2.5rem] hover:border-brand/30 transition-all hover:bg-white/[0.05] group">
-                        <h3 className="text-xl font-black text-white uppercase tracking-tight mb-4 group-hover:text-brand transition-colors">{feature.name}</h3>
-                        <p className="text-slate-400 font-medium leading-relaxed">{feature.desc}</p>
-                     </div>
-                   ))}
-                </div>
-             </div>
-           ))}
-        </div>
-
-        {/* FINAL CTA */}
-        <div className="mt-40 text-center relative py-20 px-8 rounded-[4rem] bg-gradient-to-t from-brand/20 via-black to-black border-t border-brand/30">
-          <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter mb-8 italic leading-none">
-            {t('features.cta.title').split('<br />')[0]} <br /> {t('features.cta.title').split('<br />')[1]}
-          </h2>
-          <p className="text-slate-400 font-medium max-w-sm mx-auto mb-12">
-            {t('features.cta.sub')}
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-6">
-            <Link href="/login">
-              <Button size="lg" className="h-16 px-12 text-xs font-black uppercase tracking-widest rounded-2xl bg-brand hover:bg-brand/90 text-white shadow-[0_0_30px_rgb(var(--ua-brand-glow)/0.4)]">
-                {t('features.cta.btn1')}
-              </Button>
-            </Link>
-            {showPricing && (
-              <Link href="/pricing">
-                <Button variant="ghost" size="lg" className="h-16 px-12 text-xs font-black uppercase tracking-widest rounded-2xl text-white hover:bg-white/5 border border-white/10">
-                  {t('features.cta.btn2')}
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </div>
+      <Footer />
     </main>
-  );
+  )
 }

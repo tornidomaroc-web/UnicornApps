@@ -162,10 +162,11 @@ describe('the rule is the ONLY thing covering unguarded tracking utilities', () 
     // The floor is an order-of-magnitude guard against a vacuous pass (141 sites
     // when written; 99 after the dashboard input and history moved to
     // sentence-case type with no tracking on any surface that renders model
-    // output). It is not a quota: fewer tracking utilities is the direction the
-    // Arabic surface wants.
-    expect(total).toBeGreaterThan(50)
-    expect(unguarded).toBeGreaterThan(50)
+    // output; 54 once the marketing pages and the footer followed). It is not
+    // a quota: fewer tracking utilities is the direction the Arabic surface
+    // wants.
+    expect(total).toBeGreaterThan(30)
+    expect(unguarded).toBeGreaterThan(30)
   })
 
   it('the CSS rule that covers them is present (fails loudly if it is removed)', () => {
