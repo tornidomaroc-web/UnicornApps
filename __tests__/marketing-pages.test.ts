@@ -110,7 +110,13 @@ describe('a phone can reach the pages: the menu', () => {
     expect(code.navbar).toMatch(/aria-expanded=\{menuOpen\}/)
     expect(code.navbar).toMatch(/aria-controls="site-menu"/)
     expect(code.navbar).toMatch(/id="site-menu" className="lg:hidden/)
-    expect(code.navbar).toMatch(/className="lg:hidden flex h-10 w-10/)
+    expect(code.navbar).toMatch(/className="lg:hidden flex h-11 w-11/)
+  })
+
+  it('holds what the bar has no room for below lg: sign-out and the language switch', () => {
+    const menu = code.navbar.slice(code.navbar.indexOf('id="site-menu"'))
+    expect(menu).toMatch(/<form action=\{logout\}>/)
+    expect(menu).toMatch(/onClick=\{toggleLang\}/)
   })
 
   it('closes on navigation and on Escape', () => {
@@ -122,6 +128,54 @@ describe('a phone can reach the pages: the menu', () => {
     for (const href of ["'/'", "'/features'", "'/about'", '"/dashboard"', '"/account"', '"/login"']) {
       expect(code.navbar).toContain(href)
     }
+  })
+})
+
+describe('the bar is in the same visual language, and light', () => {
+  it('carries no letter-spacing, no uppercase and no type below 12px', () => {
+    expect(code.navbar).not.toMatch(/tracking-/)
+    expect(code.navbar).not.toMatch(/\buppercase\b/)
+    expect(code.navbar).not.toMatch(/text-\[(9|10|11)px\]/)
+    expect(code.navbar).not.toMatch(/text-xs\b/)
+  })
+
+  it('paints no blur, no perpetual animation and no scale transform', () => {
+    expect(code.navbar).not.toMatch(/blur/)
+    expect(code.navbar).not.toMatch(/animate-/)
+    expect(code.navbar).not.toMatch(/scale-/)
+  })
+
+  it('every control is 44px tall on a 64px bar, the height the layout offsets the page by', () => {
+    expect(code.navbar).toMatch(/const SHAPE =\s*'h-11 /)
+    expect(code.navbar).not.toMatch(/\bh-(8|9|10)\b(?! w-10)/)
+    expect(code.navbar).toMatch(/flex h-16 max-w-7xl/)
+    expect(read('src/app/layout.tsx')).toMatch(/<main className="flex-1 mt-16 /)
+  })
+
+  it('has exactly one brand-filled style, used by the main action of each auth state', () => {
+    expect(code.navbar.match(/(?<![:\w-])bg-brand\b(?!\/)/g)).toHaveLength(1)
+    expect(code.navbar.match(/\$\{PRIMARY\}/g)).toHaveLength(2)
+    expect(code.navbar).toMatch(/<Link href="\/login" className=\{`\$\{PRIMARY\} flex`\}>/)
+    expect(code.navbar).toMatch(/<Link href="\/dashboard" className=\{`\$\{PRIMARY\} hidden min-\[360px\]:flex`\}>/)
+  })
+
+  it('the credit count follows the credits bus and never re-renders the server tree', () => {
+    expect(code.navbar).toMatch(/useEffect\(\(\) => subscribeCredits\(setCredits\), \[\]\)/)
+    expect(code.navbar).not.toMatch(/useRouter|router\.refresh/)
+  })
+
+  it('the credit NUMBER renders at every width; only the word beside it gives way', () => {
+    const at = code.navbar.indexOf('<span>{credits}</span>')
+    expect(at).toBeGreaterThan(0)
+    const chip = code.navbar.slice(code.navbar.lastIndexOf('<div', at), at)
+    expect(chip).toMatch(/^<div className="flex h-11 /)
+    // `aria-hidden` on the icon is not a display utility.
+    expect(chip.replace(/aria-hidden/g, '')).not.toMatch(/hidden|sr-only/)
+  })
+
+  it('the bar itself never links to pricing: that link is the menu\'s alone', () => {
+    expect(code.navbar).toMatch(/const barPages = \[home, features, about\]/)
+    expect(code.navbar.match(/\/pricing/g)).toHaveLength(1)
   })
 })
 

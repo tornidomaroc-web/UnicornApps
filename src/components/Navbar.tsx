@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { logout } from "@/app/(auth)/login/actions";
-import { Button } from "@/components/ui/button";
-import { Sparkles, Zap, LogOut, User, Menu, X } from "lucide-react";
+import { Zap, LogOut, User, Menu, X } from "lucide-react";
 import { useLang } from '@/lib/i18n/LanguageContext';
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -11,6 +10,28 @@ import type { User as AuthUser } from "@supabase/supabase-js";
 import { deriveNavView, reconcileNavState } from "./navbar-auth";
 import { subscribeCredits } from "@/lib/credits-bus";
 import { useIsNative } from "@/hooks/useIsNative";
+
+/**
+ * The site bar, in the same visual language as the dashboard, the landing
+ * pages and the auth screens: sentence-case bold type, full pills, one
+ * brand-filled pill for the main action and neutral outlines for the rest.
+ *
+ * SIZE. Every control is 44px tall, on a 64px bar. The bar is exactly as tall
+ * as the offset the layout gives the page under it, so it covers nothing.
+ *
+ * TWO TIERS. Below 1024px the bar carries the mark, the one main action, the
+ * credit count and the menu button; everything else lives in the menu, where
+ * a row is 48px tall. From 1024px the menu is gone and the bar carries it all.
+ *
+ * WEIGHT. An opaque background, no blur, no perpetual animation, no scale
+ * transforms: nothing here asks a low-end WebView to composite a layer.
+ *
+ * DIRECTION. Logical classes only, and no letter-spacing anywhere.
+ */
+const SHAPE =
+  'h-11 items-center justify-center whitespace-nowrap rounded-full text-[15px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60';
+const GHOST = `${SHAPE} border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white`;
+const PRIMARY = `${SHAPE} bg-brand px-5 text-white shadow-glow-brand hover:bg-brand/90`;
 
 export default function Navbar({
   initialUser = null,
@@ -52,11 +73,11 @@ export default function Navbar({
   // the link back to the root.
   const onDashboard = pathname === '/dashboard';
 
-  // THE MENU. The page links were `hidden lg:flex`, so below 1024px — every
-  // phone, every tablet, the Android WebView always — there was no way to
-  // reach /features or /about from the bar at all. This button and panel are
-  // that way. The panel is part of the fixed nav, so it sits under the bar and
-  // over the page; it closes on navigation and on Escape.
+  // THE MENU. Below 1024px — every phone, every tablet, the Android WebView
+  // always — the bar has no room for the page links, the account entry or the
+  // sign-out, so this button and panel are the way to them. The panel is part
+  // of the fixed nav, so it sits under the bar and over the page; it closes on
+  // navigation, on a tap on any of its links, and on Escape.
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     setMenuOpen(false);
@@ -69,123 +90,133 @@ export default function Navbar({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [menuOpen]);
+  const closeMenu = () => setMenuOpen(false);
 
   // The pricing link is WEB ONLY, hidden until native detection resolves to
   // web — the same gate every other pricing surface uses. The native app must
-  // never see it, and unresolved means hidden.
+  // never see it, and unresolved means hidden. It lives in the menu alone: the
+  // bar's own links render before detection has answered, so a pricing link
+  // there would pop in and push its neighbours.
   const { isNative, resolved } = useIsNative();
   const showPricing = resolved && !isNative;
 
-  const pages: { href: string; label: string }[] = [
-    { href: '/', label: t('nav.home') },
-    { href: '/features', label: t('nav.features') },
+  const home = { href: '/', label: t('nav.home') };
+  const features = { href: '/features', label: t('nav.features') };
+  const about = { href: '/about', label: t('nav.about') };
+  const barPages = [home, features, about];
+  const menuPages = [
+    home,
+    features,
     ...(showPricing ? [{ href: '/pricing', label: t('nav.pricing') }] : []),
-    { href: '/about', label: t('nav.about') },
+    about,
   ];
-  const menuLink = (href: string) =>
-    `flex h-12 items-center rounded-2xl px-4 text-base font-bold transition-colors ${
-      pathname === href ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'
+
+  const barLink = (href: string) =>
+    `flex h-11 items-center rounded-full px-4 text-[15px] font-bold transition-colors ${
+      pathname === href ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'
+    }`;
+  const menuRow = (href?: string) =>
+    `flex h-12 w-full items-center rounded-2xl px-4 text-base font-bold transition-colors ${
+      href && pathname === href ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'
     }`;
 
+  // The switch is labelled with the language it switches TO, written in that
+  // language, so a reader who cannot read the current one can still find it.
+  const otherLang = lang === 'en' ? 'ar' : 'en';
+  const otherLangName = lang === 'en' ? 'العربية' : 'English';
+  // On the English surface nothing else asks for the Arabic face, so without
+  // this the one Arabic word falls back to whatever the system has.
+  const otherLangFont = lang === 'en' ? 'font-arabic' : '';
+
   return (
-    <nav className="fixed top-0 w-full z-50 pt-safe border-b border-white/5 bg-[#070710]/95">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 h-20 flex items-center justify-between">
-        <div className="flex items-center gap-12">
-          <Link href="/" className="font-black text-2xl tracking-tighter text-white flex items-center gap-3 group">
+    <nav className="fixed top-0 z-50 w-full border-b border-white/5 bg-[#070710] pt-safe">
+      <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-6">
+          <Link href="/" className="flex h-11 min-w-[44px] shrink-0 items-center justify-center gap-3 text-xl font-bold text-white">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/unicornapps-mark.svg" alt="UnicornApps" width={40} height={40} className="w-10 h-10 transition-transform duration-500 group-hover:scale-105" />
-            <span className="hidden sm:block bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 group-hover:to-brand transition-all">
-              UnicornApps
-            </span>
+            <img src="/unicornapps-mark.svg" alt="UnicornApps" width={40} height={40} className="h-10 w-10" />
+            <span className="hidden sm:block">UnicornApps</span>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-8 text-[10px] uppercase font-black tracking-[0.2em] text-[#c8cfe0]/60">
-            <Link href="/" className="hover:text-brand transition-all">{t('nav.home')}</Link>
-            <Link href="/features" className="hover:text-brand transition-all">{t('nav.features')}</Link>
-            <Link href="/about" className="hover:text-brand transition-all">{t('nav.about')}</Link>
-          </div>
+          <ul className="hidden items-center gap-1 lg:flex">
+            {barPages.map((p) => (
+              <li key={p.href}>
+                <Link href={p.href} aria-current={pathname === p.href ? 'page' : undefined} className={barLink(p.href)}>
+                  {p.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="flex items-center gap-3 sm:gap-6">
-          {/* Language Toggle */}
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          {/* Signed in, a phone bar has no room for this next to the credit
+              count and the main action, so there it is a row in the menu. Signed
+              out, the same holds only on the narrowest screens, under 360px. */}
           <button
+            type="button"
             onClick={toggleLang}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white hover:border-brand/50 transition-all"
+            lang={otherLang}
+            className={`${GHOST} ${otherLangFont} px-4 ${view === 'authed' ? 'hidden sm:flex' : 'hidden min-[360px]:flex'}`}
           >
-            {lang === 'en' ? '🇸🇦 AR' : '🇬🇧 EN'}
+            {otherLangName}
           </button>
 
           {view === 'loading' ? (
             // Session still resolving. A neutral, non-interactive placeholder that
             // asserts NEITHER state — sized near the resolved clusters to limit
             // layout shift. aria-hidden: transient, nothing for AT to announce.
-            <div
-              className="h-10 w-24 rounded-2xl bg-white/5 animate-pulse"
-              aria-hidden="true"
-            />
+            <div className="h-11 w-28 rounded-full bg-white/5" aria-hidden="true" />
           ) : view === 'authed' ? (
-            <div className="flex items-center gap-2 sm:gap-4 bg-white/5 border border-white/10 rounded-2xl p-1.5 sm:ps-4 transition-all hover:border-brand/30">
+            <>
               {/* 🔴 THIS IS THE ONLY PLACE A CREDIT BALANCE RENDERS ANYWHERE IN THE APP.
                   The dashboard used to carry a header bar of its own; that bar has been
-                  deleted outright, so there is no second surface to fall back on. This
-                  element was `hidden sm:flex`, i.e. it never rendered below 640px — every
-                  phone width. Putting ANY breakpoint gate back on it leaves a phone user
-                  with no credit count at all, on every screen, and nothing else will show
-                  it to them. 12px, not 10px — 10 is not a step on this scale. */}
-              <div className="flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-brand animate-pulse" />
-                <span className="text-xs font-black uppercase tracking-widest text-[#c8cfe0]">
-                  {credits} <span className="text-slate-500">{t('nav.credits')}</span>
+                  deleted outright, so there is no second surface to fall back on.
+                  Putting ANY breakpoint gate on the NUMBER leaves a phone user with no
+                  credit count at all, on every screen, and nothing else will show it to
+                  them. Only the WORD beside it gives way, below 640px and only while
+                  the dashboard pill is taking the room; it stays in the tree for
+                  assistive technology. */}
+              <div className="flex h-11 items-center gap-1.5 whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-3.5 text-[15px] font-bold text-white">
+                <Zap aria-hidden className="h-4 w-4 shrink-0 text-brand" />
+                <span>{credits}</span>
+                <span className={onDashboard ? 'font-medium text-slate-400' : 'sr-only sm:not-sr-only sm:font-medium sm:text-slate-400'}>
+                  {t('nav.credits')}
                 </span>
               </div>
-              <div className="hidden sm:block h-6 w-px bg-white/10 mx-1" />
-              <div className="flex items-center gap-2">
-                {/* A link to the page you are already on is the cheapest thing in this
-                    bar to give up, and giving it up is what pays for the credit count
-                    above at 411px. It is also the only element on the dashboard that
-                    rendered text below 12px. */}
-                {!onDashboard && (
-                <Link href="/dashboard">
-                  <Button size="sm" className="h-8 px-4 rounded-xl bg-brand hover:bg-brand/90 text-white text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgb(var(--ua-brand-glow)/0.3)] border-none transition-all hover:scale-105 active:scale-95">
-                    {t('nav.dashboard')}
-                  </Button>
+              {/* A link to the page you are already on is the cheapest thing in this
+                  bar to give up, and giving it up is what pays for the full credit
+                  label at 360px. Under 360px the pill itself gives way: a three-digit
+                  balance needs its room, and the menu has the same link. */}
+              {!onDashboard && (
+                <Link href="/dashboard" className={`${PRIMARY} hidden min-[360px]:flex`}>
+                  {t('nav.dashboard')}
                 </Link>
-                )}
-                <Link href="/account" aria-label={t('nav.account')}>
-                  <Button variant="ghost" size="icon" className="w-8 h-8 rounded-xl text-ink-2 hover:text-brand hover:bg-brand/10 transition-all">
-                    <User aria-hidden className="w-3.5 h-3.5" />
-                  </Button>
-                </Link>
-                {/* Logout is icon-only below `sm` (the pill has no room for a second
-                    label at ~360-390px without clipping under body overflow-x-hidden);
-                    the icon is brighter (ink-1) than the account icon (ink-2) so the two
-                    are no longer indistinguishable, and aria-label names it for AT at
-                    every width. The visible word appears from `sm` up where there is
-                    room. tracking is ltr:-guarded so Arabic letter-joining survives. */}
-                <form action={logout}>
-                  <button
-                    type="submit"
-                    aria-label={t('nav.logout')}
-                    className="h-8 w-8 sm:w-auto sm:px-3 flex items-center justify-center gap-1.5 rounded-xl text-ink-1 hover:text-red-400 hover:bg-red-500/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 text-[9px] font-black uppercase ltr:tracking-widest"
-                  >
-                    <LogOut aria-hidden className="w-3.5 h-3.5 shrink-0" />
-                    <span className="hidden sm:inline">{t('nav.logout')}</span>
-                  </button>
-                </form>
-              </div>
-            </div>
+              )}
+              <Link href="/account" aria-label={t('nav.account')} className={`${GHOST} hidden w-11 lg:flex`}>
+                <User aria-hidden className="h-5 w-5" />
+              </Link>
+              {/* Icon-only until 1280px, where the bar has room for the word;
+                  aria-label names it at every width. */}
+              <form action={logout} className="hidden lg:block">
+                <button type="submit" aria-label={t('nav.logout')} className={`${GHOST} flex w-11 gap-2 xl:w-auto xl:px-4`}>
+                  {/* The arrow leaves toward the end of the line in both directions. */}
+                  <LogOut aria-hidden className="h-5 w-5 shrink-0 rtl:rotate-180" />
+                  <span className="hidden xl:inline">{t('nav.logout')}</span>
+                </button>
+              </form>
+            </>
           ) : (
-            <div className="flex items-center gap-3 sm:gap-6">
-              <Link href="/login" className="hidden sm:block text-[10px] uppercase font-black tracking-[0.2em] text-[#c8cfe0]/60 hover:text-white transition-all">
+            <>
+              {/* Both lead to the same screen, so below 640px the bar keeps the
+                  main action alone and sign-in is a row in the menu. */}
+              <Link href="/login" className={`${SHAPE} hidden px-4 text-slate-300 hover:text-white sm:flex`}>
                 {t('nav.login')}
               </Link>
-              <Link href="/login">
-                <Button size="sm" className="h-10 sm:h-11 px-4 sm:px-8 rounded-xl sm:rounded-2xl bg-brand hover:bg-brand/90 text-white text-[10px] font-black uppercase tracking-widest sm:tracking-[0.2em] shadow-[0_0_30px_rgb(var(--ua-brand-glow)/0.4)] transition-all hover:scale-105 active:scale-95 group">
-                  {t('nav.getStarted')}
-                  <Sparkles className="ms-2 w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
-                </Button>
+              <Link href="/login" className={`${PRIMARY} flex`}>
+                {t('nav.getStarted')}
               </Link>
-            </div>
+            </>
           )}
 
           <button
@@ -194,7 +225,7 @@ export default function Navbar({
             aria-expanded={menuOpen}
             aria-controls="site-menu"
             aria-label={menuOpen ? t('nav.closeMenu') : t('nav.menu')}
-            className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:text-white"
+            className="lg:hidden flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
           >
             {menuOpen ? <X aria-hidden className="h-5 w-5" /> : <Menu aria-hidden className="h-5 w-5" />}
           </button>
@@ -202,12 +233,14 @@ export default function Navbar({
       </div>
 
       {menuOpen && (
-        <div id="site-menu" className="lg:hidden border-t border-white/5 bg-[#070710]">
+        // Scrolls inside itself: on a phone held sideways the rows are taller
+        // than the screen, and a fixed panel would otherwise cut them off.
+        <div id="site-menu" className="lg:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-white/5 bg-[#070710]">
           <nav aria-label={t('nav.menu')} className="container mx-auto max-w-7xl px-4 py-3 sm:px-6">
             <ul className="space-y-1">
-              {pages.map((p) => (
+              {menuPages.map((p) => (
                 <li key={p.href}>
-                  <Link href={p.href} aria-current={pathname === p.href ? 'page' : undefined} className={menuLink(p.href)}>
+                  <Link href={p.href} onClick={closeMenu} aria-current={pathname === p.href ? 'page' : undefined} className={menuRow(p.href)}>
                     {p.label}
                   </Link>
                 </li>
@@ -217,13 +250,26 @@ export default function Navbar({
               {view === 'authed' ? (
                 <>
                   {!onDashboard && (
-                    <li><Link href="/dashboard" className={menuLink('/dashboard')}>{t('nav.dashboard')}</Link></li>
+                    <li><Link href="/dashboard" onClick={closeMenu} className={menuRow('/dashboard')}>{t('nav.dashboard')}</Link></li>
                   )}
-                  <li><Link href="/account" aria-current={pathname === '/account' ? 'page' : undefined} className={menuLink('/account')}>{t('nav.account')}</Link></li>
+                  <li><Link href="/account" onClick={closeMenu} aria-current={pathname === '/account' ? 'page' : undefined} className={menuRow('/account')}>{t('nav.account')}</Link></li>
+                  <li>
+                    <form action={logout}>
+                      <button type="submit" className={`${menuRow()} gap-3`}>
+                        <LogOut aria-hidden className="h-5 w-5 shrink-0 text-slate-500 rtl:rotate-180" />
+                        {t('nav.logout')}
+                      </button>
+                    </form>
+                  </li>
                 </>
               ) : view === 'anon' ? (
-                <li><Link href="/login" aria-current={pathname === '/login' ? 'page' : undefined} className={menuLink('/login')}>{t('nav.login')}</Link></li>
+                <li><Link href="/login" onClick={closeMenu} aria-current={pathname === '/login' ? 'page' : undefined} className={menuRow('/login')}>{t('nav.login')}</Link></li>
               ) : null}
+              <li>
+                <button type="button" onClick={toggleLang} lang={otherLang} className={`${menuRow()} ${otherLangFont}`}>
+                  {otherLangName}
+                </button>
+              </li>
             </ul>
           </nav>
         </div>
