@@ -1,125 +1,66 @@
-"use client"
+'use client'
 
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Settings, ShieldCheck, Zap, Heart, Users, Globe } from "lucide-react";
-import Link from "next/link";
-import { useLang } from "@/lib/i18n/LanguageContext";
+import { EYEBROW, TILE } from '@/app/dashboard/surface'
+import Footer from '@/components/layout/Footer'
+import { CARD, EndCard, H2, PAGE, SUB, WRAP } from '@/components/marketing/Marketing'
+import { useIsNative } from '@/hooks/useIsNative'
+import { useLang } from '@/lib/i18n/LanguageContext'
 
+const SUPPORT_EMAIL = 'support@unicornapps.app'
+
+/**
+ * The about page: what the product is, who it is for, how it is built, what
+ * it costs, and how to reach us. Four short blocks and a contact line, no
+ * team story and no figures.
+ *
+ * The one sentence that mentions buying credits is WEB ONLY, under the same
+ * `showPricing` gate as every pricing surface.
+ */
 export default function AboutPage() {
-  const { t } = useLang();
-  
+  const { t } = useLang()
+  const { isNative, resolved } = useIsNative()
+  const showPricing = resolved && !isNative
+
   return (
-    <main className="min-h-screen bg-[#070710] text-[#c8cfe0] pt-32 pb-24 px-4 relative overflow-hidden">
-      {/* BACKGROUND EFFECTS */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-brand/10 rounded-full blur-[120px] animate-float-orb" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-brand/10 rounded-full blur-[120px] animate-float-orb-slow" />
-        <div className="absolute inset-0 opacity-[0.03]" 
-             style={{ backgroundImage: `linear-gradient(#c8cfe0 1px, transparent 1px), linear-gradient(90deg, #c8cfe0 1px, transparent 1px)`, backgroundSize: '60px 60px' }} 
-        />
-      </div>
+    <main className={PAGE}>
+      <div className={WRAP}>
+        <section className={CARD}>
+          <p className={`${EYEBROW} mb-3`}>{t('about.eyebrow')}</p>
+          <h1 className={H2}>{t('about.title')}</h1>
+          <p className={SUB}>{t('about.sub')}</p>
 
-      <div className="max-w-4xl mx-auto relative z-10">
-        {/* HERO */}
-        <div className="text-center mb-24">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand/10 border border-brand/30 text-brand text-[10px] font-black uppercase tracking-widest mb-6 backdrop-blur-md">
-            {t('about.badge')}
-          </div>
-          <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-8 leading-[0.9]">
-            {t('about.title1')} <br />
-            <span className="text-white italic uppercase">
-              {t('about.title2')}
-            </span>
-          </h1>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
-            {t('about.sub')}
-          </p>
-        </div>
-
-        {/* MISSION SECTION */}
-        <div className="relative mb-24 group">
-          <div className="absolute inset-0 bg-brand/5 rounded-[2.5rem] blur-2xl group-hover:bg-brand/10 transition-all" />
-          <div className="relative bg-white/5 backdrop-blur-3xl border border-white/10 p-8 sm:p-12 md:p-16 rounded-[2.5rem] space-y-8">
-            <h2 className="text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-4">
-              <Heart className="text-brand w-8 h-8" />
-              {t('about.mission.title')}
-            </h2>
-            <div className="space-y-6 text-lg text-slate-300 font-medium leading-relaxed">
-              <p>
-                {t('about.mission.p1')}
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className={`${TILE} p-5`}>
+              <h2 className="text-base font-bold text-white">{t('about.who.title')}</h2>
+              <p className="mt-1 text-[15px] leading-relaxed text-slate-400">{t('about.who.body')}</p>
+            </div>
+            <div className={`${TILE} p-5`}>
+              <h2 className="text-base font-bold text-white">{t('about.how.title')}</h2>
+              <p className="mt-1 text-[15px] leading-relaxed text-slate-400">{t('about.how.body')}</p>
+            </div>
+            <div className={`${TILE} p-5`}>
+              <h2 className="text-base font-bold text-white">{t('about.cost.title')}</h2>
+              <p className="mt-1 text-[15px] leading-relaxed text-slate-400">
+                {t('about.cost.body')}
+                {showPricing && <> {t('about.cost.web')}</>}
               </p>
-              <p>
-                {t('about.mission.p2')}
+            </div>
+            <div className={`${TILE} p-5`}>
+              <h2 className="text-base font-bold text-white">{t('about.contact.title')}</h2>
+              <p className="mt-1 text-[15px] leading-relaxed text-slate-400">
+                {t('about.contact.body')}{' '}
+                <a href={`mailto:${SUPPORT_EMAIL}`} dir="ltr" className="font-medium text-brand underline underline-offset-4">
+                  {SUPPORT_EMAIL}
+                </a>
+                .
               </p>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* TECH STACK SECTION */}
-        <div className="grid md:grid-cols-2 gap-8 mb-24">
-          <div className="bg-black/40 border border-white/10 rounded-[2.5rem] p-10 hover:border-brand/30 transition-all group">
-            <div className="w-14 h-14 bg-brand/20 rounded-2xl flex items-center justify-center border border-brand/20 mb-8 group-hover:scale-110 transition-transform">
-              <Zap className="text-brand w-8 h-8" />
-            </div>
-            <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">{t('about.tech.gemini.title')}</h3>
-            <p className="text-slate-400 font-medium leading-relaxed">
-              {t('about.tech.gemini.desc')}
-            </p>
-          </div>
-
-          <div className="bg-black/40 border border-white/10 rounded-[2.5rem] p-10 hover:border-brand/30 transition-all group">
-            <div className="w-14 h-14 bg-brand/20 rounded-2xl flex items-center justify-center border border-brand/20 mb-8 group-hover:scale-110 transition-transform">
-              <ShieldCheck className="text-brand w-8 h-8" />
-            </div>
-            <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">{t('about.tech.supabase.title')}</h3>
-            <p className="text-slate-400 font-medium leading-relaxed">
-              {t('about.tech.supabase.desc')}
-            </p>
-          </div>
-        </div>
-
-        {/* TEAM / STORY */}
-        <div className="text-center mb-24 space-y-12">
-           <div className="space-y-4">
-              <h2 className="text-3xl font-black text-white uppercase tracking-tighter">{t('about.team.title')}</h2>
-              <p className="text-slate-400 font-medium">{t('about.team.sub')}</p>
-           </div>
-           <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-              {[
-                { label: t('about.stats.languages'), value: '2' },
-                { label: t('about.stats.formats'), value: '5+' },
-                { label: t('about.stats.start'), value: '$0' }
-              ].map(stat => (
-                <div key={stat.label} className="bg-white/5 border border-white/5 py-8 rounded-3xl">
-                   <div className="text-3xl font-black text-white tracking-widest">{stat.value}</div>
-                   <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mt-2">{stat.label}</div>
-                </div>
-              ))}
-           </div>
-        </div>
-
-        {/* CTA */}
-        <div className="relative text-center">
-          <div className="absolute inset-0 bg-brand/10 blur-[120px] rounded-full scale-50" />
-          <div className="relative z-10 bg-white/5 border border-white/10 p-8 sm:p-16 rounded-[3rem] space-y-8 backdrop-blur-2xl">
-            <h2 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">
-              {t('about.cta.title').split('<br />')[0]} <br /> {t('about.cta.title').split('<br />')[1]}
-            </h2>
-            <p className="text-slate-400 font-medium max-w-sm mx-auto">
-              {t('about.cta.sub')}
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
-              <Link href="/login">
-                <Button size="lg" className="h-16 px-12 text-xs font-black uppercase tracking-widest rounded-2xl bg-brand hover:bg-brand/90 text-white shadow-[0_0_30px_rgb(var(--ua-brand-glow)/0.4)] transition-all hover:scale-105 active:scale-95 group">
-                  {t('about.cta.btn')}
-                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-2 transition-transform" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
+        <EndCard title={t('home.end.title')} sub={t('home.end.sub')} cta={t('home.cta')} />
       </div>
-
+      <Footer />
     </main>
-  );
+  )
 }
