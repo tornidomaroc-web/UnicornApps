@@ -1,34 +1,26 @@
-"use client"
+'use client'
 
-import { motion } from "framer-motion";
+import { Loader2 } from 'lucide-react'
+import { SURFACE } from '@/app/dashboard/surface'
+import { useLang } from '@/lib/i18n/LanguageContext'
 
+/**
+ * What the dashboard shows while its server data loads: one SURFACE card on
+ * the dashboard's own background and gutters, a spinner and one translated
+ * line. No motion library, no glow and no transform other than the spinner's
+ * rotation, so a low-end WebView paints it in one pass.
+ */
 export default function Loading() {
+  const { t } = useLang()
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] py-20 bg-transparent">
-      <div className="relative">
-        <motion.div
-          className="absolute inset-0 rounded-full border-2 border-violet-500/50"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1.5, opacity: 0 }}
-          transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
-        />
-        
-        <motion.div
-           className="w-20 h-20 bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center relative z-10 shadow-[0_0_30px_rgba(124,58,237,0.3)]"
-           animate={{ rotate: 360 }}
-           transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
-        >
-           <span className="text-4xl">🦄</span>
-        </motion.div>
-      </div>
-
-      <motion.p
-        className="mt-8 text-[10px] font-black uppercase tracking-[0.4em] text-violet-400 font-mono"
-        animate={{ opacity: [0.4, 1, 0.4] }}
-        transition={{ repeat: Infinity, duration: 1.5 }}
+    <div className="min-h-screen bg-[#070710] px-4 py-8 md:px-8">
+      <div
+        role="status"
+        className={`${SURFACE} mx-auto flex min-h-[40vh] max-w-7xl flex-col items-center justify-center gap-4 p-8 text-center`}
       >
-        LOADING YOUR ENGINE...
-      </motion.p>
+        <Loader2 className="h-8 w-8 animate-spin text-brand" aria-hidden />
+        <p className="text-base font-bold text-white">{t('dash.loading')}</p>
+      </div>
     </div>
-  );
+  )
 }

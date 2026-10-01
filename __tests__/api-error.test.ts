@@ -290,9 +290,10 @@ describe('resolveApiError — the code map', () => {
 // there is shown to the user as written: untranslated English in the Arabic UI
 // (CLAUDE.md §6). PR #64 fixed the two places that abused this and left behind a
 // source-level test over an ENUMERATED pair of files. That enumeration cannot
-// see a route it does not list — and one already exists:
-// src/app/api/account/delete/route.ts has been leaking three English strings
-// through AccountClient.tsx since before #64, unnoticed by anything.
+// see a route it does not list — and one existed:
+// src/app/api/account/delete/route.ts leaked three English strings through
+// AccountClient.tsx from before #64 until it was moved to codes, unnoticed by
+// anything but this walk.
 //
 // So this walks EVERY route file that exists, now and in future, and requires
 // each `error:` it emits to be named below. Adding prose fails CI.
@@ -319,11 +320,6 @@ const KNOWN_UNTRANSLATED_ERROR_PROSE: Record<string, string> = {
     'NEVER DISPLAYED: resolveApiError maps 429/503 by STATUS before the body is read.',
   'Insufficient credits':
     'DISPLAYED, untranslated, on /api/generate. Backlog item 50 (Play-policy sensitive: native must not steer to upgrade).',
-  'Server configuration error':
-    'DISPLAYED, untranslated, by AccountClient.tsx. Backlog item 53.',
-  'Not authenticated': 'DISPLAYED, untranslated, by AccountClient.tsx. Backlog item 53.',
-  'Failed to delete account':
-    'DISPLAYED, untranslated, by AccountClient.tsx. Backlog item 53.',
 }
 
 describe('no API route emits unledgered user-visible prose', () => {
@@ -370,6 +366,16 @@ describe('no API route emits unledgered user-visible prose', () => {
         expect(Object.keys(KNOWN_UNTRANSLATED_ERROR_PROSE)).toContain(raw.slice(1, -1))
       }
     }
+  })
+
+  // The account route's three strings are gone from the ledger above, so the
+  // walk already fails if one comes back. This pins the replacement.
+  it('the account delete route answers every failure with a code and no prose', () => {
+    const src = bodyOf('src/app/api/account/delete/route.ts')
+    expect(src).not.toMatch(/\berror:\s*['"`]/)
+    expect(src).toMatch(/\{ code: 'UNAUTHORIZED' \}, \{ status: 401 \}/)
+    expect(src).toMatch(/\{ code: 'DELETE_FAILED' \}, \{ status: 500 \}/)
+    expect(src.match(/\{ code: 'CONFIG' \}, \{ status: 500 \}/g)).toHaveLength(2)
   })
 
   // The two strings this PR removed. Pinned so a revert is loud rather than a
