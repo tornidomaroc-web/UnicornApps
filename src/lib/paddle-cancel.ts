@@ -63,16 +63,21 @@ async function paddleErrorCode(res: Response): Promise<string> {
  * Cancel a Paddle subscription immediately.
  *
  * Success is EITHER a 2xx from the cancel call OR, when Paddle refuses it, a
- * read of the subscription that shows it will never charge again: already
- * `canceled` (a retried delete, a cancel from the Paddle dashboard), or carrying
- * a scheduled change whose action is `cancel`. Paddle refuses changes to a
- * subscription with a pending scheduled change, so without the second case a
- * subscriber who had already scheduled a cancel could never delete the account,
- * although no further charge can happen. A scheduled pause does NOT count:
- * a paused subscription can resume and bill. Paddle's API reference documents the 200 and that a
- * canceled subscription cannot be reinstated, but not the error code it
- * returns for a second cancel, so the outcome is read from the subscription
- * itself instead of matched on an error string.
+ * read of the subscription that shows it will never charge again.
+ *
+ * Measured in Paddle's sandbox (2026-10-02), not assumed:
+ *   - active, paused, and active with a cancel already scheduled for period
+ *     end: the immediate cancel is ACCEPTED and the subscription is canceled
+ *     at once. A scheduled cancel does not block it.
+ *   - already canceled (a retried delete, a cancel from the dashboard): the
+ *     cancel is refused with 400 `subscription_update_when_canceled`, and the
+ *     read-back showing `canceled` is what lets the deletion go ahead.
+ * A read-back carrying a scheduled change whose action is `cancel` also counts
+ * as success. Paddle did not refuse that case when measured; it stays as a
+ * fallback for a refusal we have not seen (a renewal lock, say), because such a
+ * subscription cannot charge again either. A scheduled pause does NOT count: a
+ * paused subscription can resume and bill. The outcome is read from the
+ * subscription itself rather than matched on an error string.
  *
  * Anything else (no key, a timeout, a network failure, a refusal on a live
  * subscription) is a failure and the caller must NOT delete the account.
