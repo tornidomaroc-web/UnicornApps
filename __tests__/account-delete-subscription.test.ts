@@ -171,6 +171,37 @@ describe('a billable subscription is canceled first', () => {
     expect(fetchMock.mock.calls[1][1].method).toBe('GET')
     expect(sb.deleteUser).toHaveBeenCalled()
   })
+
+  it('a subscription that already has a scheduled cancel counts as success', async () => {
+    const sb = setup({ profile: ACTIVE })
+    fetchMock
+      .mockResolvedValueOnce(json({ error: { type: 'request_error', code: 'subscription_locked_pending_changes' } }, 400))
+      .mockResolvedValueOnce(
+        json({ data: { id: 'sub_01test', status: 'active', scheduled_change: { action: 'cancel', effective_at: '2026-11-01T00:00:00Z' } } }, 200)
+      )
+
+    const res = await POST()
+
+    expect(res.status).toBe(200)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock.mock.calls[1][1].method).toBe('GET')
+    expect(sb.deleteUser).toHaveBeenCalledWith('user-1')
+  })
+
+  it('a scheduled PAUSE does not count: the account is kept', async () => {
+    const sb = setup({ profile: ACTIVE })
+    fetchMock
+      .mockResolvedValueOnce(json({ error: { type: 'request_error', code: 'subscription_locked_pending_changes' } }, 400))
+      .mockResolvedValueOnce(
+        json({ data: { id: 'sub_01test', status: 'active', scheduled_change: { action: 'pause', effective_at: '2026-11-01T00:00:00Z' } } }, 200)
+      )
+
+    const res = await POST()
+
+    expect(res.status).toBe(409)
+    expect(await res.json()).toEqual({ code: 'SUBSCRIPTION_CANCEL_FAILED' })
+    expect(sb.deleteUser).not.toHaveBeenCalled()
+  })
 })
 
 describe('fail closed: the account is kept when the subscription is not ended', () => {

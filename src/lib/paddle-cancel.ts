@@ -41,7 +41,7 @@ export function isBillable(row: SubscriptionRow | null | undefined): row is Subs
 }
 
 export type CancelOutcome =
-  | { ok: true; already: boolean }
+  | { ok: true; already: boolean; scheduled?: boolean }
   | { ok: false; reason: 'NO_KEY' | 'TIMEOUT' | 'NETWORK' | 'PADDLE_ERROR' }
 
 // Same environment switch as the browser checkout in src/lib/paddle.ts:
@@ -63,9 +63,13 @@ async function paddleErrorCode(res: Response): Promise<string> {
  * Cancel a Paddle subscription immediately.
  *
  * Success is EITHER a 2xx from the cancel call OR, when Paddle refuses it, a
- * read of the subscription that shows it is already `canceled`: a subscription
- * canceled earlier (a retried delete, a cancel from the Paddle dashboard) must
- * not block the deletion. Paddle's API reference documents the 200 and that a
+ * read of the subscription that shows it will never charge again: already
+ * `canceled` (a retried delete, a cancel from the Paddle dashboard), or carrying
+ * a scheduled change whose action is `cancel`. Paddle refuses changes to a
+ * subscription with a pending scheduled change, so without the second case a
+ * subscriber who had already scheduled a cancel could never delete the account,
+ * although no further charge can happen. A scheduled pause does NOT count:
+ * a paused subscription can resume and bill. Paddle's API reference documents the 200 and that a
  * canceled subscription cannot be reinstated, but not the error code it
  * returns for a second cancel, so the outcome is read from the subscription
  * itself instead of matched on an error string.
@@ -114,6 +118,9 @@ export async function cancelSubscriptionNow(
     if (check.ok) {
       const body = await check.json().catch(() => null)
       if (body?.data?.status === 'canceled') return { ok: true, already: true }
+      if (body?.data?.scheduled_change?.action === 'cancel') {
+        return { ok: true, already: true, scheduled: true }
+      }
     }
 
     console.error(
