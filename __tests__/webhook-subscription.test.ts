@@ -255,3 +255,45 @@ describe('Paddle webhook — subscription.* lifecycle (Piece 3)', () => {
     expect('current_period_end' in (updates[1] as object)).toBe(false)
   })
 })
+
+// Account deletion cancels the subscription and then deletes the profile, so
+// the subscription.canceled that Paddle sends afterwards finds no profile. It
+// must still be acknowledged with a 2xx, or Paddle retries it for days.
+describe('subscription.canceled after the account was deleted', () => {
+  let mock: SupabaseMock
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mock = createSupabaseMock()
+    ;(createClientJS as jest.Mock).mockReturnValue(mock.client)
+  })
+
+  it('custom_data still names the deleted user: the update matches no row, 200, recorded', async () => {
+    mock.queue(
+      { data: null }, // dedup .single()
+      { data: [] }, // profiles update tail: no row left
+      { data: [{ id: 'row' }] }, // processed insert
+    )
+
+    const res = await webhookPOST(makeReq(canceled))
+
+    expect(res.status).toBe(200)
+    expect(insertedEventIds(mock)).toEqual([{ event_id: canceled.event_id }])
+  })
+
+  it('no custom_data and no profile owns the subscription: 200, recorded, nothing written', async () => {
+    const payload = { ...canceled, data: { ...canceled.data, custom_data: null } }
+    mock.queue(
+      { data: null }, // dedup .single()
+      { data: null, error: { code: 'PGRST116', message: 'no rows' } }, // owner lookup .single()
+      { data: [{ id: 'row' }] }, // processed insert
+    )
+
+    const res = await webhookPOST(makeReq(payload))
+
+    expect(res.status).toBe(200)
+    expect(eqDidQuery(mock, 'subscription_id', 'sub_01docs')).toBe(true)
+    expect(profileUpdates(mock)).toEqual([])
+    expect(insertedEventIds(mock)).toEqual([{ event_id: canceled.event_id }])
+  })
+})
