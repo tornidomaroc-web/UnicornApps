@@ -249,7 +249,6 @@ export default function PricingClient({
             </span>
             <div className="min-w-0 flex-1">
               <h2 className="text-xl font-bold text-white">{t('pricing.enterprise.title')}</h2>
-              <p className="mt-1 text-[15px] leading-relaxed text-slate-400">{t('pricing.enterprise.sub')}</p>
             </div>
             <div className="sm:w-64 sm:shrink-0">
               <a href="mailto:support@unicornapps.app" className={GHOST}>

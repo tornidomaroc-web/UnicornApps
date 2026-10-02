@@ -156,3 +156,15 @@ describe('the money path is the one it always was', () => {
     expect(client).toMatch(/disabled=\{pending !== null\}/)
   })
 })
+
+describe('promises nothing the product does not do', () => {
+  const dictionary = read('src/lib/i18n/LanguageContext.tsx')
+
+  // There is no public API and no bulk licence. The contact card stays as a
+  // way to reach us; it may not describe an offer behind it.
+  it('the contact card carries no offer line, in either language', () => {
+    expect(client).not.toMatch(/pricing\.enterprise\.sub/)
+    expect(dictionary).not.toMatch(/'pricing\.enterprise\.sub'/)
+    expect(dictionary).not.toMatch(/Custom API access|bulk licensing/i)
+  })
+})
