@@ -19,8 +19,9 @@ import { useLang } from '@/lib/i18n/LanguageContext'
  * usage counts are kept with their user reference cleared, so the page says
  * so instead of promising that everything goes.
  *
- * MONEY. The sentence about purchase records is WEB ONLY, hidden until native
- * detection resolves to web, the same gate every other payment surface uses.
+ * MONEY. The sentences about purchase records and subscriptions are WEB
+ * ONLY, hidden until native detection resolves to web, the same gate every
+ * other payment surface uses.
  *
  * DIRECTION. Logical classes only, no letter-spacing.
  */
@@ -91,6 +92,7 @@ export default function DeleteAccountClient() {
         <section className={CARD}>
           <h2 className={H2}>{t('del.what.title')}</h2>
           <p className={BODY}>{t('del.what.body')}</p>
+          {showPricing && <p className={BODY}>{t('del.what.subscription')}</p>}
         </section>
 
         <section className={CARD}>

@@ -38,15 +38,21 @@ export function isDeleteConfirmed(input: string): boolean {
   return typed === normalise(CONFIRM_WORD.en) || typed === normalise(CONFIRM_WORD.ar)
 }
 
-export type DeleteErrorKey = 'account.err.session' | 'account.err.failed'
+export type DeleteErrorKey = 'account.err.session' | 'account.err.subscription' | 'account.err.failed'
 
 /**
  * The translated sentence for a failed delete request, chosen from the STATUS
  * alone. The response body is never read: whatever a server or a proxy wrote
  * there is not a reviewed, translated string.
+ *
+ * 409 is the route's SUBSCRIPTION_CANCEL_FAILED: the subscription could not be
+ * canceled, so the account was deliberately kept. Neither a proxy nor the
+ * platform answers 409, so the status alone is enough to tell it apart.
  */
 export function deleteErrorKey(status: number): DeleteErrorKey {
-  return status === 401 ? 'account.err.session' : 'account.err.failed'
+  if (status === 401) return 'account.err.session'
+  if (status === 409) return 'account.err.subscription'
+  return 'account.err.failed'
 }
 
 /**

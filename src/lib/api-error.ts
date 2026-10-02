@@ -69,6 +69,11 @@ const CODE_KEYS: Record<string, string> = {
   // Response is deliberate — that is the shape item 47's allowlist needs.
   FORMAT_FAILED: 'dash.formatFailed',
   REFINE_FORMAT_FAILED: 'dash.refineFormatFailed',
+  // /api/account/delete, 409: the subscription could not be canceled, so the
+  // account was kept. The account screen reaches the same key from the status
+  // alone (deleteErrorKey in account-delete.ts); this entry keeps the code
+  // translated for any caller that goes through resolveApiError.
+  SUBSCRIPTION_CANCEL_FAILED: 'account.err.subscription',
 }
 
 /**

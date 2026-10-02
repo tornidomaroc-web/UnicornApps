@@ -376,6 +376,7 @@ describe('no API route emits unledgered user-visible prose', () => {
     expect(src).toMatch(/\{ code: 'UNAUTHORIZED' \}, \{ status: 401 \}/)
     expect(src).toMatch(/\{ code: 'DELETE_FAILED' \}, \{ status: 500 \}/)
     expect(src.match(/\{ code: 'CONFIG' \}, \{ status: 500 \}/g)).toHaveLength(2)
+    expect(src).toMatch(/\{ code: 'SUBSCRIPTION_CANCEL_FAILED' \}, \{ status: 409 \}/)
   })
 
   // The two strings this PR removed. Pinned so a revert is loud rather than a
