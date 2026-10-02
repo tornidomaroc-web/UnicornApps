@@ -1,42 +1,60 @@
-"use client"
+'use client'
 
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Check, Sparkles, Zap, Shield, Globe } from "lucide-react";
-import { motion } from "framer-motion";
-import { useLang } from "@/lib/i18n/LanguageContext";
-import { useIsNative } from "@/hooks/useIsNative";
-import { openCheckout } from "@/lib/checkout";
-import { useCreditGrantPoll } from "@/hooks/useCreditGrantPoll";
-import { bannerToneClass, checkoutBannerTone } from "@/lib/dashboard-banner";
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { Check, Globe, Shield, Sparkles, Zap, type LucideIcon } from 'lucide-react'
+import { SURFACE } from '@/app/dashboard/surface'
+import Footer from '@/components/layout/Footer'
+import { CARD, PAGE, SectionHead, WRAP } from '@/components/marketing/Marketing'
+import { useLang } from '@/lib/i18n/LanguageContext'
+import { useIsNative } from '@/hooks/useIsNative'
+import { openCheckout } from '@/lib/checkout'
+import { useCreditGrantPoll } from '@/hooks/useCreditGrantPoll'
+import { bannerToneClass, checkoutBannerTone } from '@/lib/dashboard-banner'
+
+/**
+ * The pricing page in the marketing pages' own vocabulary: SURFACE cards, a
+ * round icon chip beside a name, sentence-case bold type, one pill per action.
+ *
+ * WEIGHT. No framer-motion, no blur, no glow blobs, no scale transforms. The
+ * first paint is the final paint: nothing is shipped hidden to fade in later.
+ *
+ * PHONE FIRST. One column, three from md. Every action is a pill at least 56px
+ * tall whose label may wrap onto a second line rather than clip, so no label
+ * is cut at 360px in either language.
+ *
+ * DIRECTION. Logical classes only. Prices are Latin and pinned ltr inside the
+ * Arabic surface.
+ *
+ * MONEY. Paid tiers, the merchant-of-record line and the contact card render
+ * only under `showPaid`, false until native detection has resolved to web.
+ * The server redirect in page.tsx keeps native off this page entirely; this is
+ * the client backstop.
+ */
+const PILL =
+  'inline-flex min-h-14 w-full items-center justify-center rounded-full px-6 py-3 text-center text-base font-bold leading-snug transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60'
+const PRIMARY = `${PILL} bg-brand text-white shadow-glow-brand hover:bg-brand/90 focus-visible:ring-white/60`
+const GHOST = `${PILL} border border-white/10 bg-white/5 text-white hover:bg-white/10 focus-visible:ring-brand/60`
+const FEATURED = 'rounded-3xl border border-brand/50 bg-brand/[0.06]'
 
 export default function PricingClient({
   initialUserId,
   initialCredits,
 }: {
-  initialUserId: string | null;
+  initialUserId: string | null
   // The server-rendered balance (same read the navbar counter is seeded from).
   // The post-purchase poll watches THIS prop move; without it, a buyer who paid
   // here saw the counter frozen until a full reload.
-  initialCredits: number;
+  initialCredits: number
 }) {
-  const { t } = useLang();
+  const { t } = useLang()
   // Backstop: the server already redirects /pricing → / on native, but if that
   // is ever bypassed, default to HIDDEN and only reveal paid tiers once the
   // client confirms it is web. No native flash of paid plans / Paddle links.
-  const { isNative, resolved } = useIsNative();
-  const showPaid = resolved && !isNative;
-  const router = useRouter();
+  const { isNative, resolved } = useIsNative()
+  const showPaid = resolved && !isNative
+  const router = useRouter()
   // Seeded from the SERVER (page.tsx reads the validated session and passes the
   // id down). We do NOT read auth in the browser: the browser Supabase client
   // cannot see the auth cookie in this deployment, so a client getSession()
@@ -44,147 +62,98 @@ export default function PricingClient({
   // This page remounts on every visit (page is force-dynamic) and auth
   // transitions navigate away from /pricing, so a one-time seed is enough — no
   // reconcile effect needed.
-  const [userId] = useState<string | null>(initialUserId);
+  const [userId] = useState<string | null>(initialUserId)
   // Checkout lifecycle + post-purchase credit reconciliation: one shared hook
   // with the dashboard (hooks/useCreditGrantPoll.ts), so the two surfaces
   // cannot drift and the poll's stop condition is the same server-rendered
   // value on both.
-  const { checkoutStatus: status, setCheckoutStatus: setStatus } = useCreditGrantPoll(initialCredits);
+  const { checkoutStatus: status, setCheckoutStatus: setStatus } = useCreditGrantPoll(initialCredits)
   // Which tier is opening, from the click until Paddle's overlay is up (or the
   // attempt failed). Both paid CTAs disable so the dynamic-import + CDN
   // round-trip cannot be clicked through twice, but only the clicked one shows
   // the pending label. lib/checkout.ts holds the real interlock (see there).
-  const [pending, setPending] = useState<'sub' | 'pack' | null>(null);
+  const [pending, setPending] = useState<'sub' | 'pack' | null>(null)
 
   const handlePaid = async (kind: 'sub' | 'pack') => {
-    if (pending) return;
-    setPending(kind);
-    setStatus(null);
+    if (pending) return
+    setPending(kind)
+    setStatus(null)
     try {
-      await openCheckout({ kind, userId, navigate: (path) => router.push(path) });
+      await openCheckout({ kind, userId, navigate: (path) => router.push(path) })
     } catch (err) {
       // Paddle.js failed to load. Previously `void`-ed, so the button silently
       // did nothing and every later click in the session failed the same way.
-      console.error('Checkout: Paddle failed to load', err);
-      setStatus('error');
+      console.error('Checkout: Paddle failed to load', err)
+      setStatus('error')
     } finally {
-      setPending(null);
+      setPending(null)
     }
-  };
+  }
 
   // Three cards: Free (signup credits) + the two locked paid products. All copy
   // is sourced from LanguageContext (EN + AR). The app shows no ads anywhere, so
   // no card may claim an ad-related benefit in either direction.
   const tiers: {
-    name: string; price: string; period: string; description: string;
-    features: string[]; cta: string; featured: boolean;
-    href?: string; checkoutKind?: 'sub' | 'pack'; icon: ReactNode;
+    name: string
+    price: string
+    period: string
+    description: string
+    features: string[]
+    cta: string
+    featured: boolean
+    href?: string
+    checkoutKind?: 'sub' | 'pack'
+    icon: LucideIcon
   }[] = [
     {
       name: t('pricing.free'),
-      price: "$0",
-      period: "",
+      price: '$0',
+      period: '',
       description: t('pricing.free.desc'),
-      features: [
-        t('pricing.f.gen3'),
-        t('pricing.f.vision.std'),
-        t('pricing.f.seo.basic'),
-        t('pricing.f.nocard'),
-      ],
+      features: [t('pricing.f.gen3'), t('pricing.f.vision.std'), t('pricing.f.seo.basic'), t('pricing.f.nocard')],
       cta: t('pricing.cta.free'),
       featured: false,
-      href: "/login",
-      icon: <Shield className="w-6 h-6 text-slate-400" />
+      href: '/login',
+      icon: Shield,
     },
     {
       name: t('pricing.sub.name'),
       price: t('pricing.sub.price'),
       period: t('pricing.sub.period'),
       description: t('pricing.sub.desc'),
-      features: [
-        t('pricing.f.credits100'),
-        t('pricing.f.percredit'),
-        t('pricing.f.allai'),
-      ],
+      features: [t('pricing.f.credits100'), t('pricing.f.percredit'), t('pricing.f.allai')],
       cta: t('pricing.sub.cta'),
       featured: true,
       checkoutKind: 'sub',
-      icon: <Sparkles className="w-6 h-6 text-brand" />
+      icon: Sparkles,
     },
     {
       name: t('pricing.pack.name'),
       price: t('pricing.pack.price'),
       period: t('pricing.pack.period'),
       description: t('pricing.pack.desc'),
-      features: [
-        t('pricing.f.credits30'),
-        t('pricing.f.noexpiry'),
-        t('pricing.f.allai'),
-      ],
+      features: [t('pricing.f.credits30'), t('pricing.f.noexpiry'), t('pricing.f.allai')],
       cta: t('pricing.pack.cta'),
       featured: false,
       checkoutKind: 'pack',
-      icon: <Zap className="w-6 h-6 text-brand" />
+      icon: Zap,
     },
-  ];
+  ]
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5 }
-    }
-  };
+  const shown = showPaid ? tiers : tiers.filter((tier) => !tier.checkoutKind)
 
   return (
-    <main className="min-h-screen bg-[#070710] text-[#c8cfe0] pt-32 pb-20 px-4 relative overflow-hidden">
-      {/* 1. BACKGROUND EFFECTS */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-brand/10 rounded-full blur-[120px] animate-float-orb" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-brand/10 rounded-full blur-[120px] animate-float-orb-slow" />
-        <div className="absolute inset-0 opacity-[0.02]" 
-             style={{ backgroundImage: `linear-gradient(#c8cfe0 1px, transparent 1px), linear-gradient(90deg, #c8cfe0 1px, transparent 1px)`, backgroundSize: '60px 60px' }} 
-        />
-      </div>
-
-      <div className="max-w-7xl mx-auto relative z-10">
-        <motion.div 
-          initial="hidden"
-          animate="visible"
-          variants={containerVariants}
-          className="text-center mb-24"
-        >
-          <motion.div variants={itemVariants} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand/10 border border-brand/30 text-brand text-[10px] font-black uppercase tracking-widest mb-6">
-            {t('pricing.badge')}
-          </motion.div>
-          <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-8 leading-[0.9]">
-            {t('pricing.title').split('<br />')[0]} <br />
-            <span className="text-white uppercase italic">
-              {t('hero.title2')}
-            </span>
-          </motion.h1>
-          <motion.p variants={itemVariants} className="text-xl text-slate-400 max-w-2xl mx-auto font-medium">
-            {t('pricing.sub')}
-          </motion.p>
-        </motion.div>
+    <main className={PAGE}>
+      <div className={WRAP}>
+        <section className={CARD}>
+          <SectionHead eyebrow={t('pricing.badge')} title={t('pricing.title')} sub={t('pricing.sub')} />
+        </section>
 
         {/* Same container and tone table as the dashboard's checkout banner
             (lib/dashboard-banner.ts): green only once the grant has been SEEN,
             amber while waiting, red on failure. */}
         {status && (
-          <div className={`${bannerToneClass(checkoutBannerTone(status))} mb-12`}>
+          <div className={`${bannerToneClass(checkoutBannerTone(status))} mt-6`}>
             {status === 'success'
               ? t('pricing.banner.success')
               : status === 'confirmed'
@@ -197,96 +166,67 @@ export default function PricingClient({
           </div>
         )}
 
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={containerVariants}
-          className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto"
-        >
-          {(showPaid ? tiers : tiers.filter((tier) => !tier.checkoutKind)).map((tier) => (
-            <motion.div key={tier.name} variants={itemVariants} className="h-full">
-              <Card
-                className={`flex flex-col h-full relative transition-all duration-500 bg-white/5 backdrop-blur-3xl border-white/10 group ${
-                   tier.featured
-                    ? "border-brand/50 shadow-[0_0_50px_-10px_rgb(var(--ua-brand-glow)/0.3)] scale-105 z-10"
-                    : "hover:border-brand/30 shadow-sm"
-                } rounded-[2.5rem] overflow-hidden`}
-              >
-                {tier.featured && (
-                  <div className="absolute top-0 right-0">
-                    <span className="bg-brand text-white text-[10px] font-black uppercase tracking-[0.2em] py-2 px-6 rounded-bl-2xl shadow-lg flex items-center gap-2">
-                       {t('pricing.popular')}
+        <ul className="mt-6 grid gap-4 md:grid-cols-3">
+          {shown.map((tier) => {
+            const Icon = tier.icon
+            return (
+              <li key={tier.name} className={`${tier.featured ? FEATURED : SURFACE} flex flex-col p-5 sm:p-6`}>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
+                    <Icon className="h-5 w-5" aria-hidden />
+                  </span>
+                  <h2 className="min-w-0 text-xl font-bold text-white">{tier.name}</h2>
+                  {tier.featured && (
+                    <span className="rounded-full bg-brand/15 px-3 py-1 text-sm font-bold text-brand">
+                      {t('pricing.popular')}
                     </span>
-                  </div>
-                )}
-                
-                <CardHeader className="pt-12 px-10 pb-8 border-b border-white/5 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                      {tier.icon}
-                    </div>
-                    <CardTitle className="text-2xl font-black text-white uppercase tracking-tighter">{tier.name}</CardTitle>
-                  </div>
-                  <CardDescription className="text-slate-400 font-medium leading-relaxed min-h-[48px]">
-                    {tier.description}
-                  </CardDescription>
-                </CardHeader>
+                  )}
+                </div>
 
-                <CardContent className="px-10 py-10 flex-grow space-y-10">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-6xl font-black tracking-tighter text-white">{tier.price}</span>
-                    {tier.period && (
-                      <span className="text-sm text-slate-500 font-black uppercase tracking-widest">{tier.period}</span>
-                    )}
-                  </div>
-                  
-                  <ul className="space-y-5">
-                    {tier.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-4 group/item">
-                        <Check className="h-5 w-5 text-brand flex-shrink-0 mt-0.5" />
-                        <span className="text-slate-300 font-medium text-sm group-hover/item:text-white transition-colors">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
+                <p className="mt-4 text-[15px] leading-relaxed text-slate-400">{tier.description}</p>
 
-                <CardFooter className="px-10 pb-12 pt-4">
+                <p className="mt-5 flex flex-wrap items-baseline gap-x-2">
+                  <span dir="ltr" className="text-[40px] font-bold leading-none text-white">
+                    {tier.price}
+                  </span>
+                  {tier.period && <span className="text-[15px] font-medium text-slate-500">{tier.period}</span>}
+                </p>
+
+                <ul className="mt-5 flex-grow space-y-3">
+                  {tier.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-3 text-[15px] leading-relaxed text-slate-300">
+                      <Check className="mt-1 h-4 w-4 shrink-0 text-brand" aria-hidden />
+                      <span className="min-w-0">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-6">
                   {tier.checkoutKind ? (
                     // Paid action. Only reachable on web (showPaid filters the
                     // tier out on native); openCheckout() is a further no-op on
                     // native via getPaddle(). Null userId redirects to /login.
                     showPaid && (
-                      <Button
+                      <button
+                        type="button"
                         onClick={() => void handlePaid(tier.checkoutKind!)}
                         disabled={pending !== null}
                         aria-busy={pending === tier.checkoutKind}
-                        className={`w-full h-16 text-xs font-black uppercase tracking-[0.2em] rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 ${
-                          tier.featured
-                            ? "bg-brand hover:bg-brand/90 text-white shadow-[0_0_30px_rgb(var(--ua-brand-glow)/0.4)]"
-                            : "bg-white/5 hover:bg-white/10 text-white border border-white/10"
-                        }`}
+                        className={tier.featured ? PRIMARY : GHOST}
                       >
                         {pending === tier.checkoutKind ? t('checkout.pending') : tier.cta}
-                      </Button>
+                      </button>
                     )
                   ) : (
-                    <Link href={tier.href!} className="w-full">
-                      <Button
-                        className={`w-full h-16 text-xs font-black uppercase tracking-[0.2em] rounded-2xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] ${
-                          tier.featured
-                            ? "bg-brand hover:bg-brand/90 text-white shadow-[0_0_30px_rgb(var(--ua-brand-glow)/0.4)]"
-                            : "bg-white/5 hover:bg-white/10 text-white border border-white/10"
-                        }`}
-                      >
-                        {tier.cta}
-                      </Button>
+                    <Link href={tier.href!} className={tier.featured ? PRIMARY : GHOST}>
+                      {tier.cta}
                     </Link>
                   )}
-                </CardFooter>
-              </Card>
-            </motion.div>
-          ))}
-        </motion.div>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
 
         {/* Merchant-of-record disclosure. Inside the SAME `showPaid` gate as the
             paid CTAs it describes: native never reaches this page at all
@@ -294,48 +234,32 @@ export default function PricingClient({
             payment copy must not outlive the buttons it belongs to. The Refund
             Policy link adds navigation only, no new claim. */}
         {showPaid && (
-          <p className="mt-8 mx-auto max-w-2xl text-center text-xs leading-relaxed text-slate-500">
+          <p className="mx-auto mt-6 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
             {t('checkout.mor')}{' '}
-            <Link href="/refund" className="underline underline-offset-4 hover:text-white transition-colors">
+            <Link href="/refund" className="text-slate-300 underline underline-offset-4 hover:text-white">
               {t('refund.title')}
             </Link>
           </p>
         )}
 
         {showPaid && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="mt-32 text-center"
-        >
-          <div className="inline-flex flex-col md:flex-row items-center gap-8 px-12 py-8 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem]">
-            <div className="flex items-center gap-4 text-left">
-              <div className="w-12 h-12 bg-brand/20 rounded-xl flex items-center justify-center border border-brand/20">
-                <Globe className="text-brand w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-white font-bold">{t('pricing.enterprise.title')}</h4>
-                <p className="text-sm text-slate-500 font-medium">{t('pricing.enterprise.sub')}</p>
-              </div>
+          <section className={`${CARD} mt-6 flex flex-col gap-5 sm:flex-row sm:items-center`}>
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
+              <Globe className="h-5 w-5" aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-xl font-bold text-white">{t('pricing.enterprise.title')}</h2>
+              <p className="mt-1 text-[15px] leading-relaxed text-slate-400">{t('pricing.enterprise.sub')}</p>
             </div>
-            <div className="h-px md:h-12 w-full md:w-px bg-white/10" />
-            <Link href="mailto:support@unicornapps.app">
-              <Button variant="ghost" className="text-xs font-black uppercase tracking-[0.2em] text-brand hover:text-brand/80 hover:bg-white/5 px-8">
-                {t('pricing.enterprise.cta')} →
-              </Button>
-            </Link>
-          </div>
-        </motion.div>
+            <div className="sm:w-64 sm:shrink-0">
+              <a href="mailto:support@unicornapps.app" className={GHOST}>
+                {t('pricing.enterprise.cta')}
+              </a>
+            </div>
+          </section>
         )}
       </div>
-
-      {/* FOOTER */}
-      <footer className="mt-40 border-t border-white/5 py-12 text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">
-          © {new Date().getFullYear()} UnicornApps Global. Powered by Google Gemini.
-        </p>
-      </footer>
+      <Footer />
     </main>
-  );
+  )
 }
