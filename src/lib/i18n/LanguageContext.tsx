@@ -334,7 +334,6 @@ const translations = {
     'pricing.cta.free': 'Start Free',
     'pricing.popular': 'Most Popular',
     'pricing.enterprise.title': 'Enterprise Needs?',
-    'pricing.enterprise.sub': 'Custom API access and bulk licensing.',
     'pricing.enterprise.cta': 'Contact Sales Today',
     // Free-tier features
     'pricing.f.gen3': '3 free credits',
@@ -780,7 +779,6 @@ const translations = {
     'pricing.cta.free': 'ابدأ مجاناً',
     'pricing.popular': 'الأكثر شيوعاً',
     'pricing.enterprise.title': 'تحتاج خطة مؤسسية؟',
-    'pricing.enterprise.sub': 'وصول مخصص للـ API وتراخيص بالجملة.',
     'pricing.enterprise.cta': 'اتصل بالمبيعات اليوم',
     // Free-tier features
     'pricing.f.gen3': '3 أرصدة مجانية',
