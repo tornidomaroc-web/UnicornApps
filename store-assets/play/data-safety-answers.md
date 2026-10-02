@@ -4,6 +4,9 @@ Copy-paste pack for the Play Console Data Safety form. Verified against the
 actual codebase (Supabase schema, the generate/refine API routes, the Gemini
 call, and the network requests in the app). Fill the Console section by section.
 
+Last verified against the code on 2026-10-03 (main at `29ae561`, Android
+versionCode 5 loads this same web app from https://www.unicornapps.app).
+
 ## Required URLs
 
 - **Privacy policy URL:** https://www.unicornapps.app/privacy
@@ -13,14 +16,24 @@ call, and the network requests in the app). Fill the Console section by section.
 
 ## What the app actually does with data (verified facts)
 
-- Sign-in is by email and password (Supabase Auth). Google sign-in is also offered.
+- Sign-in is by email and password only (Supabase Auth). The Google and Apple
+  buttons are switched off in code and never render in the Android app.
 - The `profiles` table stores: user id, email, credit balance, created date.
 - The `generations` table stores: user id, the generated listing content, and
   `image_url` which holds the submitted product photo itself (base64). The photo
   is stored, not discarded.
-- Each product photo is sent to the Google Gemini API for AI processing.
+- Each product photo is sent to the Google Gemini API for AI processing. When a
+  user refines a result, their typed instruction and the current listing text are
+  sent to the same API.
+- The `usage_events` table records one row per generate or refine call: the user
+  id, the time, which route ran, whether it succeeded, the model and its token
+  counts. No photo and no text is stored there. On account deletion these rows
+  are kept with the user id cleared, so they no longer identify anyone.
+- Short-lived rate-limit counters are keyed by user id and expire with their time
+  window.
 - There is no analytics SDK, no crash-reporting SDK, no advertising SDK, and no
-  advertising ID usage anywhere in the app.
+  advertising ID usage in the Android app. The website mounts Vercel Analytics,
+  but only when the request does not come from the Android app.
 - The Android app contains no payment flow. Pricing and billing exist only on the
   website and are deliberately absent from the Android build.
 
@@ -34,10 +47,22 @@ call, and the network requests in the app). Fill the Console section by section.
 ### Is all of the user data collected by your app encrypted in transit?
 **Answer:** Yes (all traffic to Supabase, Vercel, and the Google AI API uses HTTPS/TLS)
 
+### Which methods of account creation does your app support?
+**Answer:** Username and password only. Not OAuth, not "other authentication".
+
+### Delete account URL
+**Answer:** https://www.unicornapps.app/delete-account (the canonical host; it
+names the app, lists the steps, and says what is deleted and what is kept).
+
 ### Do you provide a way for users to request that their data is deleted?
-**Answer:** Yes. Users delete their account and all associated data in-app from the
-Account page. A public instructions page is also provided at
-https://www.unicornapps.app/delete-account
+**Answer:** Yes. Users delete their account in-app from the Account page, and the
+public page above explains how. Deleting the account erases the sign-in details,
+the email address, the credit balance, and every generation with its stored
+photo. Usage counts are kept with the user id cleared, so they no longer identify
+the person; the deletion page says so.
+
+### Can users delete some or all data without deleting their account?
+**Answer:** No.
 
 ---
 
@@ -125,13 +150,26 @@ above. The app does not access documents or other files.
 
 ### App activity - Other user-generated content
 **Collected:** Yes
-**Shared:** No
+**Shared:** Yes
 **Processing:** Persistent (generated titles, descriptions, captions, and history
 are stored in the `generations` table)
 **Optional or required:** Required
 **Purposes:** App functionality
+**Shared with / why:** A refine instruction the user types, with the current
+listing text, is sent to Google (Gemini API) to rewrite the listing. Declared
+"Shared: Yes" for the same reason as Photos below.
 
-### App activity - App interactions, In-app search history, Installed apps, Other actions
+### App activity - App interactions
+**Collected:** Yes
+**Shared:** No
+**Processing:** Persistent (one `usage_events` row per generate or refine call:
+time, route, outcome, model, token counts, linked to the user id until the
+account is deleted)
+**Optional or required:** Required
+**Purposes:** Analytics (measuring how much the AI feature is used and what it
+costs); App functionality
+
+### App activity - In-app search history, Installed apps, Other actions
 **Collected:** No
 **Shared:** No
 
@@ -160,9 +198,16 @@ analytics or ads SDK that would collect one.
 | Email address | Yes | No | Persistent | Required | Account management, App functionality |
 | User IDs | Yes | No | Persistent | Required | Account management, App functionality |
 | Photos | Yes | Yes (Google AI API) | Persistent | Required | App functionality |
-| Other user-generated content | Yes | No | Persistent | Required | App functionality |
+| Other user-generated content | Yes | Yes (Google AI API) | Persistent | Required | App functionality |
+| App interactions | Yes | No | Persistent | Required | Analytics, App functionality |
 
-Everything not in this table is declared "Not collected".
+Everything not in this table is declared "Not collected". In particular,
+"Device or other IDs" is NOT collected: the account UUID is a user ID and is
+declared above under Personal info - User IDs.
+
+Service providers that process data on the app's behalf, and are therefore not
+declared as "shared": Supabase (database and authentication), Vercel (hosting),
+and the email provider that delivers sign-in emails.
 
 ---
 
@@ -173,5 +218,7 @@ Everything not in this table is declared "Not collected".
   generative-AI question honestly and confirm there is a way for users to flag
   content. Adding an in-app report link is still recommended (see
   RESUME_PLAY_PUBLISH.md section 10).
-- **Account creation:** The app supports account creation, which is why the
-  account deletion URL above is required.
+- **Account creation:** The app supports account creation (email and password),
+  which is why the account deletion URL above is required.
+- **Payments:** None of Paddle, its scripts, or any price is reachable from the
+  Android app, so nothing about payments belongs in this form.
