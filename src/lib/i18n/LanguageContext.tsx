@@ -333,8 +333,8 @@ const translations = {
     'pricing.free.desc': 'Try the AI on a few products. No card required.',
     'pricing.cta.free': 'Start Free',
     'pricing.popular': 'Most Popular',
-    'pricing.enterprise.title': 'Enterprise Needs?',
-    'pricing.enterprise.cta': 'Contact Sales Today',
+    'pricing.contact.title': 'Questions before you buy?',
+    'pricing.contact.cta': 'Email support',
     // Free-tier features
     'pricing.f.gen3': '3 free credits',
     'pricing.f.vision.std': 'Standard Vision Analysis',
@@ -778,8 +778,8 @@ const translations = {
     'pricing.free.desc': 'جرّب الذكاء الاصطناعي على بعض المنتجات. لا حاجة إلى بطاقة.',
     'pricing.cta.free': 'ابدأ مجاناً',
     'pricing.popular': 'الأكثر شيوعاً',
-    'pricing.enterprise.title': 'تحتاج خطة مؤسسية؟',
-    'pricing.enterprise.cta': 'اتصل بالمبيعات اليوم',
+    'pricing.contact.title': 'لديك سؤال قبل الشراء؟',
+    'pricing.contact.cta': 'راسل الدعم',
     // Free-tier features
     'pricing.f.gen3': '3 أرصدة مجانية',
     'pricing.f.vision.std': 'تحليل بصريّ قياسيّ',
