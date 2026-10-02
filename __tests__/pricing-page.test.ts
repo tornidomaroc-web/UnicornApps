@@ -167,4 +167,14 @@ describe('promises nothing the product does not do', () => {
     expect(dictionary).not.toMatch(/'pricing\.enterprise\.sub'/)
     expect(dictionary).not.toMatch(/Custom API access|bulk licensing/i)
   })
+
+  // There is no enterprise plan and no sales team: the card's address is the
+  // support mailbox, so its title and button say so in both languages.
+  it('the contact card names no enterprise plan and no sales team', () => {
+    expect(client).not.toMatch(/pricing\.enterprise\./)
+    expect(dictionary).not.toMatch(/'pricing\.enterprise\./)
+    expect(dictionary).not.toMatch(/Enterprise Needs|Contact Sales|خطة مؤسسية|بالمبيعات/)
+    expect(client).toMatch(/t\('pricing\.contact\.title'\)/)
+    expect(client).toMatch(/mailto:support@unicornapps\.app/)
+  })
 })
