@@ -11,8 +11,10 @@ import { PGlite } from '@electric-sql/pglite'
 jest.setTimeout(60_000)
 
 const ROOT = join(__dirname, '..')
-const SCHEMA = readFileSync(join(ROOT, 'supabase_schema.sql'), 'utf8')
-const MIGRATION = readFileSync(join(ROOT, 'migrations', '2026-10-03_add_before_user_created_hook.sql'), 'utf8')
+// Line endings depend on the checkout (core.autocrlf); compare the SQL, not them.
+const unix = (s: string) => s.split('\r\n').join('\n')
+const SCHEMA = unix(readFileSync(join(ROOT, 'supabase_schema.sql'), 'utf8'))
+const MIGRATION = unix(readFileSync(join(ROOT, 'migrations', '2026-10-03_add_before_user_created_hook.sql'), 'utf8'))
 const fn = (sql: string) => {
   const m = sql.match(/CREATE OR REPLACE FUNCTION public\.hook_require_server_signup\b[\s\S]*?\$\$;/)
   if (!m) throw new Error('hook function not found')
