@@ -31,7 +31,8 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.hook_require_server_signup(jsonb) FROM PUBLIC, anon, authenticated;
+-- service_role is listed too: Supabase grants it EXECUTE on new public functions by default.
+REVOKE ALL ON FUNCTION public.hook_require_server_signup(jsonb) FROM PUBLIC, anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.hook_require_server_signup(jsonb) TO supabase_auth_admin;
 GRANT USAGE ON SCHEMA public TO supabase_auth_admin;
 
@@ -43,5 +44,5 @@ GRANT USAGE ON SCHEMA public TO supabase_auth_admin;
 --   SELECT public.hook_require_server_signup('{"user":{"app_metadata":{"provider":"google"}}}');
 --     -- {}
 --   SELECT grantee FROM information_schema.role_routine_grants
---   WHERE routine_name = 'hook_require_server_signup';                        -- supabase_auth_admin only
+--   WHERE routine_name = 'hook_require_server_signup';   -- postgres (owner) and supabase_auth_admin only
 -- ─────────────────────────────────────────────────────────────────────────────

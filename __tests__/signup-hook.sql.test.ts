@@ -41,7 +41,7 @@ describe('hook_require_server_signup', () => {
 
   it('only supabase_auth_admin may execute it, in both files', () => {
     for (const sql of [SCHEMA, MIGRATION]) {
-      expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.hook_require_server_signup\(jsonb\) FROM PUBLIC, anon, authenticated;/)
+      expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.hook_require_server_signup\(jsonb\) FROM PUBLIC, anon, authenticated, service_role;/)
       expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.hook_require_server_signup\(jsonb\) TO supabase_auth_admin;/)
     }
   })

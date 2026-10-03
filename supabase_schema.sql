@@ -607,6 +607,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.hook_require_server_signup(jsonb) FROM PUBLIC, anon, authenticated;
+-- service_role is listed too: Supabase grants it EXECUTE on new public functions by default.
+REVOKE ALL ON FUNCTION public.hook_require_server_signup(jsonb) FROM PUBLIC, anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.hook_require_server_signup(jsonb) TO supabase_auth_admin;
 GRANT USAGE ON SCHEMA public TO supabase_auth_admin;
