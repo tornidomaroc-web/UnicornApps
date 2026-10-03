@@ -12,6 +12,23 @@ const mockedNative = jest.fn(() => false)
 jest.mock('@/lib/supabase/server', () => ({ createClient: (...a: unknown[]) => mockedCreateClient(...a) }))
 jest.mock('@/lib/native-request', () => ({ isNativeRequest: () => mockedNative() }))
 jest.mock('next/cache', () => ({ revalidatePath: () => {} }))
+// Sign-up's guards (Turnstile, the per-network cap) are tested in
+// signup-guard.test.ts; here they pass so these tests reach the account call.
+const mockedAdminCreateUser = jest.fn()
+jest.mock('next/headers', () => ({ headers: () => new Headers({ 'x-real-ip': '203.0.113.7' }) }))
+jest.mock('@/lib/turnstile', () => ({
+  TURNSTILE_FIELD: 'cf-turnstile-response',
+  verifyTurnstile: async () => ({ ok: true, checked: true }),
+}))
+jest.mock('@/lib/signup-limit', () => ({
+  clientIp: () => '203.0.113.7',
+  checkSignupLimit: async () => ({ allowed: true, checked: true }),
+}))
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: () => ({ auth: { admin: { createUser: (...a: unknown[]) => mockedAdminCreateUser(...a) } } }),
+}))
+process.env.NEXT_PUBLIC_SUPABASE_URL ||= 'http://localhost:54321'
+process.env.SUPABASE_SERVICE_ROLE_KEY ||= 'test-service-role'
 jest.mock('next/navigation', () => ({
   redirect: (to: string) => {
     throw Object.assign(new Error('NEXT_REDIRECT'), { to })
@@ -54,8 +71,9 @@ describe('form actions return codes, never Supabase text', () => {
   })
 
   it('a thrown network error is server_unreachable with nothing else attached', async () => {
-    mockedCreateClient.mockReturnValue({
-      auth: { signUp: jest.fn(async () => { throw new Error('getaddrinfo ENOTFOUND qwgd.supabase.co') }) },
+    mockedCreateClient.mockReturnValue({ auth: {} })
+    mockedAdminCreateUser.mockImplementationOnce(async () => {
+      throw new Error('getaddrinfo ENOTFOUND qwgd.supabase.co')
     })
     const res = await actions().signup(undefined, form({ email: 'a@b.co', password: 'secret1' }))
     expect(res).toEqual({ code: 'server_unreachable' })

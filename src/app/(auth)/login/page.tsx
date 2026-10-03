@@ -14,6 +14,7 @@ import {
 import { useLang } from '@/lib/i18n/LanguageContext'
 import { AuthBanner, AuthShell, FIELD, LABEL, SubmitButton } from '@/components/auth/AuthShell'
 import { SocialButtons } from '@/components/auth/SocialButtons'
+import { TurnstileWidget } from '@/components/auth/TurnstileWidget'
 import { TILE } from '@/app/dashboard/surface'
 
 type Mode = 'signin' | 'signup' | 'reset'
@@ -211,6 +212,9 @@ export default function LoginPage({
               </div>
             </div>
           )}
+
+          {/* Sign-up hands out free credits, so it alone carries the check. */}
+          {mode === 'signup' && <TurnstileWidget lang={lang === 'ar' ? 'ar' : 'en'} resetKey={signupState} />}
 
           {feedback && (
             <AuthBanner

@@ -536,3 +536,51 @@ ALTER TABLE public.usage_events ENABLE ROW LEVEL SECURITY;
 -- migrations/2026-07-14_add_usage_events.sql (step 2).
 REVOKE ALL ON TABLE public.usage_events FROM PUBLIC, anon, authenticated;
 GRANT INSERT, SELECT ON TABLE public.usage_events TO service_role;
+
+-- Per-network cap on new accounts (sign-up only). See migrations/2026-10-03_add_signup_limit.sql.
+CREATE OR REPLACE FUNCTION public.check_signup_limit(
+  p_network   text,
+  p_per_hour  integer,
+  p_per_day   integer
+) RETURNS text
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+DECLARE
+  now_s bigint := floor(extract(epoch from now()))::bigint;
+  win_h bigint := now_s / 3600;
+  win_d bigint := now_s / 86400;
+  k_d   text := 's:' || p_network || ':d';
+  k_h   text := 's:' || p_network || ':h';
+  e_d   integer;
+  e_h   integer;
+BEGIN
+  -- Fail OPEN on misconfiguration or an empty key.
+  IF p_per_hour <= 0 OR p_per_day <= 0 OR coalesce(p_network, '') = '' THEN
+    RETURN 'allowed';
+  END IF;
+
+  INSERT INTO rate_limits (bucket_key, window_start, count) VALUES
+    (k_d, win_d, 0),
+    (k_h, win_h, 0)
+  ON CONFLICT (bucket_key) DO NOTHING;
+
+  SELECT CASE WHEN window_start = win_d THEN count ELSE 0 END INTO e_d
+    FROM rate_limits WHERE bucket_key = k_d FOR UPDATE;
+  SELECT CASE WHEN window_start = win_h THEN count ELSE 0 END INTO e_h
+    FROM rate_limits WHERE bucket_key = k_h FOR UPDATE;
+
+  IF e_d + 1 > p_per_day  THEN RETURN 'day';  END IF;
+  IF e_h + 1 > p_per_hour THEN RETURN 'hour'; END IF;
+
+  UPDATE rate_limits SET count = CASE WHEN window_start = win_d THEN count + 1 ELSE 1 END,
+                         window_start = win_d WHERE bucket_key = k_d;
+  UPDATE rate_limits SET count = CASE WHEN window_start = win_h THEN count + 1 ELSE 1 END,
+                         window_start = win_h WHERE bucket_key = k_h;
+
+  RETURN 'allowed';
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.check_signup_limit(text, integer, integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.check_signup_limit(text, integer, integer) TO service_role;
