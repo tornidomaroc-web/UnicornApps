@@ -1,5 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
-import { authForwardingFetch, clientIpFrom } from '@/lib/supabase/forwarded-fetch'
+import { authForwardingFetch, clientIpFrom, forwardingStatus, logForwardingStatusOnce } from '@/lib/supabase/forwarded-fetch'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const NATIVE_UA_TOKEN = 'UnicornAppsAndroid'
@@ -31,7 +31,9 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  const forwardingFetch = authForwardingFetch(clientIpFrom(request.headers))
+  const clientIp = clientIpFrom(request.headers)
+  logForwardingStatusOnce('middleware', forwardingStatus(clientIp))
+  const forwardingFetch = authForwardingFetch(clientIp)
 
   try {
     const supabase = createServerClient(

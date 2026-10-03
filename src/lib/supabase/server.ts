@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies, headers } from 'next/headers'
-import { authForwardingFetch, clientIpFrom } from './forwarded-fetch'
+import { authForwardingFetch, clientIpFrom, forwardingStatus, logForwardingStatusOnce } from './forwarded-fetch'
 
 export function createClient() {
   const cookieStore = cookies()
@@ -51,6 +51,7 @@ function forwardingOption(): { global?: { fetch: typeof fetch } } {
   } catch {
     // Outside a request (build time): nothing to forward.
   }
+  logForwardingStatusOnce('server', forwardingStatus(ip))
   const f = authForwardingFetch(ip)
   return f ? { global: { fetch: f } } : {}
 }

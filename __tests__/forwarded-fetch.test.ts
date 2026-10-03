@@ -5,7 +5,7 @@
  */
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { authForwardingFetch, clientIpFrom, isIpAddress } from '../src/lib/supabase/forwarded-fetch'
+import { authForwardingFetch, clientIpFrom, forwardingStatus, isIpAddress } from '../src/lib/supabase/forwarded-fetch'
 
 const URL_ = 'https://proj.supabase.co'
 const ANON = 'eyJhbGciOiJIUzI1NiJ9.anon.sig'
@@ -92,10 +92,21 @@ describe('both server-side clients use it', () => {
   })
   it('the middleware that refreshes sessions', () => {
     const src = read('src/middleware.ts')
-    expect(src).toMatch(/authForwardingFetch\(clientIpFrom\(request\.headers\)\)/)
+    expect(src).toMatch(/authForwardingFetch\(clientIp\)/)
+    expect(src).toMatch(/clientIpFrom\(request\.headers\)/)
     expect(src).toMatch(/global: \{ fetch: forwardingFetch \}/)
   })
   it('the browser client is not given anything (it never holds the secret key)', () => {
     expect(read('src/lib/supabase/client.ts')).not.toMatch(/SUPABASE_SECRET_KEY|forwarded-fetch/)
+  })
+})
+
+describe('forwardingStatus names the reason, never a value', () => {
+  it('each state', () => {
+    expect(forwardingStatus('1.2.3.4', { url: URL_, secretKey: SECRET })).toBe('active')
+    expect(forwardingStatus('1.2.3.4', { url: URL_ })).toBe('no-secret-key')
+    expect(forwardingStatus('1.2.3.4', { url: URL_, secretKey: 'eyJ.legacy.key' })).toBe('not-a-secret-key')
+    expect(forwardingStatus(null, { url: URL_, secretKey: SECRET })).toBe('no-client-address')
+    expect(forwardingStatus('1.2.3.4', { secretKey: SECRET })).toBe('no-url')
   })
 })

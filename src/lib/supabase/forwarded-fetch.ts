@@ -37,6 +37,32 @@ export function clientIpFrom(headers: Headers): string | null {
   return candidate && isIpAddress(candidate) ? candidate : null
 }
 
+export type ForwardingStatus = 'active' | 'no-secret-key' | 'not-a-secret-key' | 'no-client-address' | 'no-url'
+
+/** Why forwarding is or is not happening. Names a reason, never a value. */
+export function forwardingStatus(
+  ip: string | null,
+  env: { url?: string; secretKey?: string } = {
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    secretKey: process.env.SUPABASE_SECRET_KEY,
+  }
+): ForwardingStatus {
+  if (!env.url) return 'no-url'
+  if (!env.secretKey) return 'no-secret-key'
+  if (!env.secretKey.startsWith('sb_secret_')) return 'not-a-secret-key'
+  if (!ip) return 'no-client-address'
+  return 'active'
+}
+
+const logged = new Set<string>()
+/** One log line per status per server instance, so the state is visible in Vercel's runtime logs. */
+export function logForwardingStatusOnce(where: 'server' | 'middleware', status: ForwardingStatus): void {
+  const key = `${where}:${status}`
+  if (logged.has(key)) return
+  logged.add(key)
+  console.info(`[auth-forwarding] ${where}: ${status}`)
+}
+
 /**
  * A fetch for supabase-js that forwards the end user's address on auth calls,
  * or `undefined` (use the default fetch) when there is nothing to forward.
