@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { authForwardingFetch, clientIpFrom } from '@/lib/supabase/forwarded-fetch'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const NATIVE_UA_TOKEN = 'UnicornAppsAndroid'
@@ -30,11 +31,16 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  const forwardingFetch = authForwardingFetch(clientIpFrom(request.headers))
+
   try {
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
+        // The session refresh below is an auth call: forward the user's
+        // address so Supabase's per-IP limit counts people, not Vercel.
+        ...(forwardingFetch ? { global: { fetch: forwardingFetch } } : {}),
         cookies: {
           getAll() {
             return request.cookies.getAll()

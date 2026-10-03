@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
+import { authForwardingFetch, clientIpFrom } from './forwarded-fetch'
 
 export function createClient() {
   const cookieStore = cookies()
@@ -17,6 +18,9 @@ export function createClient() {
       supabaseUrl,
       supabaseAnonKey,
       {
+        // Auth calls carry the user's address (see forwarded-fetch.ts); inert
+        // until SUPABASE_SECRET_KEY is set.
+        ...forwardingOption(),
         cookies: {
           getAll() {
             return cookieStore.getAll()
@@ -38,4 +42,15 @@ export function createClient() {
     console.error('SERVER ERROR initializing Supabase Client:', error)
     return null
   }
+}
+
+function forwardingOption(): { global?: { fetch: typeof fetch } } {
+  let ip: string | null = null
+  try {
+    ip = clientIpFrom(headers())
+  } catch {
+    // Outside a request (build time): nothing to forward.
+  }
+  const f = authForwardingFetch(ip)
+  return f ? { global: { fetch: f } } : {}
 }
