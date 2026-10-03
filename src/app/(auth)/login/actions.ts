@@ -79,10 +79,11 @@ export async function signup(
   const limit = await checkSignupLimit(ip)
   if (!limit.allowed) return { code: 'signup_limited' }
 
-  // The account is created by the server with the admin API. Public sign-up is
-  // CLOSED in Supabase (Auth → "Allow new users to sign up" off), so the public
-  // anon key cannot create accounts around the checks above. The admin API is
-  // unaffected by that setting, which is why this path works with it on or off.
+  // The account is created by the server with the admin API. Supabase's
+  // before-user-created hook refuses email sign-ups made at the PUBLIC
+  // endpoint, so the anon key cannot create accounts around the checks above;
+  // the admin API does not run that hook, which is why this path works whether
+  // the hook is on or off. OAuth (Google, Apple) sign-ups are not affected.
   const admin = adminAuthClient()
   if (!admin) return { code: 'config_error' }
 

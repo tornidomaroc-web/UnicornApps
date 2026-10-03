@@ -584,3 +584,29 @@ $$;
 
 REVOKE ALL ON FUNCTION public.check_signup_limit(text, integer, integer) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.check_signup_limit(text, integer, integer) TO service_role;
+
+-- Before-user-created hook: email sign-ups only through the app's server. See migrations/2026-10-03_add_before_user_created_hook.sql.
+CREATE OR REPLACE FUNCTION public.hook_require_server_signup(event jsonb)
+RETURNS jsonb
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+DECLARE
+  provider  text    := coalesce(event->'user'->'app_metadata'->>'provider', '');
+  anonymous boolean := coalesce((event->'user'->>'is_anonymous')::boolean, false);
+BEGIN
+  IF anonymous OR provider IN ('email', 'phone', '') THEN
+    RETURN jsonb_build_object(
+      'error', jsonb_build_object(
+        'http_code', 403,
+        'message', 'Sign up in the UnicornApps app or website.'
+      )
+    );
+  END IF;
+  RETURN '{}'::jsonb;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.hook_require_server_signup(jsonb) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.hook_require_server_signup(jsonb) TO supabase_auth_admin;
+GRANT USAGE ON SCHEMA public TO supabase_auth_admin;

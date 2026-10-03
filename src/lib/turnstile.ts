@@ -4,9 +4,12 @@
 // demands a token on every password sign-in and every password reset too, not
 // only on sign-up. A check placed in our own sign-up action covers exactly the
 // path that hands out free credits and leaves sign-in and reset untouched.
-// It only holds because public sign-up is closed in Supabase and accounts are
-// created by this server with the admin API (see signup in login/actions.ts):
-// otherwise the public anon key could create accounts around this check.
+// It holds because accounts are created by this server with the admin API
+// (see signup in login/actions.ts), and a before-user-created hook in Supabase
+// (migrations/2026-10-03_add_before_user_created_hook.sql) refuses any email
+// sign-up arriving at the PUBLIC endpoint. Without that hook the public anon key
+// could create accounts around this check. Google and Apple sign-ups pass the
+// hook untouched.
 //
 // SERVER ONLY. TURNSTILE_SECRET_KEY is never NEXT_PUBLIC_ and never logged.
 
