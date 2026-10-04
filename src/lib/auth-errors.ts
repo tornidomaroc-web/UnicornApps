@@ -29,6 +29,10 @@ export const AUTH_ERROR_CODES = [
   'link_expired',
   'session_expired',
   'reset_session_missing',
+  // Sign-up only: the Turnstile check failed, or this network made too many
+  // accounts recently (lib/turnstile.ts, lib/signup-limit.ts).
+  'captcha_failed',
+  'signup_limited',
 ] as const
 export type AuthErrorCode = (typeof AUTH_ERROR_CODES)[number]
 

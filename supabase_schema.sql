@@ -536,3 +536,78 @@ ALTER TABLE public.usage_events ENABLE ROW LEVEL SECURITY;
 -- migrations/2026-07-14_add_usage_events.sql (step 2).
 REVOKE ALL ON TABLE public.usage_events FROM PUBLIC, anon, authenticated;
 GRANT INSERT, SELECT ON TABLE public.usage_events TO service_role;
+
+-- Per-network cap on new accounts (sign-up only). See migrations/2026-10-03_add_signup_limit.sql.
+CREATE OR REPLACE FUNCTION public.check_signup_limit(
+  p_network   text,
+  p_per_hour  integer,
+  p_per_day   integer
+) RETURNS text
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+DECLARE
+  now_s bigint := floor(extract(epoch from now()))::bigint;
+  win_h bigint := now_s / 3600;
+  win_d bigint := now_s / 86400;
+  k_d   text := 's:' || p_network || ':d';
+  k_h   text := 's:' || p_network || ':h';
+  e_d   integer;
+  e_h   integer;
+BEGIN
+  -- Fail OPEN on misconfiguration or an empty key.
+  IF p_per_hour <= 0 OR p_per_day <= 0 OR coalesce(p_network, '') = '' THEN
+    RETURN 'allowed';
+  END IF;
+
+  INSERT INTO rate_limits (bucket_key, window_start, count) VALUES
+    (k_d, win_d, 0),
+    (k_h, win_h, 0)
+  ON CONFLICT (bucket_key) DO NOTHING;
+
+  SELECT CASE WHEN window_start = win_d THEN count ELSE 0 END INTO e_d
+    FROM rate_limits WHERE bucket_key = k_d FOR UPDATE;
+  SELECT CASE WHEN window_start = win_h THEN count ELSE 0 END INTO e_h
+    FROM rate_limits WHERE bucket_key = k_h FOR UPDATE;
+
+  IF e_d + 1 > p_per_day  THEN RETURN 'day';  END IF;
+  IF e_h + 1 > p_per_hour THEN RETURN 'hour'; END IF;
+
+  UPDATE rate_limits SET count = CASE WHEN window_start = win_d THEN count + 1 ELSE 1 END,
+                         window_start = win_d WHERE bucket_key = k_d;
+  UPDATE rate_limits SET count = CASE WHEN window_start = win_h THEN count + 1 ELSE 1 END,
+                         window_start = win_h WHERE bucket_key = k_h;
+
+  RETURN 'allowed';
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.check_signup_limit(text, integer, integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.check_signup_limit(text, integer, integer) TO service_role;
+
+-- Before-user-created hook: email sign-ups only through the app's server. See migrations/2026-10-03_add_before_user_created_hook.sql.
+CREATE OR REPLACE FUNCTION public.hook_require_server_signup(event jsonb)
+RETURNS jsonb
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+DECLARE
+  provider  text    := coalesce(event->'user'->'app_metadata'->>'provider', '');
+  anonymous boolean := coalesce((event->'user'->>'is_anonymous')::boolean, false);
+BEGIN
+  IF anonymous OR provider IN ('email', 'phone', '') THEN
+    RETURN jsonb_build_object(
+      'error', jsonb_build_object(
+        'http_code', 403,
+        'message', 'Sign up in the UnicornApps app or website.'
+      )
+    );
+  END IF;
+  RETURN '{}'::jsonb;
+END;
+$$;
+
+-- service_role is listed too: Supabase grants it EXECUTE on new public functions by default.
+REVOKE ALL ON FUNCTION public.hook_require_server_signup(jsonb) FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.hook_require_server_signup(jsonb) TO supabase_auth_admin;
+GRANT USAGE ON SCHEMA public TO supabase_auth_admin;

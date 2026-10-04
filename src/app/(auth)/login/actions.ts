@@ -1,8 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
+import { checkSignupLimit, clientIp } from '@/lib/signup-limit'
+import { TURNSTILE_FIELD, verifyTurnstile } from '@/lib/turnstile'
 import { mapSupabaseAuthError, type AuthResult } from '@/lib/auth-errors'
 import { AUTH_PROVIDERS, isSocialProvider } from '@/lib/auth-providers'
 import { isNativeRequest } from '@/lib/native-request'
@@ -65,26 +69,54 @@ export async function signup(
   if (!email || !password) return { code: 'missing_fields' }
   if (password.length < 6) return { code: 'weak_password' }
 
-  let result
+  // FREE CREDITS ARE HANDED OUT HERE, so this is the one path that is guarded.
+  // Order matters: Turnstile first, so a failed widget never spends the
+  // network's budget; then the per-network cap; only then is an account made.
+  const ip = clientIp(headers())
+  const human = await verifyTurnstile(String(formData.get(TURNSTILE_FIELD) || ''), ip)
+  if (!human.ok) return { code: human.reason === 'NO_SECRET' ? 'config_error' : 'captcha_failed' }
+
+  const limit = await checkSignupLimit(ip)
+  if (!limit.allowed) return { code: 'signup_limited' }
+
+  // The account is created by the server with the admin API. Supabase's
+  // before-user-created hook refuses email sign-ups made at the PUBLIC
+  // endpoint, so the anon key cannot create accounts around the checks above;
+  // the admin API does not run that hook, which is why this path works whether
+  // the hook is on or off. OAuth (Google, Apple) sign-ups are not affected.
+  const admin = adminAuthClient()
+  if (!admin) return { code: 'config_error' }
+
+  let created
   try {
-    result = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: `${siteUrl()}/auth/callback` },
-    })
+    // email_confirm: confirmation is off for this project, so a new account is
+    // usable at once, exactly as public sign-up made it before.
+    created = await admin.auth.admin.createUser({ email, password, email_confirm: true })
   } catch (e) {
     return unreachable(e)
   }
+  if (created.error) return fail(created.error)
 
-  if (result.error) return fail(result.error)
-
-  // When "Confirm email" is enabled, signUp succeeds but returns no session.
-  // Tell the user to check their inbox instead of bouncing them to /dashboard
-  // (where middleware would silently kick them back to /login).
-  if (!result.data.session) return { code: 'check_email' }
+  let session
+  try {
+    session = await supabase.auth.signInWithPassword({ email, password })
+  } catch (e) {
+    return unreachable(e)
+  }
+  if (session.error) return fail(session.error)
 
   revalidatePath('/', 'layout')
   redirect('/dashboard')
+}
+
+function adminAuthClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !serviceKey) {
+    console.error('[auth] Supabase service credentials missing: sign-up unavailable')
+    return null
+  }
+  return createAdminClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } })
 }
 
 export async function requestPasswordReset(
