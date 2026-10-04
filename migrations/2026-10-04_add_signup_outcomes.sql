@@ -12,12 +12,15 @@
 -- WHO WRITES. The server, with the service role, after each attempt
 -- (src/lib/signup-ledger.ts). Clients hold no privilege on the table.
 --
--- WHO READS. `signup_health()` only: a SECURITY DEFINER function that returns
--- aggregate counts over the last 24 h and a verdict. It is callable with the
--- anon key ON PURPOSE: the scheduled check (.github/workflows/signup-health.yml)
--- then needs no privileged secret anywhere, and the function is STABLE, so an
--- anonymous caller can read counts but can neither write nor silence an alert.
--- The counts reveal nothing a visitor could not learn by trying to sign up.
+-- WHO READS. Two SECURITY DEFINER functions, both STABLE (read only):
+--   * `signup_health()` returns the counts, the reasons and the verdict over the
+--     last 24 h. service_role ONLY: the numbers are the app's real sign-up
+--     volume and are nobody else's business (`npm run signup:health`).
+--   * `signup_health_verdict()` returns ONE boolean, alert or not, and is
+--     callable with the anon key ON PURPOSE: the scheduled check
+--     (.github/workflows/signup-health.yml) then needs no privileged secret
+--     anywhere, nothing countable leaves, and a caller can neither write nor
+--     silence the alert.
 --
 -- Apply BEFORE deploying the code that writes here. Until then the writer
 -- fails open: it logs and never blocks a sign-up.
@@ -49,11 +52,12 @@ CREATE INDEX signup_outcomes_created_at_idx ON public.signup_outcomes (created_a
 
 -- RLS ON, NO policies: service_role bypasses RLS; clients get zero access.
 -- The REVOKE undoes Supabase's default grant of ALL to anon/authenticated.
+-- DELETE is for removing a forced test row and for a later retention purge.
 ALTER TABLE public.signup_outcomes ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.signup_outcomes FROM PUBLIC, anon, authenticated;
-GRANT INSERT, SELECT ON TABLE public.signup_outcomes TO service_role;
+GRANT INSERT, SELECT, DELETE ON TABLE public.signup_outcomes TO service_role;
 
--- Verdict + counts over the last 24 h. `p_now` exists for tests.
+-- Counts, reasons and verdict over the last 24 h. `p_now` exists for tests.
 --
 -- SYSTEM failure = a code no visitor can produce: a missing secret or client,
 -- the hook refusing the server, a Supabase error other than the user-caused
@@ -136,8 +140,25 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.signup_health(timestamptz) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.signup_health(timestamptz) TO anon, service_role;
+-- Supabase grants EXECUTE on every new public function to anon and authenticated
+-- by default privilege, so both are revoked by name; PUBLIC alone is not enough.
+REVOKE ALL ON FUNCTION public.signup_health(timestamptz) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.signup_health(timestamptz) TO service_role;
+
+-- The one bit the public check may read. SECURITY DEFINER so that it can call
+-- signup_health(), which its callers cannot.
+CREATE OR REPLACE FUNCTION public.signup_health_verdict(p_now timestamptz DEFAULT now())
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT (public.signup_health(p_now)->>'alert')::boolean;
+$$;
+
+REVOKE ALL ON FUNCTION public.signup_health_verdict(timestamptz) FROM PUBLIC, authenticated;
+GRANT EXECUTE ON FUNCTION public.signup_health_verdict(timestamptz) TO anon, service_role;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- VERIFY (run after applying; all must hold):
@@ -145,8 +166,10 @@ GRANT EXECUTE ON FUNCTION public.signup_health(timestamptz) TO anon, service_rol
 --   SELECT grantee, privilege_type FROM information_schema.role_table_grants
 --   WHERE table_name = 'signup_outcomes';                   -- postgres + service_role only
 --
---   SELECT grantee FROM information_schema.role_routine_grants
---   WHERE routine_name = 'signup_health';                   -- anon, service_role (+ postgres)
+--   SELECT routine_name, grantee FROM information_schema.role_routine_grants
+--   WHERE routine_name LIKE 'signup_health%' ORDER BY 1, 2;
+--     -- signup_health: postgres, service_role; signup_health_verdict: anon, postgres, service_role
 --
+--   SELECT public.signup_health_verdict();                  -- false
 --   SELECT public.signup_health();                          -- {"alert": false, ...}
 -- ─────────────────────────────────────────────────────────────────────────────

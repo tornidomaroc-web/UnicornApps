@@ -1,11 +1,12 @@
 # Asks the database every 30 minutes whether sign-up looks healthy and FAILS
 # when it does not, so GitHub emails the alert. The verdict comes from the SQL
-# function `signup_health` (supabase_schema.sql), which classifies the last
-# 24 h of sign-up outcomes and decides when an alert is due, so this file
-# carries no rule of its own.
+# function `signup_health_verdict` (supabase_schema.sql): one boolean, computed
+# by `signup_health`, which classifies the last 24 h of sign-up outcomes and
+# decides when an alert is due. This file carries no rule of its own.
 #
-# This log is PUBLIC (public repository), so it prints the verdict only.
-# The numbers behind it: `npm run signup:health` locally.
+# This log is PUBLIC (public repository), and so is the function this calls:
+# both carry the verdict only, nothing countable. The numbers behind it need
+# the service role: `npm run signup:health` locally.
 #
 # Needs two repository secrets: SUPABASE_URL and SUPABASE_ANON_KEY (the public
 # anon key; the function it calls is readable with it and writes nothing).
@@ -39,14 +40,15 @@ jobs:
             exit 1
           fi
           if ! body=$(curl -sS --fail-with-body --retry 3 --retry-all-errors --max-time 20 \
-                -X POST "$SUPABASE_URL/rest/v1/rpc/signup_health" \
+                -X POST "$SUPABASE_URL/rest/v1/rpc/signup_health_verdict" \
                 -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
                 -H "Content-Type: application/json" -d '{}'); then
-            echo "::error::the health query itself failed (Supabase unreachable or signup_health missing)"
+            echo "::error::the health query itself failed (Supabase unreachable or signup_health_verdict missing)"
             exit 1
           fi
-          case "$(printf '%s' "$body" | jq -r '.alert')" in
+          # PostgREST returns a scalar function's result as a bare JSON value.
+          case "$(printf '%s' "$body" | jq -r '.')" in
             false) echo "sign-up: healthy" ;;
             true)  echo "::error::sign-up needs a look. Run: npm run signup:health"; exit 1 ;;
-            *)     echo "::error::unexpected answer from signup_health"; exit 1 ;;
+            *)     echo "::error::unexpected answer from signup_health_verdict"; exit 1 ;;
           esac

@@ -1,10 +1,11 @@
-// Prints the sign-up health verdict and the last-24 h counts: the same answer
-// the scheduled check reads (.github/workflows/signup-health.yml), with the
-// detail that check keeps out of its public log.
+// Prints the sign-up health verdict, the reasons and the last-24 h counts: the
+// verdict is what the scheduled check reads (.github/workflows/signup-health.yml);
+// the numbers are readable with the service role only, so they never appear
+// in that check's public log.
 //
 //   npm run signup:health
 //
-// Reads NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY from the
+// Reads NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from the
 // environment or .env.local; prints neither. Exit 1 on alert, 2 on a failure
 // of the query itself.
 import { readFileSync } from 'node:fs'
@@ -19,9 +20,9 @@ try {
   // no .env.local: the environment must carry both values
 }
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL || fromFile.NEXT_PUBLIC_SUPABASE_URL
-const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || fromFile.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY || fromFile.SUPABASE_SERVICE_ROLE_KEY
 if (!url || !key) {
-  console.error('NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are needed (environment or .env.local)')
+  console.error('NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are needed (environment or .env.local)')
   process.exit(2)
 }
 

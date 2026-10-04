@@ -26,7 +26,14 @@ const extract = (sql: string, re: RegExp) => {
   return m[0]
 }
 const TABLE = (sql: string) => extract(sql, /CREATE TABLE public\.signup_outcomes \([\s\S]*?\n\);/)
-const FN = (sql: string) => extract(sql, /CREATE OR REPLACE FUNCTION public\.signup_health\b[\s\S]*?\$\$;/)
+const FN = (sql: string) => extract(sql, /CREATE OR REPLACE FUNCTION public\.signup_health\(p_now[\s\S]*?\$\$;/)
+const VERDICT = (sql: string) => extract(sql, /CREATE OR REPLACE FUNCTION public\.signup_health_verdict\b[\s\S]*?\$\$;/)
+// Every GRANT / REVOKE / ALTER TABLE line that names the ledger or its functions.
+const GRANTS = (sql: string) =>
+  sql
+    .split('\n')
+    .filter(l => /^(GRANT|REVOKE|ALTER TABLE)\b.*signup_(outcomes|health)/.test(l))
+    .join('\n')
 
 // A quiet hour (02:xx UTC is not a reminder slot) and a reminder slot (06:xx).
 const QUIET = '2026-10-04T02:40:00Z'
@@ -38,6 +45,7 @@ beforeEach(async () => {
   db = await PGlite.create()
   await db.exec(TABLE(SCHEMA))
   await db.exec(FN(SCHEMA))
+  await db.exec(VERDICT(SCHEMA))
 })
 
 type Row = { at: string; outcome: string; detail?: string | null; unchecked?: boolean }
@@ -52,22 +60,83 @@ const health = async (now: string) =>
   (await db.query<{ h: any }>('SELECT public.signup_health($1::timestamptz) AS h', [now])).rows[0].h
 
 describe('the files agree', () => {
-  it('the migration ships the same table and function as the schema', () => {
+  it('the migration ships the same table, functions and grants as the schema', () => {
     expect(TABLE(MIGRATION)).toBe(TABLE(SCHEMA))
     expect(FN(MIGRATION)).toBe(FN(SCHEMA))
+    expect(VERDICT(MIGRATION)).toBe(VERDICT(SCHEMA))
+    expect(GRANTS(MIGRATION)).toBe(GRANTS(SCHEMA))
   })
 
-  it('clients hold nothing on the table; the health function is readable with the anon key and writes nothing', () => {
-    for (const sql of [SCHEMA, MIGRATION]) {
-      expect(sql).toMatch(/ALTER TABLE public\.signup_outcomes ENABLE ROW LEVEL SECURITY;/)
-      expect(sql).toMatch(/REVOKE ALL ON TABLE public\.signup_outcomes FROM PUBLIC, anon, authenticated;/)
-      expect(sql).toMatch(/GRANT INSERT, SELECT ON TABLE public\.signup_outcomes TO service_role;/)
-      expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.signup_health\(timestamptz\) FROM PUBLIC;/)
-      expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.signup_health\(timestamptz\) TO anon, service_role;/)
+  it('the exact privilege text: clients hold nothing; the counts are service_role only; anon gets one boolean', () => {
+    expect(GRANTS(SCHEMA)).toBe(
+      [
+        'ALTER TABLE public.signup_outcomes ENABLE ROW LEVEL SECURITY;',
+        'REVOKE ALL ON TABLE public.signup_outcomes FROM PUBLIC, anon, authenticated;',
+        'GRANT INSERT, SELECT, DELETE ON TABLE public.signup_outcomes TO service_role;',
+        'REVOKE ALL ON FUNCTION public.signup_health(timestamptz) FROM PUBLIC, anon, authenticated;',
+        'GRANT EXECUTE ON FUNCTION public.signup_health(timestamptz) TO service_role;',
+        'REVOKE ALL ON FUNCTION public.signup_health_verdict(timestamptz) FROM PUBLIC, authenticated;',
+        'GRANT EXECUTE ON FUNCTION public.signup_health_verdict(timestamptz) TO anon, service_role;',
+      ].join('\n')
+    )
+    for (const fn of [FN(SCHEMA), VERDICT(SCHEMA)]) {
+      expect(fn).toMatch(/\nSTABLE\n/)
+      expect(fn).toMatch(/\nSECURITY DEFINER\n/)
+      expect(fn).toMatch(/SET search_path = public/)
     }
-    expect(FN(SCHEMA)).toMatch(/\nSTABLE\n/)
-    expect(FN(SCHEMA)).toMatch(/\nSECURITY DEFINER\n/)
-    expect(FN(SCHEMA)).toMatch(/SET search_path = public/)
+  })
+})
+
+describe('what each role can actually do (roles created as Supabase defines them)', () => {
+  // Supabase's roles: anon and authenticated are plain; service_role has
+  // BYPASSRLS. The grants are run verbatim from the schema, then each role is
+  // assumed with SET ROLE. PGlite is real PostgreSQL, so a refusal here is the
+  // same refusal production gives.
+  const as = async (role: string, sql: string) => {
+    await db.exec(`SET ROLE ${role}`)
+    try {
+      return await db.query(sql)
+    } finally {
+      await db.exec('RESET ROLE')
+    }
+  }
+  beforeEach(async () => {
+    await db.exec('CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE service_role NOLOGIN BYPASSRLS')
+    await db.exec('GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role')
+    // Supabase's default privileges hand ALL on new tables and EXECUTE on new
+    // functions to these roles; reproduced so the REVOKEs are tested against it.
+    await db.exec('GRANT ALL ON TABLE public.signup_outcomes TO anon, authenticated, service_role')
+    await db.exec('GRANT EXECUTE ON FUNCTION public.signup_health(timestamptz), public.signup_health_verdict(timestamptz) TO anon, authenticated, service_role')
+    await db.exec(GRANTS(SCHEMA).split('\n').filter(l => !l.startsWith('ALTER TABLE')).join('\n'))
+    await insert([{ at: minus(QUIET, 10), outcome: 'hook_refused_server' }])
+  })
+
+  it.each(['anon', 'authenticated'])('%s can neither read nor write the ledger', async (role) => {
+    await expect(as(role, 'SELECT count(*) FROM public.signup_outcomes')).rejects.toThrow(/permission denied/)
+    await expect(as(role, "INSERT INTO public.signup_outcomes (outcome) VALUES ('created')")).rejects.toThrow(/permission denied/)
+    await expect(as(role, 'DELETE FROM public.signup_outcomes')).rejects.toThrow(/permission denied/)
+  })
+
+  it.each(['anon', 'authenticated'])('%s cannot read the counts', async (role) => {
+    await expect(as(role, 'SELECT public.signup_health()')).rejects.toThrow(/permission denied/)
+  })
+
+  it('anon can read the one boolean, and it is computed over rows anon cannot see', async () => {
+    const r = await as('anon', `SELECT public.signup_health_verdict('${QUIET}'::timestamptz) AS v`)
+    expect(r.rows[0]).toEqual({ v: true })
+  })
+
+  it('authenticated cannot read even the boolean', async () => {
+    await expect(as('authenticated', 'SELECT public.signup_health_verdict()')).rejects.toThrow(/permission denied/)
+  })
+
+  it('service_role writes, reads, deletes and gets the counts', async () => {
+    await as('service_role', "INSERT INTO public.signup_outcomes (outcome) VALUES ('created')")
+    const n = await as('service_role', 'SELECT count(*)::int AS n FROM public.signup_outcomes')
+    expect(n.rows[0]).toEqual({ n: 2 })
+    await as('service_role', "DELETE FROM public.signup_outcomes WHERE outcome = 'created'")
+    const h = await as('service_role', `SELECT public.signup_health('${QUIET}'::timestamptz) AS h`)
+    expect((h.rows[0] as any).h.counts.system_failures).toBe(1)
   })
 })
 
