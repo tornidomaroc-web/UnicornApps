@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "signup:health": "node scripts/signup-health.mjs",
     "cap:init": "cap sync",
     "cap:ios": "cap open ios",
     "cap:android": "cap open android",

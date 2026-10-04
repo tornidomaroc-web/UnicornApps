@@ -46,14 +46,17 @@ describe('verifyTurnstile', () => {
     expect(body.get('remoteip')).toBe('1.2.3.4')
   })
 
-  it('a rejected token is refused', async () => {
+  it("a rejected token is refused, and Cloudflare's reasons come back with it", async () => {
     fetchMock.mockResolvedValue(json({ success: false, 'error-codes': ['invalid-input-response'] }))
-    expect(await verifyTurnstile('tok', null)).toEqual({ ok: false, reason: 'REJECTED' })
+    expect(await verifyTurnstile('tok', null)).toEqual({ ok: false, reason: 'REJECTED', codes: ['invalid-input-response'] })
+    // A rejection that blames OUR key is the one the ledger must be able to tell apart.
+    fetchMock.mockResolvedValue(json({ success: false, 'error-codes': ['invalid-input-secret', 7] }))
+    expect(await verifyTurnstile('tok', null)).toEqual({ ok: false, reason: 'REJECTED', codes: ['invalid-input-secret'] })
   })
 
   it('an unreadable answer is refused, not waved through', async () => {
     fetchMock.mockResolvedValue(new Response('not json', { status: 200 }))
-    expect(await verifyTurnstile('tok', null)).toEqual({ ok: false, reason: 'REJECTED' })
+    expect(await verifyTurnstile('tok', null)).toEqual({ ok: false, reason: 'REJECTED', codes: [] })
   })
 
   it('Cloudflare down (5xx or network): let through, marked unchecked', async () => {

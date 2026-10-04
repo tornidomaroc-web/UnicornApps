@@ -6,6 +6,8 @@ import { redirect } from 'next/navigation'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { checkSignupLimit, clientIp } from '@/lib/signup-limit'
+import { joinCodes, recordSignupOutcome } from '@/lib/signup-ledger'
+import { isServerSignupHookRefusal } from '@/lib/signup-hook'
 import { TURNSTILE_FIELD, verifyTurnstile } from '@/lib/turnstile'
 import { mapSupabaseAuthError, type AuthResult } from '@/lib/auth-errors'
 import { AUTH_PROVIDERS, isSocialProvider } from '@/lib/auth-providers'
@@ -61,9 +63,17 @@ export async function signup(
   _prev: AuthResult | undefined,
   formData: FormData
 ): Promise<AuthResult | undefined> {
+  // Every outcome past the field checks is recorded (lib/signup-ledger.ts), so
+  // a broken sign-up is visible after Vercel's logs are gone. The ledger holds
+  // codes only, never the address; a failed write never blocks the sign-up.
   const supabase = createClient()
-  if (!supabase) return { code: 'config_error' }
+  if (!supabase) {
+    await recordSignupOutcome({ outcome: 'no_supabase_client' })
+    return { code: 'config_error' }
+  }
 
+  // Not recorded: the browser already enforces both, so a hit here is a script,
+  // and a script must not be able to fill the ledger with empty posts.
   const email = String(formData.get('email') || '').trim()
   const password = String(formData.get('password') || '')
   if (!email || !password) return { code: 'missing_fields' }
@@ -74,16 +84,33 @@ export async function signup(
   // network's budget; then the per-network cap; only then is an account made.
   const ip = clientIp(headers())
   const human = await verifyTurnstile(String(formData.get(TURNSTILE_FIELD) || ''), ip)
-  if (!human.ok) return { code: human.reason === 'NO_SECRET' ? 'config_error' : 'captcha_failed' }
+  if (!human.ok) {
+    if (human.reason === 'NO_SECRET') {
+      await recordSignupOutcome({ outcome: 'no_turnstile_secret' })
+      return { code: 'config_error' }
+    }
+    await recordSignupOutcome(
+      human.reason === 'NO_TOKEN'
+        ? { outcome: 'captcha_no_token' }
+        : { outcome: 'captcha_rejected', detail: joinCodes(human.codes), turnstileChecked: true }
+    )
+    return { code: 'captcha_failed' }
+  }
 
   const limit = await checkSignupLimit(ip)
-  if (!limit.allowed) return { code: 'signup_limited' }
+  if (!limit.allowed) {
+    await recordSignupOutcome({ outcome: 'signup_limited', detail: limit.window, turnstileChecked: human.checked })
+    return { code: 'signup_limited' }
+  }
+  const checks = { turnstileChecked: human.checked, limitChecked: limit.checked }
 
   // The account is created by the server with the admin API. Supabase's
   // before-user-created hook refuses email sign-ups made at the PUBLIC
   // endpoint, so the anon key cannot create accounts around the checks above;
   // the admin API does not run that hook, which is why this path works whether
   // the hook is on or off. OAuth (Google, Apple) sign-ups are not affected.
+  //
+  // Missing service credentials cannot be recorded: the ledger needs them too.
   const admin = adminAuthClient()
   if (!admin) return { code: 'config_error' }
 
@@ -93,18 +120,37 @@ export async function signup(
     // usable at once, exactly as public sign-up made it before.
     created = await admin.auth.admin.createUser({ email, password, email_confirm: true })
   } catch (e) {
+    await recordSignupOutcome({ outcome: 'create_failed', detail: 'server_unreachable', ...checks })
     return unreachable(e)
   }
-  if (created.error) return fail(created.error)
+  if (created.error) {
+    // Should the hook ever run for the admin API too, every sign-up would end
+    // here with the hook's own sentence. Recorded under its own name so the
+    // health check names the cause, and shown as what it is: our fault.
+    if (isServerSignupHookRefusal(created.error)) {
+      console.error('[auth] the before-user-created hook refused the server: sign-up unavailable')
+      await recordSignupOutcome({ outcome: 'hook_refused_server', ...checks })
+      return { code: 'config_error' }
+    }
+    const result = fail(created.error)
+    await recordSignupOutcome({ outcome: 'create_failed', detail: created.error.code ?? result.code, ...checks })
+    return result
+  }
 
   let session
   try {
     session = await supabase.auth.signInWithPassword({ email, password })
   } catch (e) {
+    await recordSignupOutcome({ outcome: 'signin_failed', detail: 'server_unreachable', ...checks })
     return unreachable(e)
   }
-  if (session.error) return fail(session.error)
+  if (session.error) {
+    const result = fail(session.error)
+    await recordSignupOutcome({ outcome: 'signin_failed', detail: session.error.code ?? result.code, ...checks })
+    return result
+  }
 
+  await recordSignupOutcome({ outcome: 'created', ...checks })
   revalidatePath('/', 'layout')
   redirect('/dashboard')
 }

@@ -23,7 +23,10 @@ export const TURNSTILE_FIELD = 'cf-turnstile-response'
 
 export type TurnstileOutcome =
   | { ok: true; checked: boolean }
-  | { ok: false; reason: 'NO_SECRET' | 'NO_TOKEN' | 'REJECTED' }
+  | { ok: false; reason: 'NO_SECRET' }
+  | { ok: false; reason: 'NO_TOKEN' }
+  /** `codes` are Cloudflare's own error codes: `invalid-input-secret` blames our key, `invalid-input-response` the token. */
+  | { ok: false; reason: 'REJECTED'; codes: string[] }
 
 /**
  * Verify a widget token with Cloudflare.
@@ -65,8 +68,9 @@ export async function verifyTurnstile(
     }
     const data = (await res.json().catch(() => null)) as { success?: boolean; 'error-codes'?: string[] } | null
     if (data?.success === true) return { ok: true, checked: true }
-    console.warn('[turnstile] token rejected:', (data?.['error-codes'] ?? []).join(',') || 'no reason')
-    return { ok: false, reason: 'REJECTED' }
+    const codes = (data?.['error-codes'] ?? []).filter((c): c is string => typeof c === 'string')
+    console.warn('[turnstile] token rejected:', codes.join(',') || 'no reason')
+    return { ok: false, reason: 'REJECTED', codes }
   } catch (err) {
     console.error(
       '[turnstile] siteverify unreachable, letting this sign-up through unchecked:',
