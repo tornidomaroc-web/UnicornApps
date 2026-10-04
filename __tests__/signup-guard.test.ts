@@ -10,6 +10,7 @@ const mockLimit = jest.fn()
 const mockCreateUser = jest.fn()
 const mockServerClient = jest.fn()
 const mockRpc = jest.fn()
+const mockRecord = jest.fn()
 
 jest.mock('next/headers', () => ({
   headers: () => new Headers({ 'x-real-ip': '198.51.100.23', 'x-forwarded-for': '198.51.100.23, 10.0.0.1' }),
@@ -66,8 +67,14 @@ describe('the sign-up action, with its guards stubbed', () => {
       clientIp: (h: Headers) => h.get('x-real-ip'),
       checkSignupLimit: (...a: unknown[]) => mockLimit(...a),
     }))
+    jest.doMock('@/lib/signup-ledger', () => ({
+      ...jest.requireActual('../src/lib/signup-ledger'),
+      recordSignupOutcome: (...a: unknown[]) => mockRecord(...a),
+    }))
+    mockRecord.mockReset().mockResolvedValue(true)
   })
   const signup = () => require('../src/app/(auth)/login/actions').signup
+  const recorded = () => mockRecord.mock.calls.map(c => c[0])
 
   const signIn = jest.fn()
   const signUpPublic = jest.fn()
@@ -78,17 +85,25 @@ describe('the sign-up action, with its guards stubbed', () => {
   })
 
   it('a failed widget is captcha_failed: no network budget spent, no account made', async () => {
-    mockVerify.mockResolvedValue({ ok: false, reason: 'REJECTED' })
+    mockVerify.mockResolvedValue({ ok: false, reason: 'REJECTED', codes: ['invalid-input-response'] })
     expect(await signup()(undefined, form(SIGNUP))).toEqual({ code: 'captcha_failed' })
     expect(mockVerify).toHaveBeenCalledWith('tok-123', '198.51.100.23')
     expect(mockLimit).not.toHaveBeenCalled()
     expect(mockCreateUser).not.toHaveBeenCalled()
+    expect(recorded()).toEqual([{ outcome: 'captcha_rejected', detail: 'invalid-input-response', turnstileChecked: true }])
+  })
+
+  it('no token at all is captcha_failed too, recorded apart from a rejection', async () => {
+    mockVerify.mockResolvedValue({ ok: false, reason: 'NO_TOKEN' })
+    expect(await signup()(undefined, form(SIGNUP))).toEqual({ code: 'captcha_failed' })
+    expect(recorded()).toEqual([{ outcome: 'captcha_no_token' }])
   })
 
   it('a missing secret is config_error, not a captcha message', async () => {
     mockVerify.mockResolvedValue({ ok: false, reason: 'NO_SECRET' })
     expect(await signup()(undefined, form(SIGNUP))).toEqual({ code: 'config_error' })
     expect(mockCreateUser).not.toHaveBeenCalled()
+    expect(recorded()).toEqual([{ outcome: 'no_turnstile_secret' }])
   })
 
   it('a network over its cap is signup_limited, with no account made', async () => {
@@ -97,6 +112,7 @@ describe('the sign-up action, with its guards stubbed', () => {
     expect(await signup()(undefined, form(SIGNUP))).toEqual({ code: 'signup_limited' })
     expect(mockLimit).toHaveBeenCalledWith('198.51.100.23')
     expect(mockCreateUser).not.toHaveBeenCalled()
+    expect(recorded()).toEqual([{ outcome: 'signup_limited', detail: 'day', turnstileChecked: true }])
   })
 
   it('a passing sign-up: admin account (confirmed), then a session, then the dashboard', async () => {
@@ -109,6 +125,15 @@ describe('the sign-up action, with its guards stubbed', () => {
     expect(signIn).toHaveBeenCalledWith({ email: 'new@example.com', password: 'secret12' })
     // The public sign-up endpoint is never used: it is closed in Supabase.
     expect(signUpPublic).not.toHaveBeenCalled()
+    expect(recorded()).toEqual([{ outcome: 'created', turnstileChecked: true, limitChecked: true }])
+  })
+
+  it('a sign-up that went through while Cloudflare was unreachable is recorded as unchecked', async () => {
+    mockVerify.mockResolvedValue({ ok: true, checked: false })
+    mockLimit.mockResolvedValue({ allowed: true, checked: false })
+    mockCreateUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
+    expect((await settle(signup()(undefined, form(SIGNUP)))).to).toBe('/dashboard')
+    expect(recorded()).toEqual([{ outcome: 'created', turnstileChecked: false, limitChecked: false }])
   })
 
   it('an address already registered is already_registered, never Supabase text', async () => {
@@ -120,12 +145,50 @@ describe('the sign-up action, with its guards stubbed', () => {
     })
     expect(await signup()(undefined, form(SIGNUP))).toEqual({ code: 'already_registered' })
     expect(signIn).not.toHaveBeenCalled()
+    // The Supabase code goes to the ledger; the message and the address never do.
+    expect(recorded()).toEqual([{ outcome: 'create_failed', detail: 'email_exists', turnstileChecked: true, limitChecked: true }])
   })
 
-  it('the cheap field checks still run before any guard', async () => {
+  it('the hook refusing OUR server is config_error on screen and hook_refused_server in the ledger, not unknown', async () => {
+    mockVerify.mockResolvedValue({ ok: true, checked: true })
+    mockLimit.mockResolvedValue({ allowed: true, checked: true })
+    mockCreateUser.mockResolvedValue({
+      data: { user: null },
+      error: { code: 'unknown', status: 403, message: 'Sign up in the UnicornApps app or website.' },
+    })
+    expect(await signup()(undefined, form(SIGNUP))).toEqual({ code: 'config_error' })
+    expect(signIn).not.toHaveBeenCalled()
+    expect(recorded()).toEqual([{ outcome: 'hook_refused_server', turnstileChecked: true, limitChecked: true }])
+  })
+
+  it('an unreachable backend and a failed sign-in after creation are recorded with their code', async () => {
+    mockVerify.mockResolvedValue({ ok: true, checked: true })
+    mockLimit.mockResolvedValue({ allowed: true, checked: true })
+    mockCreateUser.mockRejectedValueOnce(new Error('getaddrinfo ENOTFOUND x.supabase.co'))
+    expect(await signup()(undefined, form(SIGNUP))).toEqual({ code: 'server_unreachable' })
+    mockCreateUser.mockResolvedValueOnce({ data: { user: { id: 'u1' } }, error: null })
+    signIn.mockResolvedValueOnce({ error: { code: 'invalid_credentials', message: 'Invalid login credentials' } })
+    expect(await signup()(undefined, form(SIGNUP))).toEqual({ code: 'invalid_credentials' })
+    expect(recorded()).toEqual([
+      { outcome: 'create_failed', detail: 'server_unreachable', turnstileChecked: true, limitChecked: true },
+      { outcome: 'signin_failed', detail: 'invalid_credentials', turnstileChecked: true, limitChecked: true },
+    ])
+  })
+
+  it('a dead ledger changes nothing for the user', async () => {
+    // recordSignupOutcome never rejects; a failed write resolves false.
+    mockRecord.mockResolvedValue(false)
+    mockVerify.mockResolvedValue({ ok: true, checked: true })
+    mockLimit.mockResolvedValue({ allowed: true, checked: true })
+    mockCreateUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
+    expect((await settle(signup()(undefined, form(SIGNUP)))).to).toBe('/dashboard')
+  })
+
+  it('the cheap field checks still run before any guard, and are not recorded', async () => {
     expect(await signup()(undefined, form({ email: 'a@b.co', password: '123' }))).toEqual({ code: 'weak_password' })
     expect(await signup()(undefined, form({ email: '', password: 'secret12' }))).toEqual({ code: 'missing_fields' })
     expect(mockVerify).not.toHaveBeenCalled()
+    expect(mockRecord).not.toHaveBeenCalled()
   })
 })
 
