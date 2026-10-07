@@ -237,13 +237,15 @@ declared above under Personal info - User IDs.
 Service providers that process data on the app's behalf, and are therefore not
 declared as "shared": Supabase (database and authentication), Vercel (hosting),
 Cloudflare Turnstile (the sign-up bot check, see the note under "Device or other
-IDs"), and the provider that delivers password-reset emails. Which provider that
-is depends on the Supabase project's SMTP setting, which no code in this repo
-reads: with no custom SMTP, Supabase's own service sends them (Supabase's docs
-say that service is limited and delivers only to pre-authorised addresses);
-with custom SMTP, the configured provider does. Check Supabase dashboard >
-Authentication > SMTP Settings and name the provider here before the next
-submission.
+IDs"), and Resend, which delivers the account emails (password resets; sign-up
+confirmation is off). Resend receives the recipient's email address and the
+message content for that purpose only. Its Data Processing Addendum (updated
+2025-12-31) states "Company is a processor" and, for the data: "At a minimum,
+this includes metadata, email address and message content." Resend is set as
+the custom SMTP provider in the Supabase project (Authentication > SMTP
+Settings; not readable from this repo), sending as noreply@unicornapps.app.
+If that setting ever changes, this paragraph and the privacy policy's section
+04 change with it.
 
 ---
 
