@@ -4,6 +4,7 @@ import Link from "next/link";
 import { logout } from "@/app/(auth)/login/actions";
 import { Zap, LogOut, User, Menu, X } from "lucide-react";
 import { useLang } from '@/lib/i18n/LanguageContext';
+import { creditsWord } from '@/lib/i18n/credits-label';
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User as AuthUser } from "@supabase/supabase-js";
@@ -181,7 +182,7 @@ export default function Navbar({
                 <Zap aria-hidden className="h-4 w-4 shrink-0 text-brand" />
                 <span>{credits}</span>
                 <span className={onDashboard ? 'font-medium text-slate-400' : 'sr-only sm:not-sr-only sm:font-medium sm:text-slate-400'}>
-                  {t('nav.credits')}
+                  {creditsWord(credits, lang)}
                 </span>
               </div>
               {/* A link to the page you are already on is the cheapest thing in this
