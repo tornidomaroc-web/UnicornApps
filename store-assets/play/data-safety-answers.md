@@ -4,8 +4,11 @@ Copy-paste pack for the Play Console Data Safety form. Verified against the
 actual codebase (Supabase schema, the generate/refine API routes, the Gemini
 call, and the network requests in the app). Fill the Console section by section.
 
-Last verified against the code on 2026-10-03 (main at `29ae561`, Android
+Last verified against the code on 2026-10-07 (main at `30acf7d`, Android
 versionCode 5 loads this same web app from https://www.unicornapps.app).
+Changes since the 2026-10-03 submission: the sign-up bot check (Cloudflare
+Turnstile) and the per-network sign-up cap are now described, and the privacy
+policy names every provider.
 
 ## Required URLs
 
@@ -36,6 +39,18 @@ versionCode 5 loads this same web app from https://www.unicornapps.app).
   but only when the request does not come from the Android app.
 - The Android app contains no payment flow. Pricing and billing exist only on the
   website and are deliberately absent from the Android build.
+- Creating an account runs a bot check: the sign-up form loads Cloudflare
+  Turnstile (`TurnstileWidget`, script from challenges.cloudflare.com), and the
+  server verifies the token with Cloudflare, passing the client IP address along
+  (`verifyTurnstile`, `src/lib/turnstile.ts`). Cloudflare's Turnstile privacy
+  addendum (updated 2025-06-18) says the widget processes "client IP address,
+  TLS Fingerprint, User-Agent Header and Sitekey" to detect bots and to improve
+  Turnstile. Sign-in and password reset do not load it. Nothing from it is
+  stored by the app.
+- The server also keeps a per-network cap on new accounts: a SHA-256 hash of the
+  client IP address goes into a counter that expires with its hour and day
+  window (`checkSignupLimit`, `src/lib/signup-limit.ts`). The address itself is
+  never stored.
 
 ---
 
@@ -45,7 +60,8 @@ versionCode 5 loads this same web app from https://www.unicornapps.app).
 **Answer:** Yes
 
 ### Is all of the user data collected by your app encrypted in transit?
-**Answer:** Yes (all traffic to Supabase, Vercel, and the Google AI API uses HTTPS/TLS)
+**Answer:** Yes (all traffic to Supabase, Vercel, Cloudflare Turnstile, and the
+Google AI API uses HTTPS/TLS)
 
 ### Which methods of account creation does your app support?
 **Answer:** Username and password only. Not OAuth, not "other authentication".
@@ -188,6 +204,19 @@ costs); App functionality
 **Why:** No advertising ID and no device identifiers are collected. Authentication
 uses a session token tied to the account, not a device ID, and there is no
 analytics or ads SDK that would collect one.
+**Note on the sign-up bot check:** Cloudflare Turnstile reads the client IP
+address, a TLS fingerprint and the User-Agent header during sign-up (Cloudflare's
+own privacy addendum). None of these is in Play's list for this type ("an IMEI
+number, MAC address, Widevine Device ID, Firebase installation ID, or
+advertising identifier"), Play files an IP address under "Approximate location"
+only when location is inferred from it, which neither the app nor the check
+does, and Cloudflare processes the signals on the app's behalf as a service
+provider. So no data type is added for it; Cloudflare is named as a service
+provider in Section 3 and in the privacy policy. If a reviewer asks, the honest
+answers are: purpose "Fraud prevention, security, and compliance"; required (an
+account cannot be created without passing the check); processed ephemerally by
+the app (nothing from the check is stored; the sign-up cap stores only a hash of
+the address, which expires with its window).
 
 ---
 
@@ -207,7 +236,16 @@ declared above under Personal info - User IDs.
 
 Service providers that process data on the app's behalf, and are therefore not
 declared as "shared": Supabase (database and authentication), Vercel (hosting),
-and the email provider that delivers sign-in emails.
+Cloudflare Turnstile (the sign-up bot check, see the note under "Device or other
+IDs"), and Resend, which delivers the account emails (password resets; sign-up
+confirmation is off). Resend receives the recipient's email address and the
+message content for that purpose only. Its Data Processing Addendum (updated
+2025-12-31) states "Company is a processor" and, for the data: "At a minimum,
+this includes metadata, email address and message content." Resend is set as
+the custom SMTP provider in the Supabase project (Authentication > SMTP
+Settings; not readable from this repo), sending as noreply@unicornapps.app.
+If that setting ever changes, this paragraph and the privacy policy's section
+04 change with it.
 
 ---
 
