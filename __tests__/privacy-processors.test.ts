@@ -25,7 +25,7 @@ function value(lang: 'en' | 'ar', key: string): string {
   return m[1]
 }
 
-const PROCESSORS = ['Vercel', 'Vercel Web Analytics', 'Google Gemini', 'Supabase', 'Cloudflare Turnstile', 'Paddle']
+const PROCESSORS = ['Vercel', 'Vercel Web Analytics', 'Google Gemini', 'Supabase', 'Cloudflare Turnstile', 'Paddle', 'Resend']
 
 describe('privacy policy: third-party services', () => {
   it('finds the Arabic dictionary at all (a parser miss would pass vacuously)', () => {
