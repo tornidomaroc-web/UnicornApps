@@ -25,7 +25,7 @@ export default function Footer() {
         <div>
           <Link href="/" className="inline-flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/unicornapps-mark.svg" alt="" width={32} height={32} className="h-8 w-8" />
+            <img src="/unicornapps-mark.svg?v=2" alt="" width={32} height={32} className="h-8 w-8" />
             <span className="text-lg font-bold text-white">UnicornApps</span>
           </Link>
           <p className="mt-3 max-w-xs text-[15px] leading-relaxed text-slate-500">{t('footer.tagline')}</p>
