@@ -33,11 +33,41 @@ concurrency:
   group: signup-health
   cancel-in-progress: false
 
+env:
+  # Every sign-in provider that is MEANT to be on in Supabase, space-separated.
+  # The step below reads the live list and fails when the two differ, so a
+  # provider switched on in the dashboard is a deliberate one-word change here,
+  # never a silent one: a Google account is born with 0 credits only once the
+  # free-credit claim migration is live (migrations/2026-10-10_add_free_credit_claim.sql).
+  ALLOWED_AUTH_PROVIDERS: email
+
 jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
+      - name: Compare the enabled sign-in providers with the allowlist
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -u
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::repository secrets SUPABASE_URL and SUPABASE_ANON_KEY are not set"
+            exit 1
+          fi
+          # Public, read-only: the auth server's settings endpoint reports each
+          # provider's switch from its running config (anonymous_users included).
+          body=$(curl -sS --fail-with-body --retry 3 --retry-all-errors --max-time 20 \
+              "$SUPABASE_URL/auth/v1/settings" -H "apikey: $SUPABASE_ANON_KEY") \
+            || { echo "::error::could not read /auth/v1/settings"; exit 1; }
+          enabled=$(printf '%s' "$body" | jq -r '.external | to_entries[] | select(.value == true) | .key' | sort | tr '\n' ' ' | sed 's/ $//')
+          allowed=$(printf '%s\n' $ALLOWED_AUTH_PROVIDERS | sort | tr '\n' ' ' | sed 's/ $//')
+          echo "enabled providers: ${enabled:-none}"
+          if [ "$enabled" != "$allowed" ]; then
+            echo "::error::sign-in providers differ from the allowlist (enabled: '${enabled:-none}', allowed: '$allowed'). Switch the provider back off, or change ALLOWED_AUTH_PROVIDERS on purpose."
+            exit 1
+          fi
       - name: Ask the database
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

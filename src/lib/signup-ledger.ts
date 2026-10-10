@@ -24,8 +24,17 @@ export const SIGNUP_OUTCOMES = [
   'hook_refused_server',
   'create_failed',
   'signin_failed',
+  // The welcome claim (an account Google made, claiming its free credits) and
+  // the identity-link guard; see migrations/2026-10-10_add_free_credit_claim.sql.
+  'claimed',
+  'claim_failed',
+  'linked',
 ] as const
 export type SignupOutcome = (typeof SIGNUP_OUTCOMES)[number]
+
+/** Which path the attempt came through. Mirrors the CHECK on signup_outcomes.method. */
+export const SIGNUP_METHODS = ['email', 'google', 'apple'] as const
+export type SignupMethod = (typeof SIGNUP_METHODS)[number]
 
 /** Upper bound for the write; a sign-up is never slowed by more than this. */
 export const LEDGER_TIMEOUT_MS = 1500
@@ -40,6 +49,8 @@ export type SignupRecord = {
   /** false = Cloudflare was unreachable and the attempt went through unchecked. */
   turnstileChecked?: boolean | null
   limitChecked?: boolean | null
+  /** The sign-up path; the email form when absent. */
+  method?: SignupMethod
 }
 
 /**
@@ -80,6 +91,7 @@ export async function recordSignupOutcome(r: SignupRecord, timeoutMs: number = L
         detail: detailCode(r.detail),
         turnstile_checked: r.turnstileChecked ?? null,
         limit_checked: r.limitChecked ?? null,
+        method: r.method ?? 'email',
       })
       .abortSignal(controller.signal)
     if (error) {

@@ -1,9 +1,12 @@
 /**
- * Which social sign-in buttons exist. Both are OFF.
+ * Which social sign-in buttons exist. Google is ON, Apple is OFF.
  *
  * A button is turned on only after its provider is configured and proven end
  * to end in Supabase and the provider's console; turning one on before that
- * ships a button that fails for every user who taps it.
+ * ships a button that fails for every user who taps it. Google's switch-on
+ * order: the free-credit claim migration first (a Google account is born with
+ * 0 credits and claims them on /welcome), then the provider in Supabase, then
+ * this flag.
  *
  * Neither ever renders in the native app: Google refuses OAuth inside an
  * embedded WebView (403 disallowed_useragent), and the app gets its own native
@@ -14,7 +17,7 @@ export const SOCIAL_PROVIDERS = ['google', 'apple'] as const
 export type SocialProvider = (typeof SOCIAL_PROVIDERS)[number]
 
 export const AUTH_PROVIDERS: Readonly<Record<SocialProvider, boolean>> = {
-  google: false,
+  google: true,
   apple: false,
 }
 

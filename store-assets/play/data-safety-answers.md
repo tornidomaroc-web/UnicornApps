@@ -4,11 +4,13 @@ Copy-paste pack for the Play Console Data Safety form. Verified against the
 actual codebase (Supabase schema, the generate/refine API routes, the Gemini
 call, and the network requests in the app). Fill the Console section by section.
 
-Last verified against the code on 2026-10-07 (main at `30acf7d`, Android
-versionCode 5 loads this same web app from https://www.unicornapps.app).
+Last verified against the code on 2026-10-10 (the Google sign-in branch; Android
+versionCode 6 loads this same web app from https://www.unicornapps.app).
 Changes since the 2026-10-03 submission: the sign-up bot check (Cloudflare
-Turnstile) and the per-network sign-up cap are now described, and the privacy
-policy names every provider.
+Turnstile) and the per-network sign-up cap are described; the privacy policy
+names every provider; and Google sign-in exists on the WEBSITE (see the
+"Google sign-in" note below: the app itself still offers email and password
+only, so no data type changes).
 
 ## Required URLs
 
@@ -19,8 +21,23 @@ policy names every provider.
 
 ## What the app actually does with data (verified facts)
 
-- Sign-in is by email and password only (Supabase Auth). The Google and Apple
-  buttons are switched off in code and never render in the Android app.
+- In the app, sign-in is by email and password only (Supabase Auth). The
+  website also offers "Continue with Google"; that button never renders in the
+  Android app (`visibleProviders`, `src/lib/auth-providers.ts`) and the server
+  refuses the flow from the app's User-Agent (`signInWithProvider`), because
+  Google does not allow its sign-in inside an embedded WebView.
+- Google sign-in (website only): Google sends the account's email address, name
+  and profile picture, which Supabase stores in the account's user metadata
+  with the Google account identifier. The app never requests or transmits any
+  of that: a user who created the account with Google can use the app only
+  after setting a password ("Forgot password?"), and the app then sees the same
+  email address and user ID it declares below. "Name" therefore stays "Not
+  collected" for the app; revisit when native Google sign-in ships (a later
+  versionCode), which WILL collect Name through the app.
+- An account created with Google starts with 0 credits and receives its 3 free
+  credits only after the same bot check and per-network cap as an email
+  sign-up (`/welcome`, `claim_free_credits`). No new data type: the same
+  Turnstile signals and the same hashed network address as sign-up.
 - The `profiles` table stores: user id, email, credit balance, created date.
 - The `generations` table stores: user id, the generated listing content, and
   `image_url` which holds the submitted product photo itself (base64). The photo
@@ -89,7 +106,7 @@ For every type below, the answer is either "Not collected" or a full block.
 is ephemeral (used in memory only) or persistent (stored).
 
 ### Personal info - Name
-**Collected:** No
+**Collected:** No (the app has no Google sign-in; see "Google sign-in" above)
 **Shared:** No
 
 ### Personal info - Email address
