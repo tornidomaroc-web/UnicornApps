@@ -135,7 +135,7 @@ export default function Navbar({
         <div className="flex min-w-0 items-center gap-6">
           <Link href="/" className="flex h-11 min-w-[44px] shrink-0 items-center justify-center gap-3 text-xl font-bold text-white">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/unicornapps-mark.svg" alt="UnicornApps" width={40} height={40} className="h-10 w-10" />
+            <img src="/unicornapps-mark.svg?v=2" alt="UnicornApps" width={40} height={40} className="h-10 w-10" />
             <span className="hidden sm:block">UnicornApps</span>
           </Link>
 
