@@ -11,8 +11,9 @@ const config: CapacitorConfig = {
   // in src/lib/native-request.ts.
   appendUserAgent: 'UnicornAppsAndroid',
   server: {
-    // Canonical host — www is the only form with DNS records (apex does not
-    // resolve), served directly by Vercel (Cloudflare DNS-only), no redirect hop.
+    // Canonical host — www. The apex resolves too and answers a 307 to www
+    // (checked 2026-10-10); www is served directly by Vercel (Cloudflare
+    // DNS-only), no redirect hop.
     url: 'https://www.unicornapps.app',
     cleartext: false
   },
