@@ -16,6 +16,7 @@ import { AuthBanner, AuthShell, FIELD, LABEL, SubmitButton } from '@/components/
 import { SocialButtons } from '@/components/auth/SocialButtons'
 import { TurnstileWidget } from '@/components/auth/TurnstileWidget'
 import { TILE } from '@/app/dashboard/surface'
+import { useIsNative } from '@/hooks/useIsNative'
 
 type Mode = 'signin' | 'signup' | 'reset'
 const MODES: readonly Mode[] = ['signin', 'signup', 'reset']
@@ -26,6 +27,11 @@ export default function LoginPage({
   searchParams: { error?: string | string[]; mode?: string | string[] }
 }) {
   const { t, lang } = useLang()
+  // Inside the Android app there is no Google button (the WebView cannot run
+  // it), so an account made with Google on the website has no way in but a
+  // password. The hint below the sign-in form says how to set one. Shown only
+  // once native detection has RESOLVED to native: never on the web.
+  const native = useIsNative()
   const requestedMode = Array.isArray(searchParams.mode) ? searchParams.mode[0] : searchParams.mode
   const [mode, setMode] = useState<Mode>(
     MODES.includes(requestedMode as Mode) ? (requestedMode as Mode) : 'signin'
@@ -253,6 +259,10 @@ export default function LoginPage({
           </button>
         ) : (
           <SocialButtons />
+        )}
+
+        {mode === 'signin' && native.resolved && native.isNative && (
+          <p className="text-center text-xs leading-relaxed text-slate-500">{t('login.nativeGoogleHint')}</p>
         )}
       </div>
     </AuthShell>

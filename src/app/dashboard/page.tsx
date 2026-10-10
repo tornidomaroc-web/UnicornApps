@@ -7,6 +7,9 @@ export default async function DashboardPage() {
   let credits = 0
   let history: any[] = []
   let mustRedirect = false
+  // An account made outside our server (a Google sign-in) holds no credits
+  // until it claims them on /welcome, behind the same checks as sign-up.
+  let mustClaim = false
   let userId = ''
 
   try {
@@ -34,7 +37,7 @@ export default async function DashboardPage() {
       // Fetch user credit count
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('credits')
+        .select('credits, free_credits_claimed_at')
         .eq('id', user.id)
         .single()
 
@@ -42,6 +45,7 @@ export default async function DashboardPage() {
         console.error('Error fetching profile:', profileError)
       } else {
         credits = profile?.credits ?? 0
+        mustClaim = profile != null && profile.free_credits_claimed_at === null
       }
 
       // Fetch recent generations
@@ -65,6 +69,9 @@ export default async function DashboardPage() {
 
   if (mustRedirect) {
     redirect('/login')
+  }
+  if (mustClaim) {
+    redirect('/welcome')
   }
 
   // NO PRESENTATION HERE ON PURPOSE. This is a SERVER component, so it cannot
