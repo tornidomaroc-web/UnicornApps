@@ -724,9 +724,15 @@ export default function DashboardClient({
                      </h3>
                   </div>
 
-                  <Card className="bg-black/60 border border-white/5 rounded-[2rem] flex flex-col h-[650px] overflow-hidden shadow-2xl">
+                  {/* Sized by its content up to 650px; past that the history scrolls
+                      inside it and the input row stays pinned at the bottom. A fixed
+                      height left roughly 40% of a phone screen empty while the
+                      conversation was one or two messages long. `min-h-0` is what lets
+                      the flex-grow history shrink below its content once the card
+                      hits the cap, instead of pushing the input out of the card. */}
+                  <Card className="bg-black/60 border border-white/5 rounded-[2rem] flex flex-col max-h-[650px] overflow-hidden shadow-2xl">
                      {/* Chat History Area */}
-                     <div className="flex-grow overflow-y-auto p-6 space-y-6 custom-scrollbar scroll-smooth">
+                     <div className="flex-grow min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar scroll-smooth">
                         {chatHistory.map((msg, i) => (
                           <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                              <div className={`max-w-[85%] p-4 rounded-2xl text-xs font-medium leading-relaxed ${
