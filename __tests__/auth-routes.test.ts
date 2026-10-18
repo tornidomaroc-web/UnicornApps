@@ -22,7 +22,7 @@ type FakeUser = { id: string; identities: { provider: string }[]; app_metadata: 
 function fakeSupabase(
   opts: { exchangeError?: object | null; verifyError?: object | null; user?: FakeUser | null; claimedAt?: string | null } = {}
 ) {
-  const signOut = jest.fn(async () => ({ error: null }))
+  const signOut = jest.fn(async (_opts?: { scope?: string }): Promise<{ error: unknown }> => ({ error: null }))
   return {
     auth: {
       exchangeCodeForSession: jest.fn(async () => ({
@@ -165,8 +165,35 @@ describe('/auth/callback after the exchange: the claim and the link guard', () =
     expect(id).toBe('u3')
     expect(patch.password).toMatch(/^[0-9a-f]{64}$/)
     expect(patch.app_metadata).toMatchObject({ provider: 'email', link_secured: expect.any(String) })
+    expect(mockRecord).toHaveBeenCalledWith({ outcome: 'linked', method: 'google' })
+    // Other devices out first (the guard), then this browser's dead session
+    // cleared, after the ledger row, so the navbar does not read it as signed in.
+    expect(sb.auth.signOut.mock.calls).toEqual([[{ scope: 'others' }], [{ scope: 'local' }]])
+    expect(mockRecord.mock.invocationCallOrder[0]).toBeLessThan(sb.auth.signOut.mock.invocationCallOrder[1])
+  })
+
+  it.each([
+    ['throws', () => Promise.reject(new Error('network down'))],
+    ['returns an error', () => Promise.resolve({ error: { status: 500, message: 'x' } })],
+  ])('if clearing the local session %s, the guard has run and the user is still told', async (_label, local) => {
+    const sb = fakeSupabase({ user: both })
+    sb.auth.signOut.mockImplementation(async (opts) => (opts?.scope === 'local' ? local() : { error: null }))
+    mockedCreateClient.mockReturnValue(sb)
+    const res = await callback(get('/auth/callback?code=abc'))
+    expect(location(res).pathname + location(res).search).toBe('/login?notice=linked')
+    expect(mockUpdateUser).toHaveBeenCalledTimes(1)
     expect(sb.auth.signOut).toHaveBeenCalledWith({ scope: 'others' })
     expect(mockRecord).toHaveBeenCalledWith({ outcome: 'linked', method: 'google' })
+  })
+
+  it('no other sign-in path signs anyone out', async () => {
+    const secured = { ...both, app_metadata: { provider: 'email', link_secured: '2026-10-10T00:00:00Z' } }
+    for (const opts of [{ user: google, claimedAt: null }, { user: google }, { user: emailOnly }, { user: secured }]) {
+      const sb = fakeSupabase(opts)
+      mockedCreateClient.mockReturnValue(sb)
+      await callback(get('/auth/callback?code=abc'))
+      expect(sb.auth.signOut).not.toHaveBeenCalled()
+    }
   })
 
   it('the linked notice is a fixed URL: nothing from the request reaches it', async () => {
