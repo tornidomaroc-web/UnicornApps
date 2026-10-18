@@ -39,7 +39,7 @@ env:
   # provider switched on in the dashboard is a deliberate one-word change here,
   # never a silent one: a Google account is born with 0 credits only once the
   # free-credit claim migration is live (migrations/2026-10-10_add_free_credit_claim.sql).
-  ALLOWED_AUTH_PROVIDERS: email
+  ALLOWED_AUTH_PROVIDERS: email google
 
 jobs:
   check:

@@ -26,7 +26,7 @@ describe('the provider flags', () => {
 
 describe('the scheduled check watches the live provider switches', () => {
   it('carries an explicit allowlist, and reads the public settings endpoint with the anon key only', () => {
-    expect(workflow).toMatch(/^\s*ALLOWED_AUTH_PROVIDERS:\s*email\s*$/m)
+    expect(workflow).toMatch(/^\s*ALLOWED_AUTH_PROVIDERS:\s*email google\s*$/m)
     expect(workflow).toMatch(/\/auth\/v1\/settings/)
     expect(workflow).toMatch(/\.external \| to_entries\[\] \| select\(\.value == true\)/)
     expect(workflow).not.toMatch(/SERVICE_ROLE/)
