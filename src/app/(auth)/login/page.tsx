@@ -8,6 +8,7 @@ import { login, signup, requestPasswordReset } from './actions'
 import {
   LINK_ERROR_CODES,
   callbackErrorCode,
+  loginNotice,
   resolveFeedback,
   type AuthErrorCode,
 } from '@/lib/auth-errors'
@@ -24,7 +25,7 @@ const MODES: readonly Mode[] = ['signin', 'signup', 'reset']
 export default function LoginPage({
   searchParams,
 }: {
-  searchParams: { error?: string | string[]; mode?: string | string[] }
+  searchParams: { error?: string | string[]; mode?: string | string[]; notice?: string | string[] }
 }) {
   const { t, lang } = useLang()
   // Inside the Android app there is no Google button (the WebView cannot run
@@ -40,6 +41,10 @@ export default function LoginPage({
   // The URL error is shown until the user does something; switching mode or
   // submitting a form replaces it.
   const [urlError, setUrlError] = useState<unknown>(searchParams.error)
+  // Good news from our own callback (a Google sign-in joined to a password
+  // account). A known code picks fixed copy; the URL's text is never shown.
+  // Cleared like the URL error, by the user's next move.
+  const [notice, setNotice] = useState(() => loginNotice(searchParams.notice))
 
   const [signinState, signinAction] = useFormState(login, undefined)
   const [signupState, signupAction] = useFormState(signup, undefined)
@@ -85,6 +90,7 @@ export default function LoginPage({
     setMode(next)
     setShowPassword(false)
     setUrlError(undefined)
+    setNotice(null)
   }
 
   const state = mode === 'signin' ? signinState : mode === 'signup' ? signupState : resetState
@@ -143,6 +149,13 @@ export default function LoginPage({
   return (
     <AuthShell title={title} sub={sub} footer={footer}>
       <div className="space-y-5">
+        {notice && (
+          <div role="status" className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4">
+            <p className="text-sm font-semibold text-emerald-200">{t(`login.notice.${notice}.title`)}</p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-300">{t(`login.notice.${notice}.body`)}</p>
+          </div>
+        )}
+
         {mode !== 'reset' && (
           <div className={`${TILE} grid grid-cols-2 gap-1 p-1`}>
             {(['signin', 'signup'] as const).map((m) => (

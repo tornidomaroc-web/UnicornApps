@@ -175,6 +175,21 @@ export function urlErrorCode(raw: unknown): AuthErrorCode | null {
   return has(URL_ERROR_CODES, v) ? v : 'unknown'
 }
 
+/**
+ * News that only our own redirects send to /login. Each has a
+ * `login.notice.<code>.title` and `.body` string in both languages. Same rule
+ * as the errors: the URL picks a member of this list or nothing, and its text
+ * is never shown.
+ */
+export const LOGIN_NOTICES = ['linked'] as const
+export type LoginNotice = (typeof LOGIN_NOTICES)[number]
+
+/** The notice a URL asks for, or null for anything we did not produce. */
+export function loginNotice(raw: unknown): LoginNotice | null {
+  const v = Array.isArray(raw) ? raw[0] : raw
+  return has(LOGIN_NOTICES, v) ? v : null
+}
+
 export type Feedback = { kind: 'success' | 'error'; key: string; code: AuthErrorCode | AuthSuccessCode }
 
 /**
