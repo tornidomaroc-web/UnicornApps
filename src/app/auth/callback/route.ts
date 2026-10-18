@@ -76,6 +76,17 @@ export async function GET(request: Request) {
       // it issued for this sign-in included, so there is no session left to
       // carry to /welcome. /login says what happened; the next Google sign-in
       // finds the marker set and keeps its session.
+      //
+      // This browser still holds that dead session's cookies, and the navbar
+      // reads them as signed in next to a notice that says signed out. A local
+      // sign-out clears them on this response and touches no other device. It
+      // asks the server first, which may fail: the cookies then stay, as
+      // before, and the user still gets the notice.
+      try {
+        await supabase.auth.signOut({ scope: 'local' })
+      } catch (e) {
+        console.error('[auth/callback] could not clear the local session:', (e as Error)?.message)
+      }
       return go('/login?notice=linked')
     }
   }
