@@ -62,6 +62,7 @@ describe('recordSignupOutcome', () => {
       detail: 'email_exists',
       turnstile_checked: true,
       limit_checked: false,
+      method: 'email',
     })
     expect(mockAbortSignal.mock.calls[0][0]).toBeInstanceOf(AbortSignal)
   })
@@ -73,6 +74,7 @@ describe('recordSignupOutcome', () => {
       detail: null,
       turnstile_checked: null,
       limit_checked: null,
+      method: 'email',
     })
   })
 

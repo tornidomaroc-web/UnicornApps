@@ -17,6 +17,7 @@ const FILES = {
   update: 'src/app/(auth)/update-password/page.tsx',
   shell: 'src/components/auth/AuthShell.tsx',
   social: 'src/components/auth/SocialButtons.tsx',
+  welcome: 'src/app/welcome/WelcomeClient.tsx',
 }
 const code = Object.fromEntries(Object.entries(FILES).map(([k, p]) => [k, strip(read(p))])) as Record<
   keyof typeof FILES,
@@ -59,7 +60,7 @@ describe('no raw text reaches an auth screen', () => {
 })
 
 describe('direction and weight', () => {
-  const ui = [code.login, code.update, code.shell, code.social].join('\n')
+  const ui = [code.login, code.update, code.shell, code.social, code.welcome].join('\n')
   const classNames = (ui.match(/className=(?:"[^"]*"|\{`[^`]*`\})/g) || []).join(' ')
 
   it('uses logical direction classes only', () => {
@@ -84,8 +85,8 @@ describe('direction and weight', () => {
 })
 
 describe('social buttons', () => {
-  it('both providers are off', () => {
-    expect(AUTH_PROVIDERS).toEqual({ google: false, apple: false })
+  it('Google is on, Apple is off', () => {
+    expect(AUTH_PROVIDERS).toEqual({ google: true, apple: false })
   })
 
   it('nothing renders until native detection has resolved to web', () => {
@@ -94,7 +95,8 @@ describe('social buttons', () => {
     expect(visibleProviders(on, { isNative: true, resolved: true })).toEqual([])
     expect(visibleProviders(on, { isNative: true, resolved: false })).toEqual([])
     expect(visibleProviders(on, { isNative: false, resolved: true })).toEqual(['google', 'apple'])
-    expect(visibleProviders(AUTH_PROVIDERS, { isNative: false, resolved: true })).toEqual([])
+    expect(visibleProviders(AUTH_PROVIDERS, { isNative: false, resolved: true })).toEqual(['google'])
+    expect(visibleProviders(AUTH_PROVIDERS, { isNative: true, resolved: true })).toEqual([])
   })
 
   it('the component asks useIsNative and the flags, and returns null when empty', () => {

@@ -60,11 +60,26 @@ const health = async (now: string) =>
   (await db.query<{ h: any }>('SELECT public.signup_health($1::timestamptz) AS h', [now])).rows[0].h
 
 describe('the files agree', () => {
-  it('the migration ships the same table, functions and grants as the schema', () => {
-    expect(TABLE(MIGRATION)).toBe(TABLE(SCHEMA))
-    expect(FN(MIGRATION)).toBe(FN(SCHEMA))
+  // The 2026-10-10 claim migration ALTERs the table (a `method` column, three
+  // more outcomes) and replaces signup_health; that file is now the source of
+  // truth for both (claim-gate.sql.test.ts pins it). The 2026-10-04 file is an
+  // applied migration, left as the historical record of the rest.
+  it('the migration ships the same verdict function and grants as the schema', () => {
     expect(VERDICT(MIGRATION)).toBe(VERDICT(SCHEMA))
     expect(GRANTS(MIGRATION)).toBe(GRANTS(SCHEMA))
+  })
+
+  it("the schema's table is the 2026-10-04 table plus the 2026-10-10 additions, nothing dropped", () => {
+    const outcomes = (sql: string) => {
+      const m = sql.replace(/--[^\n]*/g, '').match(/CHECK \(outcome IN \(([\s\S]*?)\)\)/)
+      if (!m) throw new Error('outcome CHECK not found')
+      return Array.from(m[1].matchAll(/'([a-z_]+)'/g)).map(x => x[1])
+    }
+    const original = outcomes(TABLE(MIGRATION))
+    const current = outcomes(TABLE(SCHEMA))
+    expect(current).toEqual(expect.arrayContaining(original))
+    expect(current.length).toBe(original.length + 3)
+    expect(TABLE(SCHEMA)).toMatch(/method\s+TEXT\s+NOT NULL DEFAULT 'email' CHECK \(method IN \('email', 'google', 'apple'\)\)/)
   })
 
   it('the exact privilege text: clients hold nothing; the counts are service_role only; anon gets one boolean', () => {

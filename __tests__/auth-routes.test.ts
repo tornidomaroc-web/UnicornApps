@@ -4,6 +4,12 @@
  * and lives in auth-confirm.test.ts.
  */
 jest.mock('@/lib/supabase/server', () => ({ createClient: jest.fn() }))
+const mockUpdateUser = jest.fn()
+jest.mock('@/lib/supabase/admin', () => ({
+  createAdminAuthClient: () => ({ auth: { admin: { updateUserById: (...a: unknown[]) => mockUpdateUser(...a) } } }),
+}))
+const mockRecord = jest.fn()
+jest.mock('@/lib/signup-ledger', () => ({ recordSignupOutcome: (...a: unknown[]) => mockRecord(...a) }))
 
 import { createClient } from '@/lib/supabase/server'
 import { GET as callback } from '../src/app/auth/callback/route'
@@ -11,12 +17,32 @@ import { GET as callback } from '../src/app/auth/callback/route'
 const mockedCreateClient = createClient as unknown as jest.Mock
 const ORIGIN = 'https://www.unicornapps.app'
 
-function fakeSupabase(opts: { exchangeError?: object | null; verifyError?: object | null } = {}) {
+type FakeUser = { id: string; identities: { provider: string }[]; app_metadata: Record<string, unknown> }
+
+function fakeSupabase(
+  opts: { exchangeError?: object | null; verifyError?: object | null; user?: FakeUser | null; claimedAt?: string | null } = {}
+) {
+  const signOut = jest.fn(async () => ({ error: null }))
   return {
     auth: {
-      exchangeCodeForSession: jest.fn(async () => ({ error: opts.exchangeError ?? null })),
+      exchangeCodeForSession: jest.fn(async () => ({
+        data: { user: opts.user ?? null, session: null },
+        error: opts.exchangeError ?? null,
+      })),
       verifyOtp: jest.fn(async () => ({ error: opts.verifyError ?? null })),
+      signOut,
     },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({
+            data: opts.user ? { free_credits_claimed_at: opts.claimedAt === undefined ? '2026-10-10T00:00:00Z' : opts.claimedAt } : null,
+            error: null,
+          }),
+        }),
+      }),
+    }),
+    signOut,
   }
 }
 
@@ -92,6 +118,77 @@ describe('/auth/callback', () => {
     mockedCreateClient.mockReturnValue(null)
     const res = await callback(get('/auth/callback?code=abc'))
     expect(location(res).search).toBe('?error=config_error')
+  })
+})
+
+describe('/auth/callback after the exchange: the claim and the link guard', () => {
+  const google: FakeUser = { id: 'u1', identities: [{ provider: 'google' }], app_metadata: { provider: 'google' } }
+  const emailOnly: FakeUser = { id: 'u2', identities: [{ provider: 'email' }], app_metadata: { provider: 'email' } }
+  const both: FakeUser = { id: 'u3', identities: [{ provider: 'email' }, { provider: 'google' }], app_metadata: { provider: 'email' } }
+
+  beforeEach(() => {
+    mockUpdateUser.mockReset().mockResolvedValue({ data: {}, error: null })
+    mockRecord.mockReset().mockResolvedValue(true)
+  })
+
+  it('a Google account that has not claimed its credits goes to /welcome, not the dashboard', async () => {
+    mockedCreateClient.mockReturnValue(fakeSupabase({ user: google, claimedAt: null }))
+    const res = await callback(get('/auth/callback?code=abc'))
+    expect(location(res).pathname).toBe('/welcome')
+    expect(mockUpdateUser).not.toHaveBeenCalled()
+  })
+
+  it('a Google account that holds its credits goes where it was going', async () => {
+    mockedCreateClient.mockReturnValue(fakeSupabase({ user: google }))
+    const res = await callback(get('/auth/callback?code=abc'))
+    expect(location(res).pathname).toBe('/dashboard')
+  })
+
+  it('a password account signing in by email link is untouched', async () => {
+    mockedCreateClient.mockReturnValue(fakeSupabase({ user: emailOnly }))
+    const res = await callback(get('/auth/callback?code=abc'))
+    expect(location(res).pathname).toBe('/dashboard')
+    expect(mockUpdateUser).not.toHaveBeenCalled()
+    expect(mockRecord).not.toHaveBeenCalled()
+  })
+
+  it('a Google identity newly joined to a password account: random password, other sessions out, ledger row, told', async () => {
+    const sb = fakeSupabase({ user: both })
+    mockedCreateClient.mockReturnValue(sb)
+    const res = await callback(get('/auth/callback?code=abc'))
+    expect(location(res).pathname + location(res).search).toBe('/welcome?notice=linked')
+    expect(mockUpdateUser).toHaveBeenCalledTimes(1)
+    const [id, patch] = mockUpdateUser.mock.calls[0] as [string, { password: string; app_metadata: Record<string, unknown> }]
+    expect(id).toBe('u3')
+    expect(patch.password).toMatch(/^[0-9a-f]{64}$/)
+    expect(patch.app_metadata).toMatchObject({ provider: 'email', link_secured: expect.any(String) })
+    expect(sb.auth.signOut).toHaveBeenCalledWith({ scope: 'others' })
+    expect(mockRecord).toHaveBeenCalledWith({ outcome: 'linked', method: 'google' })
+  })
+
+  it('once secured, a later Google sign-in on that account is left alone', async () => {
+    const secured = { ...both, app_metadata: { provider: 'email', link_secured: '2026-10-10T00:00:00Z' } }
+    mockedCreateClient.mockReturnValue(fakeSupabase({ user: secured }))
+    const res = await callback(get('/auth/callback?code=abc'))
+    expect(location(res).pathname).toBe('/dashboard')
+    expect(mockUpdateUser).not.toHaveBeenCalled()
+  })
+
+  it('if the rotation fails the user still gets in and nothing claims it was secured', async () => {
+    mockUpdateUser.mockResolvedValue({ data: null, error: { code: 'unexpected_failure', message: 'x' } })
+    const sb = fakeSupabase({ user: both })
+    mockedCreateClient.mockReturnValue(sb)
+    const res = await callback(get('/auth/callback?code=abc'))
+    expect(location(res).pathname).toBe('/dashboard')
+    expect(sb.auth.signOut).not.toHaveBeenCalled()
+    expect(mockRecord).not.toHaveBeenCalled()
+  })
+
+  it('a reset link never runs either decision', async () => {
+    mockedCreateClient.mockReturnValue(fakeSupabase({ user: both, claimedAt: null }))
+    const res = await callback(get('/auth/callback?code=abc&next=/update-password'))
+    expect(location(res).pathname).toBe('/update-password')
+    expect(mockUpdateUser).not.toHaveBeenCalled()
   })
 })
 

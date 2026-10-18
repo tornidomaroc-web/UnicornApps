@@ -3,12 +3,11 @@
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
-import { checkSignupLimit, clientIp } from '@/lib/signup-limit'
-import { joinCodes, recordSignupOutcome } from '@/lib/signup-ledger'
+import { createAdminAuthClient } from '@/lib/supabase/admin'
+import { recordSignupOutcome } from '@/lib/signup-ledger'
+import { runSignupGuards } from '@/lib/signup-guards'
 import { isServerSignupHookRefusal } from '@/lib/signup-hook'
-import { TURNSTILE_FIELD, verifyTurnstile } from '@/lib/turnstile'
 import { mapSupabaseAuthError, type AuthResult } from '@/lib/auth-errors'
 import { AUTH_PROVIDERS, isSocialProvider } from '@/lib/auth-providers'
 import { isNativeRequest } from '@/lib/native-request'
@@ -79,39 +78,22 @@ export async function signup(
   if (!email || !password) return { code: 'missing_fields' }
   if (password.length < 6) return { code: 'weak_password' }
 
-  // FREE CREDITS ARE HANDED OUT HERE, so this is the one path that is guarded.
-  // Order matters: Turnstile first, so a failed widget never spends the
-  // network's budget; then the per-network cap; only then is an account made.
-  const ip = clientIp(headers())
-  const human = await verifyTurnstile(String(formData.get(TURNSTILE_FIELD) || ''), ip)
-  if (!human.ok) {
-    if (human.reason === 'NO_SECRET') {
-      await recordSignupOutcome({ outcome: 'no_turnstile_secret' })
-      return { code: 'config_error' }
-    }
-    await recordSignupOutcome(
-      human.reason === 'NO_TOKEN'
-        ? { outcome: 'captcha_no_token' }
-        : { outcome: 'captcha_rejected', detail: joinCodes(human.codes), turnstileChecked: true }
-    )
-    return { code: 'captcha_failed' }
-  }
-
-  const limit = await checkSignupLimit(ip)
-  if (!limit.allowed) {
-    await recordSignupOutcome({ outcome: 'signup_limited', detail: limit.window, turnstileChecked: human.checked })
-    return { code: 'signup_limited' }
-  }
-  const checks = { turnstileChecked: human.checked, limitChecked: limit.checked }
+  // FREE CREDITS ARE HANDED OUT HERE, so this path is guarded: Turnstile, then
+  // the per-network cap (lib/signup-guards.ts, shared with the welcome claim
+  // that a Google-made account goes through); only then is an account made.
+  const guards = await runSignupGuards(formData, headers(), 'email')
+  if (!guards.ok) return { code: guards.code }
+  const checks = { ...guards.checks, method: 'email' as const }
 
   // The account is created by the server with the admin API. Supabase's
   // before-user-created hook refuses email sign-ups made at the PUBLIC
   // endpoint, so the anon key cannot create accounts around the checks above;
   // the admin API does not run that hook, which is why this path works whether
-  // the hook is on or off. OAuth (Google, Apple) sign-ups are not affected.
+  // the hook is on or off. OAuth (Google, Apple) sign-ups pass the hook and are
+  // born with 0 credits instead (handle_new_user); they claim them on /welcome.
   //
   // Missing service credentials cannot be recorded: the ledger needs them too.
-  const admin = adminAuthClient()
+  const admin = createAdminAuthClient()
   if (!admin) return { code: 'config_error' }
 
   let created
@@ -153,16 +135,6 @@ export async function signup(
   await recordSignupOutcome({ outcome: 'created', ...checks })
   revalidatePath('/', 'layout')
   redirect('/dashboard')
-}
-
-function adminAuthClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !serviceKey) {
-    console.error('[auth] Supabase service credentials missing: sign-up unavailable')
-    return null
-  }
-  return createAdminClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } })
 }
 
 export async function requestPasswordReset(

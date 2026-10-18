@@ -90,20 +90,20 @@ describe('the sign-up action, with its guards stubbed', () => {
     expect(mockVerify).toHaveBeenCalledWith('tok-123', '198.51.100.23')
     expect(mockLimit).not.toHaveBeenCalled()
     expect(mockCreateUser).not.toHaveBeenCalled()
-    expect(recorded()).toEqual([{ outcome: 'captcha_rejected', detail: 'invalid-input-response', turnstileChecked: true }])
+    expect(recorded()).toEqual([{ outcome: 'captcha_rejected', detail: 'invalid-input-response', turnstileChecked: true, method: 'email' }])
   })
 
   it('no token at all is captcha_failed too, recorded apart from a rejection', async () => {
     mockVerify.mockResolvedValue({ ok: false, reason: 'NO_TOKEN' })
     expect(await signup()(undefined, form(SIGNUP))).toEqual({ code: 'captcha_failed' })
-    expect(recorded()).toEqual([{ outcome: 'captcha_no_token' }])
+    expect(recorded()).toEqual([{ outcome: 'captcha_no_token', method: 'email' }])
   })
 
   it('a missing secret is config_error, not a captcha message', async () => {
     mockVerify.mockResolvedValue({ ok: false, reason: 'NO_SECRET' })
     expect(await signup()(undefined, form(SIGNUP))).toEqual({ code: 'config_error' })
     expect(mockCreateUser).not.toHaveBeenCalled()
-    expect(recorded()).toEqual([{ outcome: 'no_turnstile_secret' }])
+    expect(recorded()).toEqual([{ outcome: 'no_turnstile_secret', method: 'email' }])
   })
 
   it('a network over its cap is signup_limited, with no account made', async () => {
@@ -112,7 +112,7 @@ describe('the sign-up action, with its guards stubbed', () => {
     expect(await signup()(undefined, form(SIGNUP))).toEqual({ code: 'signup_limited' })
     expect(mockLimit).toHaveBeenCalledWith('198.51.100.23')
     expect(mockCreateUser).not.toHaveBeenCalled()
-    expect(recorded()).toEqual([{ outcome: 'signup_limited', detail: 'day', turnstileChecked: true }])
+    expect(recorded()).toEqual([{ outcome: 'signup_limited', detail: 'day', turnstileChecked: true, method: 'email' }])
   })
 
   it('a passing sign-up: admin account (confirmed), then a session, then the dashboard', async () => {
@@ -125,7 +125,7 @@ describe('the sign-up action, with its guards stubbed', () => {
     expect(signIn).toHaveBeenCalledWith({ email: 'new@example.com', password: 'secret12' })
     // The public sign-up endpoint is never used: it is closed in Supabase.
     expect(signUpPublic).not.toHaveBeenCalled()
-    expect(recorded()).toEqual([{ outcome: 'created', turnstileChecked: true, limitChecked: true }])
+    expect(recorded()).toEqual([{ outcome: 'created', turnstileChecked: true, limitChecked: true, method: 'email' }])
   })
 
   it('a sign-up that went through while Cloudflare was unreachable is recorded as unchecked', async () => {
@@ -133,7 +133,7 @@ describe('the sign-up action, with its guards stubbed', () => {
     mockLimit.mockResolvedValue({ allowed: true, checked: false })
     mockCreateUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
     expect((await settle(signup()(undefined, form(SIGNUP)))).to).toBe('/dashboard')
-    expect(recorded()).toEqual([{ outcome: 'created', turnstileChecked: false, limitChecked: false }])
+    expect(recorded()).toEqual([{ outcome: 'created', turnstileChecked: false, limitChecked: false, method: 'email' }])
   })
 
   it('an address already registered is already_registered, never Supabase text', async () => {
@@ -146,7 +146,7 @@ describe('the sign-up action, with its guards stubbed', () => {
     expect(await signup()(undefined, form(SIGNUP))).toEqual({ code: 'already_registered' })
     expect(signIn).not.toHaveBeenCalled()
     // The Supabase code goes to the ledger; the message and the address never do.
-    expect(recorded()).toEqual([{ outcome: 'create_failed', detail: 'email_exists', turnstileChecked: true, limitChecked: true }])
+    expect(recorded()).toEqual([{ outcome: 'create_failed', detail: 'email_exists', turnstileChecked: true, limitChecked: true, method: 'email' }])
   })
 
   it('the hook refusing OUR server is config_error on screen and hook_refused_server in the ledger, not unknown', async () => {
@@ -158,7 +158,7 @@ describe('the sign-up action, with its guards stubbed', () => {
     })
     expect(await signup()(undefined, form(SIGNUP))).toEqual({ code: 'config_error' })
     expect(signIn).not.toHaveBeenCalled()
-    expect(recorded()).toEqual([{ outcome: 'hook_refused_server', turnstileChecked: true, limitChecked: true }])
+    expect(recorded()).toEqual([{ outcome: 'hook_refused_server', turnstileChecked: true, limitChecked: true, method: 'email' }])
   })
 
   it('an unreachable backend and a failed sign-in after creation are recorded with their code', async () => {
@@ -170,8 +170,8 @@ describe('the sign-up action, with its guards stubbed', () => {
     signIn.mockResolvedValueOnce({ error: { code: 'invalid_credentials', message: 'Invalid login credentials' } })
     expect(await signup()(undefined, form(SIGNUP))).toEqual({ code: 'invalid_credentials' })
     expect(recorded()).toEqual([
-      { outcome: 'create_failed', detail: 'server_unreachable', turnstileChecked: true, limitChecked: true },
-      { outcome: 'signin_failed', detail: 'invalid_credentials', turnstileChecked: true, limitChecked: true },
+      { outcome: 'create_failed', detail: 'server_unreachable', turnstileChecked: true, limitChecked: true, method: 'email' },
+      { outcome: 'signin_failed', detail: 'invalid_credentials', turnstileChecked: true, limitChecked: true, method: 'email' },
     ])
   })
 

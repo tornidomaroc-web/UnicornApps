@@ -106,7 +106,9 @@ describe('form actions return codes, never Supabase text', () => {
 describe('signInWithProvider is refused on the server', () => {
   const actions = () => require('../src/app/(auth)/login/actions')
 
-  it.each(['google', 'apple'])('%s is refused while its flag is off, before Supabase is touched', async (p) => {
+  // Google's flag is on (auth-providers.ts); its refusals are the native and
+  // provider-error cases below. Apple is the one still behind an off flag.
+  it.each(['apple'])('%s is refused while its flag is off, before Supabase is touched', async (p) => {
     expect(await redirectedTo(actions().signInWithProvider(p))).toBe('/login?error=oauth_failed')
     expect(mockedCreateClient).not.toHaveBeenCalled()
   })

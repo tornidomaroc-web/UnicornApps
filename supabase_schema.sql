@@ -4,6 +4,11 @@ CREATE TABLE public.profiles (
   email TEXT,
   credits INTEGER DEFAULT 3 NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  -- When the 3 free credits were granted (added 2026-10-10, see
+  -- migrations/2026-10-10_add_free_credit_claim.sql). NULL = an account made
+  -- outside our server (a Google sign-in) that has not claimed them yet; it
+  -- holds 0 credits until claim_free_credits runs. Column order mirrors live.
+  free_credits_claimed_at TIMESTAMPTZ NULL,
   -- Monetization entitlement columns (added 2026-06-21, Migration Step 1).
   -- All nullable; NULL across the board = a free user. Written ONLY by the
   -- Paddle webhook via the service-role key (no client UPDATE policy exists on
@@ -39,19 +44,65 @@ USING (auth.uid() = id);
 
 -- 4. Create a trigger to automatically insert a profile for new users
 -- First, define the function that the trigger will use
-CREATE OR REPLACE FUNCTION public.handle_new_user() 
-RETURNS TRIGGER AS $$
+-- Free credits go to the GUARDED path only (2026-10-10): an account our server
+-- made with the admin API has passed Turnstile, the per-network cap and the
+-- ledger; a Google (or any other) account reached the database without them
+-- and is born with 0 credits, to be claimed on /welcome behind the same checks.
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  -- 'email' = made by our server with the admin API, behind Turnstile, the
+  -- per-network cap and the ledger. Anything else reached the database
+  -- without those checks and must claim its credits (claim_free_credits).
+  guarded boolean := coalesce(new.raw_app_meta_data->>'provider', '') = 'email';
 BEGIN
-  INSERT INTO public.profiles (id, email, credits)
-  VALUES (new.id, new.email, 3);
+  INSERT INTO public.profiles (id, email, credits, free_credits_claimed_at)
+  VALUES (new.id, new.email,
+          CASE WHEN guarded THEN 3 ELSE 0 END,
+          CASE WHEN guarded THEN now() ELSE NULL END);
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Second, link the function to the auth.users table
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- The one-time grant for an account born with 0 credits (2026-10-10). Called by
+-- the server only (service_role), after Turnstile, the per-network cap and the
+-- ledger (src/app/welcome/actions.ts). Row-locked, so two parallel claims
+-- cannot both pay. Returns 'claimed' | 'already_claimed' | 'no_profile'.
+CREATE OR REPLACE FUNCTION public.claim_free_credits(p_user_id uuid)
+RETURNS text
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+DECLARE
+  v_claimed_at timestamptz;
+BEGIN
+  SELECT free_credits_claimed_at INTO v_claimed_at
+    FROM profiles WHERE id = p_user_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RETURN 'no_profile';
+  END IF;
+  IF v_claimed_at IS NOT NULL THEN
+    RETURN 'already_claimed';
+  END IF;
+  UPDATE profiles
+     SET credits = credits + 3,
+         free_credits_claimed_at = now()
+   WHERE id = p_user_id;
+  RETURN 'claimed';
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.claim_free_credits(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.claim_free_credits(uuid) TO service_role;
 
 -- 5. Create the generations table
 CREATE TABLE public.generations (
@@ -629,14 +680,20 @@ CREATE TABLE public.signup_outcomes (
                       'signup_limited',      -- per-network cap; detail = 'hour' | 'day'
                       'hook_refused_server', -- the before-user-created hook refused OUR admin call
                       'create_failed',       -- admin createUser failed; detail = Supabase error code
-                      'signin_failed'        -- account made, the sign-in after it failed; detail = code
+                      'signin_failed',       -- account made, the sign-in after it failed; detail = code
+                      'claimed',             -- free credits granted to an account made outside the server (Google)
+                      'claim_failed',        -- the grant failed; detail = 'already_claimed' | 'no_profile' | an error code
+                      'linked'               -- a Google identity joined a password account; the password was rotated
                     )),
   -- A machine code only: [a-z0-9_:,.-], so an address or a sentence cannot fit.
   detail            TEXT        NULL CHECK (detail ~ '^[a-z0-9_:,.-]{1,120}$'),
   -- NULL = that guard was never reached. FALSE on Turnstile = Cloudflare was
   -- unreachable and the attempt went through UNCHECKED (fail-open).
   turnstile_checked BOOLEAN     NULL,
-  limit_checked     BOOLEAN     NULL
+  limit_checked     BOOLEAN     NULL,
+  -- Which sign-up path (added 2026-10-10): the email form, or a social account
+  -- claiming its credits on /welcome. Column order mirrors live (appended).
+  method            TEXT        NOT NULL DEFAULT 'email' CHECK (method IN ('email', 'google', 'apple'))
 );
 
 -- The health check reads the last 24 h; nothing else reads this table.
@@ -685,10 +742,11 @@ BEGIN
     SELECT created_at, turnstile_checked,
       CASE
         WHEN outcome IN ('no_supabase_client', 'no_turnstile_secret', 'hook_refused_server', 'signin_failed') THEN 'system'
+        WHEN outcome = 'claim_failed' AND coalesce(detail, '') <> 'already_claimed' THEN 'system'
         WHEN outcome = 'create_failed' AND coalesce(detail, '') NOT IN
              ('email_exists', 'user_already_exists', 'weak_password', 'validation_failed', 'email_address_invalid') THEN 'system'
         WHEN outcome = 'captcha_rejected' AND coalesce(detail, '') ~ '(invalid-input-secret|missing-input-secret|bad-request)' THEN 'system'
-        WHEN outcome = 'created' THEN 'created'
+        WHEN outcome IN ('created', 'claimed') THEN 'created'
         ELSE 'user'
       END AS klass
     FROM signup_outcomes
