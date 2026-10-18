@@ -3,8 +3,10 @@ import { join } from 'path'
 import {
   AUTH_ERROR_CODES,
   AUTH_SUCCESS_CODES,
+  LOGIN_NOTICES,
   URL_ERROR_CODES,
   callbackErrorCode,
+  loginNotice,
   mapSupabaseAuthError,
   resolveFeedback,
   safeNextPath,
@@ -142,6 +144,18 @@ describe('no user-controlled string can reach the login screen', () => {
     expect(urlErrorCode(undefined)).toBeNull()
   })
 
+  it.each(hostile)('?notice=%p shows no notice at all', (raw) => {
+    expect(loginNotice(raw)).toBeNull()
+  })
+
+  it('a notice is a member of the fixed list or nothing', () => {
+    expect(loginNotice('linked')).toBe('linked')
+    expect(loginNotice(['linked', 'x'])).toBe('linked')
+    for (const raw of ['Linked', ' linked', 'linked ', 'login.notice.linked', '', null, undefined, 42, {}, ['x', 'linked']]) {
+      expect(loginNotice(raw)).toBeNull()
+    }
+  })
+
   it('a form result wins over a stale URL error', () => {
     expect(resolveFeedback({ code: 'reset_sent' }, 'oauth_failed')).toEqual({
       kind: 'success',
@@ -157,6 +171,10 @@ describe('every code has copy in both languages', () => {
 
   it.each(AUTH_ERROR_CODES)('login.err.%s', (code) => expect(count(`login.err.${code}`)).toBe(2))
   it.each(AUTH_SUCCESS_CODES)('login.msg.%s', (code) => expect(count(`login.msg.${code}`)).toBe(2))
+  it.each(LOGIN_NOTICES)('login.notice.%s (title and body)', (code) => {
+    expect(count(`login.notice.${code}.title`)).toBe(2)
+    expect(count(`login.notice.${code}.body`)).toBe(2)
+  })
   it.each(['login.apple', 'login.google', 'login.or', 'login.action.send_new_link'])('%s', (key) =>
     expect(count(key)).toBe(2)
   )

@@ -32,6 +32,15 @@ describe('no raw text reaches an auth screen', () => {
     expect(code[k]).toMatch(/resolveFeedback\(/)
   })
 
+  it('the login notice comes from the allowlist and renders only t(key)', () => {
+    expect(code.login).toMatch(/loginNotice\(searchParams\.notice\)/)
+    expect(code.login).not.toMatch(/\{\s*searchParams\.notice\s*\}/)
+    expect(code.login).toMatch(/\{t\(`login\.notice\.\$\{notice\}\.title`\)\}/)
+    expect(code.login).toMatch(/\{t\(`login\.notice\.\$\{notice\}\.body`\)\}/)
+    // A bare {notice} in JSX would print the code; ${notice} inside t() is the key.
+    expect(code.login).not.toMatch(/(?<!\$)\{\s*notice\s*\}/)
+  })
+
   it('the banner renders only t(key)', () => {
     const banner = code.shell.slice(code.shell.indexOf('export function AuthBanner'))
     const body = banner.slice(0, banner.indexOf('\n}\n'))

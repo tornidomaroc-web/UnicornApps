@@ -156,7 +156,10 @@ describe('/auth/callback after the exchange: the claim and the link guard', () =
     const sb = fakeSupabase({ user: both })
     mockedCreateClient.mockReturnValue(sb)
     const res = await callback(get('/auth/callback?code=abc'))
-    expect(location(res).pathname + location(res).search).toBe('/welcome?notice=linked')
+    // /login, not /welcome: the password change ends every session of the
+    // user, this one included, and /welcome sends a user without a session
+    // to a bare /login that says nothing.
+    expect(location(res).pathname + location(res).search).toBe('/login?notice=linked')
     expect(mockUpdateUser).toHaveBeenCalledTimes(1)
     const [id, patch] = mockUpdateUser.mock.calls[0] as [string, { password: string; app_metadata: Record<string, unknown> }]
     expect(id).toBe('u3')
@@ -164,6 +167,12 @@ describe('/auth/callback after the exchange: the claim and the link guard', () =
     expect(patch.app_metadata).toMatchObject({ provider: 'email', link_secured: expect.any(String) })
     expect(sb.auth.signOut).toHaveBeenCalledWith({ scope: 'others' })
     expect(mockRecord).toHaveBeenCalledWith({ outcome: 'linked', method: 'google' })
+  })
+
+  it('the linked notice is a fixed URL: nothing from the request reaches it', async () => {
+    mockedCreateClient.mockReturnValue(fakeSupabase({ user: both }))
+    const res = await callback(get('/auth/callback?code=abc&next=/dashboard&notice=%3Cb%3Ehi%3C%2Fb%3E&error_description='))
+    expect(location(res).pathname + location(res).search).toBe('/login?notice=linked')
   })
 
   it('once secured, a later Google sign-in on that account is left alone', async () => {

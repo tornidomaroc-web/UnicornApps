@@ -72,7 +72,11 @@ export async function GET(request: Request) {
     } else {
       await supabase.auth.signOut({ scope: 'others' })
       await recordSignupOutcome({ outcome: 'linked', method: linked })
-      return go('/welcome?notice=linked')
+      // Supabase ends every session of a user whose password changes, the one
+      // it issued for this sign-in included, so there is no session left to
+      // carry to /welcome. /login says what happened; the next Google sign-in
+      // finds the marker set and keeps its session.
+      return go('/login?notice=linked')
     }
   }
 
