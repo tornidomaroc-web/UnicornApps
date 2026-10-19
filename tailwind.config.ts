@@ -22,28 +22,23 @@ const config: Config = {
       colors: {
         // ── UnicornApps design tokens (Phase 1 foundation) ──────────────────
         // RGB triplets defined in globals.css :root, consumed with alpha support
-        // (bg-surface, text-brand, border-ink-0/10, …). Additive and non-colliding
+        // (bg-surface, bg-brand/90, …). Additive and non-colliding
         // with the shadcn HSL tokens below; unused classes emit no CSS (Tailwind
         // JIT), so this block is inert until a page opts in. See docs/DESIGN-TOKENS.md.
         surface: "rgb(var(--ua-surface) / <alpha-value>)",
         "surface-2": "rgb(var(--ua-surface-2) / <alpha-value>)",
         brand: "rgb(var(--ua-brand) / <alpha-value>)",
-        ink: {
-          0: "rgb(var(--ua-ink-0) / <alpha-value>)",
-          1: "rgb(var(--ua-ink-1) / <alpha-value>)",
-          2: "rgb(var(--ua-ink-2) / <alpha-value>)",
-          3: "rgb(var(--ua-ink-3) / <alpha-value>)",
-          4: "rgb(var(--ua-ink-4) / <alpha-value>)",
-        },
         gold: "rgb(var(--ua-gold) / <alpha-value>)",
         // ── Semantic tier (globals.css "Semantic tier") ─────────────────────
-        // Role names the redesign retunes in globals.css alone. Surfaces and
-        // lines are complete colour values (several are translucent today),
-        // so bg-panel / border-line take no /alpha modifier; fg-* and focus
-        // are triplets and do. Names avoid the shadcn keys (card, muted, …).
+        // Role names whose values live in globals.css. Surfaces and lines are
+        // complete colour values, so bg-panel / border-line take no /alpha
+        // modifier; fg-* and focus are triplets and do. Names avoid the shadcn
+        // keys (card, muted, …).
         page: "var(--ua-page)",
         panel: "var(--ua-panel)",
         row: "var(--ua-row)",
+        chip: "var(--ua-chip)",
+        tile: "var(--ua-tile)",
         field: "var(--ua-field)",
         line: {
           DEFAULT: "var(--ua-line)",
@@ -104,6 +99,7 @@ const config: Config = {
       },
       backgroundImage: {
         "fill-btn": "var(--ua-fill-btn)",
+        "fill-btn-hover": "var(--ua-fill-btn-hover)",
         "fill-ghost": "var(--ua-fill-ghost)",
         "fill-tap": "var(--ua-fill-tap)",
         "fill-icon": "var(--ua-fill-icon)",
@@ -120,8 +116,8 @@ const config: Config = {
         "page-title": ["var(--ua-text-page-title)", { lineHeight: "var(--ua-leading-page-title)" }],
       },
       boxShadow: {
-        // Semantic shadows (globals.css). shadow-btn equals glow-brand today;
-        // the call sites move to it when the primary button is reskinned.
+        // Semantic shadows (globals.css): a lit top rim, a dark inner shade and
+        // a tight black contact shadow. No coloured glow anywhere.
         container: "var(--ua-shadow-container)",
         tap: "var(--ua-shadow-tap)",
         icon: "var(--ua-shadow-icon)",
@@ -130,11 +126,6 @@ const config: Config = {
         well: "var(--ua-shadow-well)",
         credits: "var(--ua-shadow-credits)",
         mark: "var(--ua-shadow-mark)",
-        // Canonical brand button glow. Color = --ua-brand-glow (single source);
-        // geometry is the common `0 0 40px -5px / 0.5`. Bespoke glows (different
-        // blur/spread/alpha) stay inline as shadow-[<geom> rgb(var(--ua-brand-glow)/<a>)]
-        // rather than spawning a utility per intensity. See docs/DESIGN-TOKENS.md.
-        "glow-brand": "0 0 40px -5px rgb(var(--ua-brand-glow) / 0.5)",
       },
     },
   },

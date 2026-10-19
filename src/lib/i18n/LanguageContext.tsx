@@ -1,6 +1,7 @@
 'use client'
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { langCookieString, type Lang } from '@/lib/i18n/initial-lang'
+import { rubik, rubikArabic } from '@/lib/fonts'
 type LanguageContextType = {
   lang: Lang
   toggleLang: () => void
@@ -978,8 +979,9 @@ export function LanguageProvider({
     <LanguageContext.Provider value={{ lang, toggleLang, t }}>
       {/* The wrapper stays: globals.css keys the Arabic letter-spacing rule on a
           [dir] ancestor, and its test pins that. Removing this would not break
-          the rule (body now carries dir too) but nothing would be gained. */}
-      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} lang={lang} className={lang === 'ar' ? 'font-arabic' : ''}>
+          the rule (body now carries dir too) but nothing would be gained. It also
+          defines the heading-font variables for everything inside it. */}
+      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} lang={lang} className={`${rubik.variable} ${rubikArabic.variable}${lang === 'ar' ? ' font-arabic' : ''}`}>
         {children}
       </div>
     </LanguageContext.Provider>

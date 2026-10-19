@@ -11,7 +11,7 @@ const twMerge = extendTailwindMerge({
       "font-size": [{ text: ["display", "title", "page-title"] }],
       rounded: [{ rounded: ["card", "row", "icon", "input", "pill"] }],
       shadow: [{ shadow: ["container", "tap", "icon", "btn", "ghost", "well", "credits", "mark"] }],
-      "bg-image": [{ bg: ["fill-btn", "fill-ghost", "fill-tap", "fill-icon", "fill-credits", "page-image"] }],
+      "bg-image": [{ bg: ["fill-btn", "fill-btn-hover", "fill-ghost", "fill-tap", "fill-icon", "fill-credits", "page-image"] }],
       "font-family": [{ font: ["head", "body"] }],
     },
   },

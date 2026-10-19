@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
 import { initializeApp } from '@/lib/capacitor'
+import { LITE_SCRIPT } from '@/lib/lite-mode'
 import type { Lang } from '@/lib/i18n/initial-lang'
 
 // Client-only shell extracted from RootLayout so that `layout.tsx` can become a
@@ -23,5 +24,13 @@ export default function Providers({
     initializeApp()
   }, [])
 
-  return <LanguageProvider initialLang={initialLang}>{children}</LanguageProvider>
+  return (
+    <>
+      {/* Lite-mode switch (lib/lite-mode.ts). First in <body> so it runs before
+          the content below it paints. Beyond this tag it adds no element or
+          attribute, so hydration is unaffected. */}
+      <script dangerouslySetInnerHTML={{ __html: LITE_SCRIPT }} />
+      <LanguageProvider initialLang={initialLang}>{children}</LanguageProvider>
+    </>
+  )
 }
