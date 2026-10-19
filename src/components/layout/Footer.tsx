@@ -17,18 +17,18 @@ export default function Footer() {
   const { t } = useLang()
   const { isNative, resolved } = useIsNative()
   const showPricing = resolved && !isNative
-  const link = 'text-[15px] text-slate-400 hover:text-white'
+  const link = 'text-[15px] text-fg-muted hover:text-fg'
 
   return (
-    <footer className="mx-auto mt-12 w-full max-w-5xl border-t border-white/5 pt-10">
+    <footer className="mx-auto mt-12 w-full max-w-5xl border-t border-line-soft pt-10">
       <div className="grid gap-8 sm:grid-cols-3">
         <div>
           <Link href="/" className="inline-flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/unicornapps-mark.svg?v=2" alt="" width={32} height={32} className="h-8 w-8" />
-            <span className="text-lg font-bold text-white">UnicornApps</span>
+            <span className="text-lg font-bold text-fg">UnicornApps</span>
           </Link>
-          <p className="mt-3 max-w-xs text-[15px] leading-relaxed text-slate-500">{t('footer.tagline')}</p>
+          <p className="mt-3 max-w-xs text-[15px] leading-relaxed text-fg-faint">{t('footer.tagline')}</p>
         </div>
         <nav aria-label={t('footer.nav')}>
           <p className={`${EYEBROW} mb-4`}>{t('footer.nav')}</p>
@@ -48,7 +48,7 @@ export default function Footer() {
           </ul>
         </nav>
       </div>
-      <p className="mt-10 text-xs text-slate-600">
+      <p className="mt-10 text-xs text-fg-faint">
         © {new Date().getFullYear()} UnicornApps. {t('footer.rights')}.
       </p>
     </footer>

@@ -28,17 +28,17 @@ import { EYEBROW, SURFACE, TILE } from '@/app/dashboard/surface'
  * `showPricing`, which is false until native detection has resolved to web.
  */
 
-export const PAGE = 'bg-[#070710] text-[#c8cfe0] px-4 pb-10 pt-6 sm:pt-12'
+export const PAGE = 'text-fg-body px-4 pb-10 pt-6 sm:pt-12'
 export const WRAP = 'mx-auto w-full max-w-5xl'
 export const CARD = `${SURFACE} p-5 sm:p-8`
-export const H2 = 'text-[28px] font-bold leading-[1.15] text-white sm:text-[32px]'
-export const SUB = 'mt-2 text-base leading-relaxed text-slate-400'
+export const H2 = 'text-[28px] font-bold leading-[1.15] text-fg sm:text-[32px]'
+export const SUB = 'mt-2 text-base leading-relaxed text-fg-muted'
 
-const PILL = 'inline-flex h-14 w-full items-center justify-center whitespace-nowrap rounded-full px-8 text-base font-bold transition-colors sm:w-auto'
+const PILL = 'inline-flex h-14 w-full items-center justify-center whitespace-nowrap rounded-full px-8 text-base font-bold sm:w-auto'
 
 export function PrimaryLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className={`${PILL} bg-brand text-white shadow-glow-brand hover:bg-brand/90`}>
+    <Link href={href} className={`${PILL} bg-brand text-fg-on-brand bg-fill-btn shadow-btn hover:bg-fill-btn-hover press`}>
       {children}
     </Link>
   )
@@ -46,7 +46,7 @@ export function PrimaryLink({ href, children }: { href: string; children: ReactN
 
 export function GhostLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <a href={href} className={`${PILL} border border-white/10 bg-white/5 text-white hover:bg-white/10`}>
+    <a href={href} className={`${PILL} border border-transparent bg-chip bg-fill-ghost text-fg-link shadow-ghost hover:text-fg press`}>
       {children}
     </a>
   )
@@ -56,12 +56,12 @@ export function GhostLink({ href, children }: { href: string; children: ReactNod
 export function Tile({ icon: Icon, name, desc }: { icon: LucideIcon; name: string; desc: string }) {
   return (
     <li className={`${TILE} flex items-start gap-4 p-4 sm:p-5`}>
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-icon bg-chip bg-fill-icon shadow-icon text-fg-link">
         <Icon className="h-5 w-5" aria-hidden />
       </span>
       <span className="min-w-0">
-        <span className="block text-base font-bold text-white">{name}</span>
-        <span className="mt-1 block text-[15px] leading-relaxed text-slate-400">{desc}</span>
+        <span className="block text-base font-bold text-fg">{name}</span>
+        <span className="mt-1 block text-[15px] leading-relaxed text-fg-muted">{desc}</span>
       </span>
     </li>
   )
@@ -71,12 +71,12 @@ export function Tile({ icon: Icon, name, desc }: { icon: LucideIcon; name: strin
 export function Step({ n, name, desc }: { n: number; name: string; desc: string }) {
   return (
     <li className={`${TILE} flex items-start gap-4 p-4 sm:p-5`}>
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand/15 text-lg font-bold text-brand">
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-icon bg-chip bg-fill-icon shadow-icon text-lg font-bold text-fg-link">
         {n}
       </span>
       <span className="min-w-0">
-        <span className="block text-base font-bold text-white">{name}</span>
-        <span className="mt-1 block text-[15px] leading-relaxed text-slate-400">{desc}</span>
+        <span className="block text-base font-bold text-fg">{name}</span>
+        <span className="mt-1 block text-[15px] leading-relaxed text-fg-muted">{desc}</span>
       </span>
     </li>
   )
@@ -131,12 +131,12 @@ export function PricingTeaser({ t }: { t: (key: string) => string }) {
       <ul className="mt-6 grid gap-3 sm:grid-cols-2">
         {plans.map((p) => (
           <li key={p.name} className={`${TILE} p-5`}>
-            <p className="text-base font-bold text-white">{p.name}</p>
-            <p className="mt-1 text-[28px] font-bold leading-none text-white">
+            <p className="text-base font-bold text-fg">{p.name}</p>
+            <p className="mt-1 text-[28px] font-bold leading-none text-fg">
               <span dir="ltr">{p.price}</span>{' '}
-              <span className="text-sm font-medium text-slate-500">{p.period}</span>
+              <span className="text-sm font-medium text-fg-faint">{p.period}</span>
             </p>
-            <ul className="mt-4 space-y-1.5 text-[15px] text-slate-400">
+            <ul className="mt-4 space-y-1.5 text-[15px] text-fg-muted">
               {p.lines.map((l) => (
                 <li key={l}>{l}</li>
               ))}
@@ -145,7 +145,7 @@ export function PricingTeaser({ t }: { t: (key: string) => string }) {
         ))}
       </ul>
       <div className="mt-6 text-center">
-        <Link href="/pricing" className={`${PILL} border border-white/10 bg-white/5 text-white hover:bg-white/10`}>
+        <Link href="/pricing" className={`${PILL} border border-transparent bg-chip bg-fill-ghost text-fg-link shadow-ghost hover:text-fg press`}>
           {t('pricing.teaser.cta')}
         </Link>
       </div>

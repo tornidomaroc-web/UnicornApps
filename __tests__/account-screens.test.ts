@@ -155,7 +155,7 @@ describe('the same visual language, and light', () => {
   })
 
   it('the loading screen is one spinner and one translated line', () => {
-    expect(code.loading).toMatch(/<Loader2 className="h-8 w-8 animate-spin text-brand" aria-hidden \/>/)
+    expect(code.loading).toMatch(/<Loader2 className="h-8 w-8 animate-spin text-fg-link" aria-hidden \/>/)
     expect(code.loading).toMatch(/\{t\('dash\.loading'\)\}/)
     expect(code.loading).not.toMatch(/LOADING|🦄/)
   })

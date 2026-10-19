@@ -39,7 +39,7 @@ export default function UpdatePasswordPage() {
               type="button"
               onClick={() => setShowPassword((s) => !s)}
               aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
-              className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-brand"
+              className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-fg-faint hover:text-fg-link"
             >
               {showPassword ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
             </button>
@@ -51,7 +51,7 @@ export default function UpdatePasswordPage() {
             feedback={feedback}
             action={
               offerNewLink ? (
-                <Link href="/login?mode=reset" className="text-sm font-semibold text-white underline underline-offset-4">
+                <Link href="/login?mode=reset" className="text-sm font-semibold text-fg underline underline-offset-4">
                   {t('login.action.send_new_link')}
                 </Link>
               ) : undefined

@@ -2,7 +2,7 @@
 
 import { useRef, type ChangeEvent, type ReactNode } from 'react'
 import { AlertCircle, Camera, CreditCard, Sparkles, UploadCloud, X } from 'lucide-react'
-import { EYEBROW, SURFACE, TILE } from './surface'
+import { EYEBROW, ROW, SURFACE, TILE } from './surface'
 
 /**
  * The product-photo input, as one card: how to add a photo, the photo once it
@@ -59,10 +59,10 @@ export interface PrimaryActionProps {
  */
 export function PrimaryAction({ kind, label, disabled, onClick }: PrimaryActionProps) {
   const look = {
-    generate: 'bg-brand text-white shadow-glow-brand hover:bg-brand/90',
-    purchase: 'bg-brand text-white shadow-glow-brand hover:bg-brand/90',
-    loading: 'border border-brand/40 bg-black/40 text-white',
-    limit: 'border border-white/10 bg-white/[0.03] text-slate-400',
+    generate: 'bg-brand text-fg-on-brand bg-fill-btn shadow-btn hover:bg-fill-btn-hover press',
+    purchase: 'bg-brand text-fg-on-brand bg-fill-btn shadow-btn hover:bg-fill-btn-hover press',
+    loading: 'border border-brand/40 bg-field text-fg shadow-well',
+    limit: 'border border-line bg-tile text-fg-muted',
   }[kind]
   return (
     <button
@@ -70,12 +70,12 @@ export function PrimaryAction({ kind, label, disabled, onClick }: PrimaryActionP
       onClick={onClick}
       disabled={disabled}
       aria-busy={kind === 'loading'}
-      className={`relative flex h-20 w-full items-center justify-center overflow-hidden rounded-full transition-colors disabled:cursor-not-allowed ${look}`}
+      className={`relative flex h-20 w-full items-center justify-center overflow-hidden rounded-full disabled:cursor-not-allowed ${look}`}
     >
       {kind === 'loading' ? (
         <span className="flex flex-col items-center gap-2">
           <span className="text-base font-bold leading-[1.15]">{label}</span>
-          <span aria-hidden className="block h-1 w-40 overflow-hidden rounded-full bg-white/10">
+          <span aria-hidden className="block h-1 w-40 overflow-hidden rounded-full bg-chip">
             <span className="block h-full w-1/3 rounded-full bg-brand animate-slide-x" />
           </span>
         </span>
@@ -122,35 +122,35 @@ export default function InputPanel({
   if (!preview) {
     return (
       <section className={`${SURFACE} p-5 sm:p-8`}>
-        <h2 className="text-[28px] font-bold leading-[1.15] text-white sm:text-[32px]">{t('dash.inputSource')}</h2>
-        <p className="mt-2 text-base text-slate-400">{t('dash.uploadSub')}</p>
+        <h2 className="text-[28px] font-bold leading-[1.15] text-fg sm:text-[32px]">{t('dash.inputSource')}</h2>
+        <p className="mt-2 text-base text-fg-muted">{t('dash.uploadSub')}</p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className={`${TILE} flex items-center gap-4 p-4 text-start transition-colors hover:border-brand/50 sm:p-5`}
+            className={`${ROW} flex items-center gap-4 p-4 text-start sm:p-5`}
           >
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-icon bg-chip bg-fill-icon shadow-icon text-fg-link">
               <UploadCloud className="h-6 w-6" />
             </span>
             <span className="min-w-0">
-              <span className="block text-base font-bold text-white">{t('dash.uploadBtn')}</span>
-              <span className="block text-sm text-slate-400">{t('dash.uploadFormat')}</span>
+              <span className="block text-base font-bold text-fg">{t('dash.uploadBtn')}</span>
+              <span className="block text-sm text-fg-muted">{t('dash.uploadFormat')}</span>
             </span>
           </button>
 
           <button
             type="button"
             onClick={onOpenCamera}
-            className={`${TILE} flex items-center gap-4 p-4 text-start transition-colors hover:border-brand/50 sm:p-5`}
+            className={`${ROW} flex items-center gap-4 p-4 text-start sm:p-5`}
           >
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-icon bg-chip bg-fill-icon shadow-icon text-fg-link">
               <Camera className="h-6 w-6" />
             </span>
             <span className="min-w-0">
-              <span className="block text-base font-bold text-white">{t('dash.cameraBtn')}</span>
-              <span className="block text-sm text-slate-400">{t('dash.cameraSub')}</span>
+              <span className="block text-base font-bold text-fg">{t('dash.cameraBtn')}</span>
+              <span className="block text-sm text-fg-muted">{t('dash.cameraSub')}</span>
             </span>
           </button>
         </div>
@@ -166,18 +166,18 @@ export default function InputPanel({
         <div className="space-y-4">
           <div className={`${TILE} p-5`}>
             <p className={`${EYEBROW} mb-2`}>{t('dash.photo.selected')}</p>
-            <p className="text-base font-medium text-slate-200">{t('dash.preflight')}</p>
+            <p className="text-base font-medium text-fg">{t('dash.preflight')}</p>
           </div>
           {action}
         </div>
 
-        <div className="relative aspect-square overflow-hidden rounded-3xl border border-white/10 bg-black/40">
+        <div className="relative aspect-square overflow-hidden rounded-card border border-line bg-black/40">
           <img src={preview} alt="Preview" className="h-full w-full object-cover" />
 
           {loading && (
             <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
               <div className="absolute inset-0 bg-brand/10" />
-              <div className="absolute -top-full start-0 end-0 h-full border-b-2 border-brand shadow-[0_0_24px_rgb(var(--ua-brand-glow)/0.8)] animate-sweep-y" />
+              <div className="absolute -top-full start-0 end-0 h-full border-b-2 border-brand animate-sweep-y" />
             </div>
           )}
 
@@ -188,11 +188,11 @@ export default function InputPanel({
                 className="group/hotspot absolute z-10"
                 style={{ top: `${h.y}%`, left: `${h.x}%`, transform: 'translate(-50%, -50%)' }}
               >
-                <span className="block h-4 w-4 rounded-full border-2 border-white bg-brand shadow-[0_0_16px_rgb(var(--ua-brand-glow)/0.8)]" />
+                <span className="block h-4 w-4 rounded-full border-2 border-white bg-brand" />
                 <span
                   data-model-output
                   dir="auto"
-                  className="pointer-events-none absolute bottom-6 whitespace-nowrap rounded-xl border border-white/10 bg-black/90 px-3 py-1.5 text-xs font-bold text-white opacity-0 transition-opacity group-hover/hotspot:opacity-100"
+                  className="pointer-events-none absolute bottom-6 whitespace-nowrap rounded-xl border border-line bg-black/90 px-3 py-1.5 text-xs font-bold text-fg opacity-0 transition-opacity group-hover/hotspot:opacity-100"
                   style={{ left: '50%', transform: 'translateX(-50%)' }}
                 >
                   {h.label}
@@ -204,7 +204,7 @@ export default function InputPanel({
             type="button"
             onClick={onClear}
             aria-label={t('dash.removePhoto')}
-            className="absolute end-4 top-4 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/70 text-slate-200 transition-colors hover:bg-black hover:text-white"
+            className="absolute end-4 top-4 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-line bg-black/70 text-fg transition-colors hover:bg-black hover:text-fg"
           >
             <X className="h-5 w-5" />
           </button>

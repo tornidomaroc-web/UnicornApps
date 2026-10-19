@@ -494,7 +494,7 @@ export default function DashboardClient({
     <div className="bg-white text-zinc-900 min-h-[600px] rounded-2xl shadow-2xl overflow-hidden font-sans border border-zinc-100">
       <nav className="border-b border-zinc-100 p-6 flex justify-between items-center bg-white">
         <div className="text-xl font-bold tracking-tighter flex items-center gap-2">
-          <ShoppingBag className="w-6 h-6 text-violet-600" />
+          <ShoppingBag className="w-6 h-6 text-brand" />
           MODERN STORE
         </div>
         <div className="hidden sm:flex gap-6 text-sm font-medium text-zinc-600">
@@ -510,7 +510,7 @@ export default function DashboardClient({
           </div>
           <div className="space-y-8">
             <div className="space-y-2">
-              <span className="text-violet-600 font-semibold tracking-widest text-xs uppercase">{t('dash.newArrival')}</span>
+              <span className="text-brand font-semibold tracking-widest text-xs uppercase">{t('dash.newArrival')}</span>
               {/* No tracking-* here: this renders GENERATED text, which is Arabic whenever the user
                   generated in Arabic — independent of the UI language. The global RTL guard keys on
                   the wrapper's dir, so it does not fire on the English surface and the tracking lands
@@ -541,7 +541,7 @@ export default function DashboardClient({
                 </div>
               </div>
               <Button
-                className="w-full py-7 text-lg font-bold rounded-2xl bg-violet-600 hover:bg-violet-500 text-white shadow-xl shadow-violet-500/20 transition-all hover:-translate-y-1 border-none"
+                className="w-full py-7 text-lg font-bold rounded-2xl bg-brand hover:bg-brand/90 text-fg-on-brand shadow-xl shadow-black/10 transition-all hover:-translate-y-1 border-none"
               >
                 {t('dash.addToCart').toUpperCase()}
               </Button>
@@ -645,7 +645,7 @@ export default function DashboardClient({
   }
 
   return (
-    <div className="min-h-screen bg-[#070710] text-[#c8cfe0] selection:bg-brand/30 selection:text-white px-4 py-8 md:px-8">
+    <div className="min-h-screen text-fg-body selection:bg-brand/30 selection:text-fg px-4 py-8 md:px-8">
       <div className="max-w-7xl mx-auto space-y-12 relative z-10">
 
         {/* Banner row. Both banners share ONE container + tone vocabulary, held
@@ -699,14 +699,14 @@ export default function DashboardClient({
                           <section className="space-y-6">
                              <div className="flex items-center gap-3">
                                 <div className="p-2 bg-orange-500/20 rounded-lg"><ShoppingBag className="w-5 h-5 text-orange-400" /></div>
-                                <h2 className="text-base font-black text-white uppercase">{t('dash.amazon.live')}</h2>
+                                <h2 className="text-base font-bold text-fg">{t('dash.amazon.live')}</h2>
                              </div>
                              <AmazonMockup />
                           </section>
                           <section className="space-y-6">
                              <div className="flex items-center gap-3">
                                 <div className="p-2 bg-green-500/20 rounded-lg"><Store className="w-5 h-5 text-green-400" /></div>
-                                <h2 className="text-base font-black text-white uppercase">{t('dash.shopify.live')}</h2>
+                                <h2 className="text-base font-bold text-fg">{t('dash.shopify.live')}</h2>
                              </div>
                              <ShopifyMockup />
                           </section>
@@ -718,8 +718,8 @@ export default function DashboardClient({
               {/* REFINE CONSOLE */}
               <div className="min-w-0 space-y-6">
                   <div className="flex items-center justify-between px-2">
-                     <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white flex items-center gap-2">
-                        <MessagesSquare className="w-4 h-4 text-violet-500" />
+                     <h3 className="text-sm font-bold text-fg-link flex items-center gap-2">
+                        <MessagesSquare className="w-4 h-4 text-fg-link" />
                         {t('dash.stealthConsole')}
                      </h3>
                   </div>
@@ -730,19 +730,19 @@ export default function DashboardClient({
                       conversation was one or two messages long. `min-h-0` is what lets
                       the flex-grow history shrink below its content once the card
                       hits the cap, instead of pushing the input out of the card. */}
-                  <Card className="bg-black/60 border border-white/5 rounded-[2rem] flex flex-col max-h-[650px] overflow-hidden shadow-2xl">
+                  <Card className="bg-panel border border-transparent rounded-card flex flex-col max-h-[650px] overflow-hidden shadow-container">
                      {/* Chat History Area */}
                      <div className="flex-grow min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar scroll-smooth">
                         {chatHistory.map((msg, i) => (
                           <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                              <div className={`max-w-[85%] p-4 rounded-2xl text-xs font-medium leading-relaxed ${
                                msg.role === 'user'
-                               ? 'bg-violet-600 text-white rounded-tr-none shadow-[0_0_15px_rgba(124,58,237,0.3)]'
-                               : 'bg-white/5 border border-white/10 text-slate-300 rounded-tl-none backdrop-blur-xl'
+                               ? 'bg-brand text-fg-on-brand rounded-tr-none'
+                               : 'bg-chip border border-line text-fg-body rounded-tl-none'
                              }`}>
                                 {msg.message}
                              </div>
-                             <span className="text-xs font-black text-slate-600 uppercase mt-2 px-1 tracking-widest">
+                             <span className="text-xs font-bold text-fg-faint mt-2 px-1">
                                 {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {msg.role === 'user' ? t('dash.vectorSent') : t('dash.matrixRefined')}
                              </span>
                           </div>
@@ -751,7 +751,7 @@ export default function DashboardClient({
                      </div>
 
                      {/* Console Input Area */}
-                     <div className="p-6 bg-white/[0.02] border-t border-white/5 space-y-6">
+                     <div className="p-6 bg-tile border-t border-line-soft space-y-6">
                         <div className="flex flex-wrap gap-2">
                            {[
                              { l: t('dash.refine.prof'), v: t('dash.refine.prof.v') },
@@ -763,7 +763,7 @@ export default function DashboardClient({
                                key={c.l}
                                onClick={() => handleRefine(c.v)}
                                disabled={isRefining}
-                               className="px-3 py-1.5 bg-white/5 border border-white/5 rounded-lg text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white hover:border-violet-500/50 transition-all active:scale-95 disabled:opacity-50"
+                               className="px-3 py-1.5 bg-chip border border-line rounded-full text-sm font-bold text-fg-link hover:text-fg press disabled:opacity-50"
                              >
                                {c.l}
                              </button>
@@ -777,12 +777,12 @@ export default function DashboardClient({
                              onKeyDown={(e) => e.key === 'Enter' && handleRefine()}
                              placeholder={isRefining ? t('dash.processing') : t('dash.enterVector')}
                              disabled={isRefining}
-                             className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-5 pr-14 text-xs font-medium text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50 transition-all disabled:opacity-50"
+                             className="w-full bg-field border border-transparent rounded-input shadow-well py-4 pl-5 pr-14 text-xs font-medium text-fg placeholder:text-fg-faint focus:outline-none focus:border-focus transition-colors disabled:opacity-50"
                            />
                            <button
                              onClick={() => handleRefine()}
                              disabled={isRefining || !refineInput.trim()}
-                             className="absolute right-2 top-2 w-10 h-10 rounded-xl bg-violet-600 hover:bg-violet-500 text-white flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 disabled:bg-slate-800"
+                             className="absolute right-2 top-2 w-10 h-10 rounded-xl bg-brand bg-fill-btn hover:bg-fill-btn-hover text-fg-on-brand shadow-btn flex items-center justify-center press disabled:opacity-50 disabled:bg-chip disabled:bg-none"
                            >
                               {isRefining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                            </button>
@@ -808,15 +808,15 @@ export default function DashboardClient({
             every Play install this block does not exist and the screen simply ends at
             the results. */}
         {results && !isNative && (
-          <div className="border-y border-white/10 bg-white/[0.02] px-4 py-6 space-y-4">
-            <span className="block text-xs font-black uppercase tracking-widest text-slate-500">{t('dash.addCredits')}</span>
+          <div className="border-y border-line bg-tile px-4 py-6 space-y-4">
+            <span className="block text-sm font-bold text-fg-link">{t('dash.addCredits')}</span>
             <div className="grid grid-cols-2 gap-4">
               <button
                 type="button"
                 onClick={() => void handlePaid('pack')}
                 disabled={checkoutPending !== null}
                 aria-busy={checkoutPending === 'pack'}
-                className="h-12 rounded-xl border border-white/20 text-[#c8cfe0] hover:border-white/40 hover:text-white text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-12 rounded-full border border-transparent bg-chip bg-fill-ghost text-fg-link shadow-ghost hover:text-fg text-sm font-bold press disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {checkoutPending === 'pack' ? t('checkout.pending') : t('dash.cta.pack')}
               </button>
@@ -825,7 +825,7 @@ export default function DashboardClient({
                 onClick={() => void handlePaid('sub')}
                 disabled={checkoutPending !== null}
                 aria-busy={checkoutPending === 'sub'}
-                className="h-12 rounded-xl bg-brand hover:bg-brand/90 text-white text-xs font-black uppercase tracking-widest shadow-glow-brand transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-12 rounded-full bg-brand hover:bg-fill-btn-hover text-fg-on-brand text-sm font-bold bg-fill-btn shadow-btn press disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {checkoutPending === 'sub' ? t('checkout.pending') : t('dash.cta.sub')}
               </button>
@@ -835,9 +835,9 @@ export default function DashboardClient({
                 must never exist on a Play install. The fixed-bar pack button
                 carries no disclosure: that control is a fixed-height nowrap box
                 with nothing to give. */}
-            <p className="text-xs leading-relaxed text-slate-500">
+            <p className="text-xs leading-relaxed text-fg-faint">
               {t('checkout.mor')}{' '}
-              <Link href="/refund" className="underline underline-offset-4 hover:text-white transition-colors">
+              <Link href="/refund" className="underline underline-offset-4 hover:text-fg transition-colors">
                 {t('refund.title')}
               </Link>
             </p>
@@ -901,7 +901,7 @@ export default function DashboardClient({
               the spacer and the bar grow together. Keep the two in step — they are
               adjacent deliberately. */}
           <div aria-hidden className="h-[105px] mb-safe" />
-          <div className="fixed bottom-0 start-0 end-0 z-40 bg-[#070710]/95 border-t border-white/10 px-4 pt-3 pb-3">
+          <div className="fixed bottom-0 start-0 end-0 z-40 bg-surface/95 border-t border-line-soft px-4 pt-3 pb-3">
             <div className="max-w-7xl mx-auto">
               <PrimaryAction {...primaryProps({ allowPurchase: true })} />
             </div>

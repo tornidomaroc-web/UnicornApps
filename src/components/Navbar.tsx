@@ -30,9 +30,9 @@ import { useIsNative } from "@/hooks/useIsNative";
  * DIRECTION. Logical classes only, and no letter-spacing anywhere.
  */
 const SHAPE =
-  'h-11 items-center justify-center whitespace-nowrap rounded-full text-[15px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60';
-const GHOST = `${SHAPE} border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white`;
-const PRIMARY = `${SHAPE} bg-brand px-5 text-white shadow-glow-brand hover:bg-brand/90`;
+  'h-11 items-center justify-center whitespace-nowrap rounded-full text-[15px] font-bold';
+const GHOST = `${SHAPE} border border-transparent bg-chip bg-fill-ghost text-fg-body shadow-ghost hover:text-fg press`;
+const PRIMARY = `${SHAPE} bg-brand px-5 text-fg-on-brand bg-fill-btn shadow-btn hover:bg-fill-btn-hover press`;
 
 export default function Navbar({
   initialUser = null,
@@ -114,11 +114,11 @@ export default function Navbar({
 
   const barLink = (href: string) =>
     `flex h-11 items-center rounded-full px-4 text-[15px] font-bold transition-colors ${
-      pathname === href ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'
+      pathname === href ? 'bg-chip text-fg-link' : 'text-fg-muted hover:text-fg'
     }`;
   const menuRow = (href?: string) =>
-    `flex h-12 w-full items-center rounded-2xl px-4 text-base font-bold transition-colors ${
-      href && pathname === href ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'
+    `flex h-12 w-full items-center rounded-row px-4 text-base font-bold transition-colors ${
+      href && pathname === href ? 'bg-chip text-fg-link' : 'text-fg-body hover:bg-chip hover:text-fg'
     }`;
 
   // The switch is labelled with the language it switches TO, written in that
@@ -130,10 +130,10 @@ export default function Navbar({
   const otherLangFont = lang === 'en' ? 'font-arabic' : '';
 
   return (
-    <nav className="fixed top-0 z-50 w-full border-b border-white/5 bg-[#070710] pt-safe">
+    <nav className="fixed top-0 z-50 w-full border-b border-line-soft bg-page pt-safe">
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-6">
-          <Link href="/" className="flex h-11 min-w-[44px] shrink-0 items-center justify-center gap-3 text-xl font-bold text-white">
+          <Link href="/" className="flex h-11 min-w-[44px] shrink-0 items-center justify-center gap-3 font-head text-xl font-bold text-fg">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/unicornapps-mark.svg?v=2" alt="UnicornApps" width={40} height={40} className="h-10 w-10" />
             <span className="hidden sm:block">UnicornApps</span>
@@ -167,7 +167,7 @@ export default function Navbar({
             // Session still resolving. A neutral, non-interactive placeholder that
             // asserts NEITHER state — sized near the resolved clusters to limit
             // layout shift. aria-hidden: transient, nothing for AT to announce.
-            <div className="h-11 w-28 rounded-full bg-white/5" aria-hidden="true" />
+            <div className="h-11 w-28 rounded-full bg-chip" aria-hidden="true" />
           ) : view === 'authed' ? (
             <>
               {/* 🔴 THIS IS THE ONLY PLACE A CREDIT BALANCE RENDERS ANYWHERE IN THE APP.
@@ -178,10 +178,10 @@ export default function Navbar({
                   them. Only the WORD beside it gives way, below 640px and only while
                   the dashboard pill is taking the room; it stays in the tree for
                   assistive technology. */}
-              <div className="flex h-11 items-center gap-1.5 whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-3.5 text-[15px] font-bold text-white">
-                <Zap aria-hidden className="h-4 w-4 shrink-0 text-brand" />
+              <div className="flex h-11 items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-chip px-3.5 text-[15px] font-bold text-fg">
+                <Zap aria-hidden className="h-4 w-4 shrink-0 text-fg-link" />
                 <span>{credits}</span>
-                <span className={onDashboard ? 'font-medium text-slate-400' : 'sr-only sm:not-sr-only sm:font-medium sm:text-slate-400'}>
+                <span className={onDashboard ? 'font-medium text-fg-muted' : 'sr-only sm:not-sr-only sm:font-medium sm:text-fg-muted'}>
                   {creditsWord(credits, lang)}
                 </span>
               </div>
@@ -211,7 +211,7 @@ export default function Navbar({
             <>
               {/* Both lead to the same screen, so below 640px the bar keeps the
                   main action alone and sign-in is a row in the menu. */}
-              <Link href="/login" className={`${SHAPE} hidden px-4 text-slate-300 hover:text-white sm:flex`}>
+              <Link href="/login" className={`${SHAPE} hidden px-4 text-fg-body hover:text-fg sm:flex`}>
                 {t('nav.login')}
               </Link>
               <Link href="/login" className={`${PRIMARY} flex`}>
@@ -226,7 +226,7 @@ export default function Navbar({
             aria-expanded={menuOpen}
             aria-controls="site-menu"
             aria-label={menuOpen ? t('nav.closeMenu') : t('nav.menu')}
-            className="lg:hidden flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+            className="lg:hidden flex h-11 w-11 items-center justify-center rounded-full border border-transparent bg-chip bg-fill-ghost text-fg-body shadow-ghost press hover:text-fg"
           >
             {menuOpen ? <X aria-hidden className="h-5 w-5" /> : <Menu aria-hidden className="h-5 w-5" />}
           </button>
@@ -236,7 +236,7 @@ export default function Navbar({
       {menuOpen && (
         // Scrolls inside itself: on a phone held sideways the rows are taller
         // than the screen, and a fixed panel would otherwise cut them off.
-        <div id="site-menu" className="lg:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-white/5 bg-[#070710]">
+        <div id="site-menu" className="lg:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-line-soft bg-page">
           <nav aria-label={t('nav.menu')} className="container mx-auto max-w-7xl px-4 py-3 sm:px-6">
             <ul className="space-y-1">
               {menuPages.map((p) => (
@@ -247,7 +247,7 @@ export default function Navbar({
                 </li>
               ))}
             </ul>
-            <ul className="mt-2 space-y-1 border-t border-white/5 pt-2">
+            <ul className="mt-2 space-y-1 border-t border-line-soft pt-2">
               {view === 'authed' ? (
                 <>
                   {!onDashboard && (
@@ -257,7 +257,7 @@ export default function Navbar({
                   <li>
                     <form action={logout}>
                       <button type="submit" className={`${menuRow()} gap-3`}>
-                        <LogOut aria-hidden className="h-5 w-5 shrink-0 text-slate-500 rtl:rotate-180" />
+                        <LogOut aria-hidden className="h-5 w-5 shrink-0 text-fg-faint rtl:rotate-180" />
                         {t('nav.logout')}
                       </button>
                     </form>

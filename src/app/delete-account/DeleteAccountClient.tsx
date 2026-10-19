@@ -26,8 +26,8 @@ import { useLang } from '@/lib/i18n/LanguageContext'
  * DIRECTION. Logical classes only, no letter-spacing.
  */
 const CARD = `${SURFACE} p-5 sm:p-8`
-const H2 = 'text-xl font-bold text-white'
-const BODY = 'mt-2 text-[15px] leading-relaxed text-slate-400'
+const H2 = 'text-xl font-bold text-fg'
+const BODY = 'mt-2 text-[15px] leading-relaxed text-fg-muted'
 
 export default function DeleteAccountClient() {
   const { t } = useLang()
@@ -50,12 +50,12 @@ export default function DeleteAccountClient() {
   const steps = [t('del.how.1'), t('del.how.2'), t('del.how.3')]
 
   return (
-    <div className="min-h-[100dvh] bg-[#070710] px-4 pb-10 pt-6 text-[#c8cfe0] sm:pt-12">
+    <div className="min-h-[100dvh] px-4 pb-10 pt-6 text-fg-body sm:pt-12">
       <div className="mx-auto w-full max-w-2xl space-y-4">
         {done && (
           <div
             role="status"
-            className="flex items-center gap-3 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-[15px] font-bold leading-relaxed text-emerald-200"
+            className="flex items-center gap-3 rounded-row border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-[15px] font-bold leading-relaxed text-emerald-200"
           >
             <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden />
             <p>{t('del.done')}</p>
@@ -63,7 +63,7 @@ export default function DeleteAccountClient() {
         )}
 
         <section className={CARD}>
-          <h1 className="text-2xl font-bold leading-tight text-white sm:text-3xl">{t('del.title')}</h1>
+          <h1 className="text-2xl font-bold leading-tight text-fg sm:text-3xl">{t('del.title')}</h1>
           <p className={BODY}>{t('del.intro')}</p>
         </section>
 
@@ -72,17 +72,17 @@ export default function DeleteAccountClient() {
           <ol className="mt-4 space-y-3">
             {steps.map((step, i) => (
               <li key={step} className={`${TILE} flex items-start gap-4 p-4`}>
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/15 text-base font-bold text-brand">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-icon bg-chip bg-fill-icon text-base font-bold text-fg-link shadow-icon">
                   {i + 1}
                 </span>
-                <span className="min-w-0 pt-2 text-[15px] leading-relaxed text-slate-300">{step}</span>
+                <span className="min-w-0 pt-2 text-[15px] leading-relaxed text-fg-body">{step}</span>
               </li>
             ))}
           </ol>
           {!done && (
             <Link
               href="/account"
-              className="mt-4 flex h-14 w-full items-center justify-center whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-6 text-base font-bold text-white transition-colors hover:bg-white/10"
+              className="mt-4 flex h-14 w-full items-center justify-center whitespace-nowrap rounded-full border border-transparent bg-chip bg-fill-ghost px-6 text-base font-bold text-fg-link shadow-ghost press hover:text-fg"
             >
               {t('del.cta')}
             </Link>
@@ -108,7 +108,7 @@ export default function DeleteAccountClient() {
             <a
               href="mailto:support@unicornapps.app"
               dir="ltr"
-              className="font-bold text-brand underline underline-offset-4 [overflow-wrap:anywhere]"
+              className="font-bold text-fg-link underline underline-offset-4 [overflow-wrap:anywhere]"
             >
               support@unicornapps.app
             </a>{' '}

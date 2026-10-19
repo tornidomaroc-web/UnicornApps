@@ -46,31 +46,31 @@ export default function LegalDoc({
   const year = new Date().getFullYear()
 
   return (
-    <article className="min-h-screen bg-surface px-6 pt-28 pb-28 sm:pt-32">
+    <article className="min-h-screen px-6 pt-28 pb-28 sm:pt-32">
       <div className="mx-auto max-w-3xl">
         {/* Back control */}
         <Link
           href={backHref}
-          className="group inline-flex items-center gap-2 text-sm text-ink-1 transition-colors hover:text-brand"
+          className="group inline-flex items-center gap-2 text-sm text-fg-body transition-colors hover:text-fg-link"
         >
           <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
           {t(backLabelKey)}
         </Link>
 
         {/* Header */}
-        <header className="mt-10 border-b border-white/10 pb-8">
+        <header className="mt-10 border-b border-line pb-8">
           <div className="mb-5 flex items-center gap-2.5">
             <span className="h-1.5 w-1.5 rounded-full bg-brand" aria-hidden="true" />
-            <span className="text-xs font-medium uppercase text-ink-3 ltr:tracking-[0.2em]">
+            <span className="text-sm font-semibold text-fg-link">
               {t(eyebrowKey)}
             </span>
           </div>
-          <h1 className="mb-4 text-4xl font-semibold text-ink-0 sm:text-5xl ltr:tracking-tight">
+          <h1 className="mb-4 text-4xl font-semibold text-fg sm:text-5xl ltr:tracking-tight">
             {t(titleKey)}
           </h1>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-ink-3">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-fg-faint">
             <span>{t(versionKey)}</span>
-            <span className="h-1 w-1 rounded-full bg-ink-4" aria-hidden="true" />
+            <span className="h-1 w-1 rounded-full bg-fg-faint" aria-hidden="true" />
             <span>{t(updatedKey)}</span>
           </div>
         </header>
@@ -80,15 +80,15 @@ export default function LegalDoc({
           {sections.map((section) => (
             <section
               key={section.id}
-              className="rounded-2xl border border-white/[0.08] bg-surface-2/40 p-7 sm:p-8"
+              className="rounded-card border border-transparent bg-panel p-7 sm:p-8"
             >
               <div className="flex gap-5">
-                <span className="shrink-0 pt-0.5 text-sm font-semibold tabular-nums text-brand">
+                <span className="shrink-0 pt-0.5 text-sm font-semibold tabular-nums text-fg-link">
                   {section.id}
                 </span>
                 <div className="min-w-0">
-                  <h2 className="mb-3 text-lg font-semibold text-ink-0">{t(section.titleKey)}</h2>
-                  <p className="leading-relaxed text-ink-1">{t(section.bodyKey)}</p>
+                  <h2 className="mb-3 text-lg font-semibold text-fg">{t(section.titleKey)}</h2>
+                  <p className="leading-relaxed text-fg-body">{t(section.bodyKey)}</p>
                 </div>
               </div>
             </section>
@@ -96,14 +96,14 @@ export default function LegalDoc({
         </div>
 
         {/* Contact CTA */}
-        <div className="mt-8 flex flex-col gap-6 rounded-2xl border border-white/[0.08] bg-surface-2/40 p-7 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+        <div className="mt-8 flex flex-col gap-6 rounded-card border border-transparent bg-panel p-7 sm:flex-row sm:items-center sm:justify-between sm:p-8">
           <div>
-            <h3 className="mb-1.5 text-base font-semibold text-ink-0">{t(contact.headingKey)}</h3>
-            <p className="text-sm text-ink-2">{t(contact.subKey)}</p>
+            <h3 className="mb-1.5 text-base font-semibold text-fg">{t(contact.headingKey)}</h3>
+            <p className="text-sm text-fg-muted">{t(contact.subKey)}</p>
           </div>
           <Link
             href={`mailto:${contact.email}`}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-brand/90"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-brand bg-fill-btn px-5 py-3 text-sm font-medium text-fg-on-brand shadow-btn press hover:bg-fill-btn-hover"
           >
             <Mail className="h-4 w-4" />
             {t(contact.ctaKey)}
@@ -111,11 +111,11 @@ export default function LegalDoc({
         </div>
 
         {/* Governing-language clause (discreet, current language) */}
-        <p className="mt-10 text-sm leading-relaxed text-ink-3">{t(governingKey)}</p>
+        <p className="mt-10 text-sm leading-relaxed text-fg-faint">{t(governingKey)}</p>
 
         {/* Footer */}
-        <footer className="mt-16 border-t border-white/10 pt-8">
-          <p className="text-sm text-ink-4">
+        <footer className="mt-16 border-t border-line pt-8">
+          <p className="text-sm text-fg-faint">
             © {year} UnicornApps Global · {t('footer.rights')}
           </p>
         </footer>

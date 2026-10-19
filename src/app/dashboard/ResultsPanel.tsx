@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Check, Copy, Code2, Eye } from 'lucide-react'
 import { sanitizeModelHtml } from '@/lib/safe-html'
+import { BLOCK, EYEBROW } from './surface'
 
 /**
  * The generated product page, as a stack of blocks the user can act on.
@@ -57,8 +58,6 @@ export interface ResultsPanelProps {
 /** Block ids double as anchor targets for the chip row. Stable: tests pin them. */
 export const BLOCKS = ['seo', 'description', 'shopify', 'amazon', 'social', 'data', 'preview'] as const
 
-const SURFACE = 'rounded-3xl border border-white/10 bg-white/[0.03]'
-const EYEBROW = 'text-xs font-black uppercase tracking-widest text-slate-500'
 
 function CopyButton({
   id,
@@ -79,13 +78,13 @@ function CopyButton({
       type="button"
       onClick={() => onCopy(text, id)}
       aria-live="polite"
-      className={`inline-flex h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-xs font-black uppercase tracking-widest transition-colors ${
+      className={`press inline-flex h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-bold ${
         done
-          ? 'border-brand/40 bg-brand/15 text-white'
-          : 'border-white/10 bg-white/5 text-slate-300 hover:border-brand/50 hover:text-white'
+          ? 'border-transparent bg-chip text-fg shadow-ghost'
+          : 'border-transparent bg-chip bg-fill-ghost text-fg-link shadow-ghost hover:text-fg'
       }`}
     >
-      {done ? <Check className="h-3.5 w-3.5 text-brand" /> : <Copy className="h-3.5 w-3.5" />}
+      {done ? <Check className="h-3.5 w-3.5 text-fg-link" /> : <Copy className="h-3.5 w-3.5" />}
       {label}
     </button>
   )
@@ -103,7 +102,7 @@ function Block({
   children: ReactNode
 }) {
   return (
-    <section id={`result-${id}`} className={`${SURFACE} scroll-mt-24 p-5 sm:p-8`}>
+    <section id={`result-${id}`} className={`${BLOCK} scroll-mt-24 p-5 sm:p-8`}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className={EYEBROW}>{eyebrow}</h3>
         {action}
@@ -152,9 +151,9 @@ export default function ResultsPanel({ results, t, copiedId, onCopy, previewSlot
   return (
     <div className="space-y-5">
       {/* HERO: the one string every block is about, and the first thing copied. */}
-      <div className={`${SURFACE} p-5 sm:p-8`}>
+      <div className={`${BLOCK} p-5 sm:p-8`}>
         <p className={`${EYEBROW} mb-3`}>{t('dash.seo.target')}</p>
-        <p data-model-output dir="auto" className="break-words text-start text-[28px] font-bold leading-[1.15] text-white sm:text-[32px]">
+        <p data-model-output dir="auto" className="break-words text-start text-[28px] font-bold leading-[1.15] text-fg sm:text-[32px]">
           {results.seoTitle}
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">{copy('t', results.seoTitle)}</div>
@@ -174,7 +173,7 @@ export default function ResultsPanel({ results, t, copiedId, onCopy, previewSlot
               if (c.id === 'preview') setPreviewOpen(true)
               document.getElementById(`result-${c.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            className="inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-4 text-xs font-black uppercase tracking-widest text-slate-300 hover:border-brand/50 hover:text-white"
+            className="inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-line bg-chip px-4 text-sm font-bold text-fg-link hover:text-fg"
           >
             {c.label}
           </a>
@@ -182,13 +181,13 @@ export default function ResultsPanel({ results, t, copiedId, onCopy, previewSlot
       </nav>
 
       <Block id="seo" eyebrow={t('dash.seo.meta')} action={copy('m', results.metaDescription)}>
-        <p data-model-output dir="auto" className="text-start text-base leading-relaxed text-slate-300">
+        <p data-model-output dir="auto" className="text-start text-base leading-relaxed text-fg-body">
           {results.metaDescription}
         </p>
       </Block>
 
       <Block id="description" eyebrow={t('dash.block.description')} action={copy('d', results.productDescription)}>
-        <p data-model-output dir="auto" className="whitespace-pre-line text-start text-base leading-relaxed text-slate-300">
+        <p data-model-output dir="auto" className="whitespace-pre-line text-start text-base leading-relaxed text-fg-body">
           {results.productDescription}
         </p>
       </Block>
@@ -198,15 +197,15 @@ export default function ResultsPanel({ results, t, copiedId, onCopy, previewSlot
         eyebrow={t('dash.shopify.title')}
         action={copy('sh', results.shopifyHtml ?? '', t('dash.copyCode'))}
       >
-        <div className="mb-4 inline-flex rounded-full border border-white/10 bg-black/40 p-1">
+        <div className="mb-4 inline-flex rounded-full border border-transparent bg-field p-1 shadow-well">
           {(['preview', 'code'] as const).map((v) => (
             <button
               key={v}
               type="button"
               onClick={() => setShopifyView(v)}
               aria-pressed={shopifyView === v}
-              className={`inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-xs font-black uppercase tracking-widest transition-colors ${
-                shopifyView === v ? 'bg-brand text-white' : 'text-slate-400 hover:text-white'
+              className={`inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-sm font-bold transition-colors ${
+                shopifyView === v ? 'bg-brand bg-fill-btn text-fg-on-brand shadow-btn' : 'text-fg-muted hover:text-fg'
               }`}
             >
               {v === 'preview' ? <Eye className="h-3.5 w-3.5" /> : <Code2 className="h-3.5 w-3.5" />}
@@ -218,14 +217,14 @@ export default function ResultsPanel({ results, t, copiedId, onCopy, previewSlot
           <div
             data-model-output
             dir="auto"
-            className="model-html max-h-[520px] overflow-auto rounded-2xl border border-white/5 bg-black/40 p-5 text-start custom-scrollbar"
+            className="model-html max-h-[520px] overflow-auto rounded-row border border-line-soft bg-field p-5 text-start custom-scrollbar"
             dangerouslySetInnerHTML={{ __html: mounted ? sanitizeModelHtml(results.shopifyHtml ?? '') : '' }}
           />
         ) : (
           <pre
             data-model-output
             dir="ltr"
-            className="max-h-[520px] overflow-auto whitespace-pre-wrap break-words rounded-2xl border border-white/5 bg-black/60 p-5 text-start font-mono text-xs leading-relaxed text-brand/80 custom-scrollbar"
+            className="max-h-[520px] overflow-auto whitespace-pre-wrap break-words rounded-row border border-line-soft bg-field p-5 text-start font-mono text-xs leading-relaxed text-fg-link/80 custom-scrollbar"
           >
             {results.shopifyHtml}
           </pre>
@@ -235,9 +234,9 @@ export default function ResultsPanel({ results, t, copiedId, onCopy, previewSlot
       <Block id="amazon" eyebrow={t('dash.amazon.title')} action={copy('ab', bullets.join('\n'))}>
         <ul className="space-y-3">
           {bullets.map((b, i) => (
-            <li key={i} className="flex items-start gap-3 rounded-2xl border border-white/5 bg-white/5 p-4">
+            <li key={i} className="flex items-start gap-3 rounded-row border border-line bg-tile p-4">
               <span aria-hidden className="mt-1 h-2 w-2 shrink-0 rounded-full bg-brand" />
-              <p data-model-output dir="auto" className="min-w-0 flex-1 text-start text-slate-200">
+              <p data-model-output dir="auto" className="min-w-0 flex-1 text-start text-fg">
                 {b}
               </p>
             </li>
@@ -246,20 +245,20 @@ export default function ResultsPanel({ results, t, copiedId, onCopy, previewSlot
       </Block>
 
       <Block id="social" eyebrow={t('dash.social.hook')} action={copy('hk', results.viralScript?.hook ?? '')}>
-        <p data-model-output dir="auto" className="text-start text-lg font-bold leading-snug text-white">
+        <p data-model-output dir="auto" className="text-start text-lg font-bold leading-snug text-fg">
           {results.viralScript?.hook}
         </p>
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
-          <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
+          <div className="rounded-row border border-line bg-tile p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <span className={EYEBROW}>{t('dash.social.concept')}</span>
               {copy('cc', results.viralScript?.concept ?? '')}
             </div>
-            <p data-model-output dir="auto" className="text-start text-sm leading-relaxed text-slate-300">
+            <p data-model-output dir="auto" className="text-start text-sm leading-relaxed text-fg-body">
               {results.viralScript?.concept}
             </p>
           </div>
-          <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
+          <div className="rounded-row border border-line bg-tile p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <span className={EYEBROW}>{t('dash.social.tags')}</span>
               {copy('tg', tags.join(' '))}
@@ -270,7 +269,7 @@ export default function ResultsPanel({ results, t, copiedId, onCopy, previewSlot
                   key={tag}
                   data-model-output
                   dir="auto"
-                  className="rounded-full border border-brand/20 bg-brand/10 px-3 py-1 text-xs font-bold text-brand"
+                  className="rounded-full border border-line bg-chip px-3 py-1 text-xs font-bold text-fg-link"
                 >
                   {tag}
                 </span>
@@ -283,9 +282,9 @@ export default function ResultsPanel({ results, t, copiedId, onCopy, previewSlot
       <Block id="data" eyebrow={t('dash.tab.data')} action={copy('sd', dataRows.map(([k, v]) => `${k}: ${v}`).join('\n'))}>
         <dl className="grid gap-3 sm:grid-cols-2">
           {dataRows.map(([k, v]) => (
-            <div key={k} className="rounded-2xl border border-white/5 bg-white/5 p-4">
+            <div key={k} className="rounded-row border border-line bg-tile p-4">
               <dt className={`${EYEBROW} mb-2`}>{k}</dt>
-              <dd data-model-output dir="auto" className="text-start text-base font-bold text-white">
+              <dd data-model-output dir="auto" className="text-start text-base font-bold text-fg">
                 {v}
               </dd>
             </div>
@@ -302,7 +301,7 @@ export default function ResultsPanel({ results, t, copiedId, onCopy, previewSlot
               type="button"
               onClick={() => setPreviewOpen((o) => !o)}
               aria-expanded={previewOpen}
-              className="inline-flex h-11 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 text-xs font-black uppercase tracking-widest text-slate-300 hover:border-brand/50 hover:text-white"
+              className="press inline-flex h-11 items-center gap-2 rounded-full border border-transparent bg-chip bg-fill-ghost px-4 text-sm font-bold text-fg-link shadow-ghost hover:text-fg"
             >
               <Eye className="h-3.5 w-3.5" />
               {previewOpen ? t('dash.preview.hide') : t('dash.preview.show')}
