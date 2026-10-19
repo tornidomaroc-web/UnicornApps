@@ -23,10 +23,10 @@ export function SocialButtons() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3 text-xs text-slate-500" aria-hidden>
-        <span className="h-px flex-1 bg-white/10" />
+      <div className="flex items-center gap-3 text-xs text-fg-faint" aria-hidden>
+        <span className="h-px flex-1 bg-line" />
         {t('login.or')}
-        <span className="h-px flex-1 bg-white/10" />
+        <span className="h-px flex-1 bg-line" />
       </div>
       {providers.map((p) => (
         <form key={p} action={signInWithProvider.bind(null, p)}>

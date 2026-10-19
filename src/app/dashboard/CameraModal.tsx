@@ -32,8 +32,8 @@ export default function CameraModal({ t, videoRef, canvasRef, onCapture, onClose
       className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black"
     >
       <div className="absolute start-0 end-0 top-8 z-10 mt-safe text-center">
-        <p className="text-xs font-black uppercase tracking-widest text-white/50">{t('dash.cameraVision')}</p>
-        <h3 className="mt-2 text-base font-bold text-white">{t('dash.cameraPoint')}</h3>
+        <p className="text-sm font-bold text-fg-muted">{t('dash.cameraVision')}</p>
+        <h3 className="mt-2 text-base font-bold text-fg">{t('dash.cameraPoint')}</h3>
       </div>
 
       <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
@@ -44,7 +44,7 @@ export default function CameraModal({ t, videoRef, canvasRef, onCapture, onClose
           type="button"
           onClick={onClose}
           aria-label={t('dash.cameraClose')}
-          className="flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors hover:bg-white/10"
+          className="flex h-14 w-14 items-center justify-center rounded-full border border-transparent bg-chip bg-fill-ghost text-fg shadow-ghost press"
         >
           <X className="h-6 w-6" />
         </button>
@@ -53,7 +53,7 @@ export default function CameraModal({ t, videoRef, canvasRef, onCapture, onClose
           type="button"
           onClick={onCapture}
           aria-label={t('dash.cameraCapture')}
-          className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white/20 bg-brand text-white shadow-glow-brand transition-colors hover:bg-brand/90"
+          className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white/20 bg-brand text-fg-on-brand bg-fill-btn shadow-btn press hover:bg-fill-btn-hover"
         >
           <Camera className="h-10 w-10" />
         </button>

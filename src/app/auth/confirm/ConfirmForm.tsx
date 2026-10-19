@@ -35,7 +35,7 @@ export function ConfirmForm({ tokenHash, type, next }: { tokenHash: string; type
             feedback={feedback}
             action={
               offerNewLink ? (
-                <Link href="/login?mode=reset" className="text-sm font-semibold text-white underline underline-offset-4">
+                <Link href="/login?mode=reset" className="text-sm font-semibold text-fg underline underline-offset-4">
                   {t('login.action.send_new_link')}
                 </Link>
               ) : undefined

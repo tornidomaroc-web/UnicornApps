@@ -164,11 +164,12 @@ describe('the rule is the ONLY thing covering unguarded tracking utilities', () 
     // sentence-case type with no tracking on any surface that renders model
     // output; 54 once the marketing pages and the footer followed; fewer again
     // once the navbar did; 29 once the pricing page did, when the floor moved
-    // from 30 to 20). It is not
+    // from 30 to 20; 14 once the Clay Night skin took uppercase and tracking off
+    // every eyebrow and label, when it moved from 20 to 10). It is not
     // a quota: fewer tracking utilities is the direction the Arabic surface
     // wants.
-    expect(total).toBeGreaterThan(20)
-    expect(unguarded).toBeGreaterThan(20)
+    expect(total).toBeGreaterThan(10)
+    expect(unguarded).toBeGreaterThan(10)
   })
 
   it('the CSS rule that covers them is present (fails loudly if it is removed)', () => {

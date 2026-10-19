@@ -107,13 +107,13 @@ export default function LoginPage({
   const footer = (
     <>
       {t('login.agreePrefix')}{' '}
-      <Link href="/terms" className="underline underline-offset-4 hover:text-slate-300">
+      <Link href="/terms" className="underline underline-offset-4 hover:text-fg-body">
         {t('login.terms')}
       </Link>{' '}
       {/* Arabic "و" is written joined to the word it introduces. */}
       {t('login.and')}
       {lang === 'ar' ? '' : ' '}
-      <Link href="/privacy" className="underline underline-offset-4 hover:text-slate-300">
+      <Link href="/privacy" className="underline underline-offset-4 hover:text-fg-body">
         {t('login.privacy')}
       </Link>
       .
@@ -124,10 +124,10 @@ export default function LoginPage({
     return (
       <AuthShell title={t(`login.msg.${mailPanel}_title`)} footer={footer}>
         <div className="flex flex-col items-center space-y-5 text-center">
-          <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-300">
+          <span className="inline-flex h-14 w-14 items-center justify-center rounded-icon border border-emerald-500/25 bg-emerald-500/10 text-emerald-300">
             <MailCheck className="h-7 w-7" aria-hidden />
           </span>
-          <p role="status" className="max-w-xs text-[15px] leading-relaxed text-slate-300">
+          <p role="status" className="max-w-xs text-[15px] leading-relaxed text-fg-body">
             {t(`login.msg.${mailPanel}`)}
           </p>
           <button
@@ -137,7 +137,7 @@ export default function LoginPage({
               setResetSentOpen(false)
               switchMode('signin')
             }}
-            className="flex h-14 w-full items-center justify-center whitespace-nowrap rounded-full bg-brand px-6 text-base font-bold text-white shadow-glow-brand hover:bg-brand/90"
+            className="flex h-14 w-full items-center justify-center whitespace-nowrap rounded-full bg-brand px-6 text-base font-bold text-fg-on-brand bg-fill-btn shadow-btn hover:bg-fill-btn-hover press"
           >
             {t('login.action.back_to_sign_in')}
           </button>
@@ -150,9 +150,9 @@ export default function LoginPage({
     <AuthShell title={title} sub={sub} footer={footer}>
       <div className="space-y-5">
         {notice && (
-          <div role="status" className="rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4">
+          <div role="status" className="rounded-row border border-emerald-500/25 bg-emerald-500/10 p-4">
             <p className="text-sm font-semibold text-emerald-200">{t(`login.notice.${notice}.title`)}</p>
-            <p className="mt-1 text-sm leading-relaxed text-slate-300">{t(`login.notice.${notice}.body`)}</p>
+            <p className="mt-1 text-sm leading-relaxed text-fg-body">{t(`login.notice.${notice}.body`)}</p>
           </div>
         )}
 
@@ -164,8 +164,8 @@ export default function LoginPage({
                 type="button"
                 aria-pressed={mode === m}
                 onClick={() => switchMode(m)}
-                className={`h-11 whitespace-nowrap rounded-xl text-sm font-semibold transition-colors ${
-                  mode === m ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'
+                className={`h-11 whitespace-nowrap rounded-[20px] text-sm font-semibold transition-colors ${
+                  mode === m ? 'bg-chip bg-fill-ghost text-fg shadow-ghost' : 'text-fg-muted hover:text-fg'
                 }`}
               >
                 {m === 'signin' ? t('login.signinLink') : t('login.signupButton')}
@@ -203,7 +203,7 @@ export default function LoginPage({
                   <button
                     type="button"
                     onClick={() => switchMode('reset')}
-                    className="mb-1.5 text-sm font-medium text-brand hover:text-brand/80"
+                    className="mb-1.5 text-sm font-medium text-fg-link hover:text-fg-link/80"
                   >
                     {t('login.forgot')}
                   </button>
@@ -224,7 +224,7 @@ export default function LoginPage({
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
                   aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
-                  className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-brand"
+                  className="absolute end-3 top-1/2 -translate-y-1/2 p-1 text-fg-faint hover:text-fg-link"
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
                 </button>
@@ -243,7 +243,7 @@ export default function LoginPage({
                   <button
                     type="button"
                     onClick={() => switchMode('reset')}
-                    className="text-sm font-semibold text-white underline underline-offset-4"
+                    className="text-sm font-semibold text-fg underline underline-offset-4"
                   >
                     {t('login.action.send_new_link')}
                   </button>
@@ -266,7 +266,7 @@ export default function LoginPage({
           <button
             type="button"
             onClick={() => switchMode('signin')}
-            className="w-full text-center text-sm font-medium text-slate-400 hover:text-white"
+            className="w-full text-center text-sm font-medium text-fg-muted hover:text-fg"
           >
             {t('login.backToSignin')}
           </button>
@@ -275,7 +275,7 @@ export default function LoginPage({
         )}
 
         {mode === 'signin' && native.resolved && native.isNative && (
-          <p className="text-center text-xs leading-relaxed text-slate-500">{t('login.nativeGoogleHint')}</p>
+          <p className="text-center text-xs leading-relaxed text-fg-faint">{t('login.nativeGoogleHint')}</p>
         )}
       </div>
     </AuthShell>

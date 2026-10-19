@@ -37,6 +37,10 @@
 
 ## Token map
 
+> **Clay Night (2026-10-19): the `brand-glow` and `ink-*` rows below are RETIRED** — removed from
+> `globals.css` and `tailwind.config.ts` (`ink-4` failed contrast at 2.65:1). Call sites use the semantic tier
+> further down; the table is kept as the record of the palette it replaced.
+
 | Tailwind class | CSS var | RGB | Hex | Eventually replaces |
 |---|---|---|---|---|
 | `surface` | `--ua-surface` | `7 7 16` | `#070710` | every `bg-[#070710]`; already wired on `body` |
@@ -55,22 +59,11 @@ actually on screen today (Tailwind `slate-*` + `#c8cfe0`) so that per-page migra
 *visually invisible*. A bespoke cool-grey ramp derived from the base is a deliberate
 design change deferred to a phase where visible change is sanctioned.
 
-### The brand-glow convention (added with the landing consolidation, PR 1)
+### The brand-glow convention — RETIRED (Clay Night skin, 2026-10-19)
 
-Buttons carry a violet glow as `shadow-[0_0_40px_-5px_rgba(124,58,237,0.5)]`. The scattered
-thing is the **color** (`124,58,237`), not the geometry — blur/spread/alpha differ per element
-and encode a deliberate hierarchy (a primary CTA glows harder than an inline one). So we
-tokenize **only the color**, via `--ua-brand-glow`, and keep geometry inline:
-
-- **Canonical button glow** (`0 0 40px -5px / 0.5`) → the `shadow-glow-brand` utility
-  (`tailwind.config.ts` `boxShadow`).
-- **Bespoke glows** (any other blur/spread/alpha) → inline
-  `shadow-[<geometry> rgb(var(--ua-brand-glow)/<alpha>)]`.
-
-One color source (`--ua-brand-glow`), retunable in one edit; geometry stays where it belongs.
-A single fixed `shadow-glow-brand` for *all* glows was rejected — it would flatten the intensity
-hierarchy into one silent value. `--ua-brand-glow` is aliased to `--ua-brand` today but kept
-separate so glows can later shift to a lighter tint without touching every shadow.
+There is no coloured glow anywhere any more, on the primary button or elsewhere. `shadow-glow-brand` and
+`--ua-brand-glow` are gone. Depth comes from the semantic shadows below: a lit top rim, a dark shade inside the
+bottom edge and a tight black contact shadow under the element.
 
 ### Decorative vs functional color (the governing rule for consolidation)
 
@@ -107,55 +100,71 @@ color:
   **false as a claim that `brand` is wired to nothing** — `LegalDoc` wired it, and those pages
   visibly recolored to `#635BFF` already.
 
-## Semantic tier (added 2026-10-19, zero visible change)
+## Semantic tier — Clay Night
 
-The tokens above are a **palette** (values with ordinal names: `ink-0` … `ink-4`). The semantic
-tier names **roles** on top of it, so the redesign retunes values in `globals.css` and never
-hunts call sites. Every value below is **today's rendering**; `__tests__/design-tokens.test.ts`
-pins each one, so a value can only change as a visible, reviewed edit to that table.
+The palette above holds raw values; the semantic tier names **roles**, and call sites use those. The role
+names arrived with today's values first (zero visible change), then took the Clay Night values in one
+reskin. `__tests__/design-tokens.test.ts` pins every value, so any change is a visible edit to that table.
 
-| Role | CSS var | Tailwind | Today |
-|---|---|---|---|
-| page background | `--ua-page` (+ `--ua-page-image`) | `bg-page`, `bg-page-image` | `#070710`, no image |
-| section card (not tappable) | `--ua-panel` | `bg-panel` | white 3% |
-| row / option inside a card | `--ua-row` | `bg-row` | white 5% |
-| input field fill | `--ua-field` | `bg-field` | black 40% |
-| hairline / fainter hairline | `--ua-line`, `--ua-line-soft` | `border-line`, `border-line-soft` | white 10% / 5% |
-| headings | `--ua-fg` | `text-fg` | `ink-0` white |
-| body copy | `--ua-fg-body` | `text-fg-body` | `ink-1` `#c8cfe0` |
-| secondary copy | `--ua-fg-muted` | `text-fg-muted` | `ink-2` slate-400 |
-| eyebrows, dates, captions | `--ua-fg-faint` | `text-fg-faint` | `ink-3` slate-500 (fails AA today, deliberately unchanged here) |
-| brand text and links | `--ua-fg-link` | `text-fg-link` | `#635BFF` (fails AA on the page today, unchanged) |
-| text on a brand fill | `--ua-fg-on-brand` | `text-fg-on-brand` | white |
-| focus ring | `--ua-focus` | `ring-focus` | `#635BFF` |
-| fills per tappable kind | `--ua-fill-{btn,ghost,tap,icon,credits}` | `bg-fill-*` | none |
-| radii | `--ua-radius-{card,row,icon,input,pill}` | `rounded-{card,row,icon,input,pill}` | 24px, 16px, 16px, 16px, full |
-| shadows | `--ua-shadow-{container,tap,icon,btn,ghost,well,credits,mark}` | `shadow-*` | none, except `btn` = `shadow-glow-brand` |
-| font roles | `--ua-font-head`, `--ua-font-body` | `font-head`, `font-body` | inherit |
-| type steps | `--ua-text-{display,title,page-title}` | `text-display`, `text-title`, `text-page-title` | 32→52px, 28→32px, 24→30px at `sm` |
+| Role | Tailwind | Value |
+|---|---|---|
+| page background + wash | `bg-page`, `bg-page-image` | `#070710` + an indigo and a faint gold radial (on `<body>`) |
+| section card (not tappable) | `bg-panel` + `shadow-container` | `#14142b` |
+| static tile inside a card | `bg-tile` + `border-line` | white 3% with a 6% hairline |
+| tappable row | `bg-row bg-fill-tap shadow-tap` | `#1c1c3d` under a `#26264f → #12122a` gradient |
+| chip / label / icon tile fill | `bg-chip` | `#22224a` |
+| input well | `bg-field shadow-well` | `#0e0e22`, inset shade only |
+| hairlines | `border-line`, `border-line-soft` | white 6% / 4% |
+| headings | `text-fg` | `#f4f2ff` |
+| body copy | `text-fg-body` | `#c9c6e6` |
+| secondary copy | `text-fg-muted` | `#a09cc4` |
+| eyebrows, dates, captions | `text-fg-faint` | `#9490ba` |
+| brand text and links | `text-fg-link` | `#a9a4ff` |
+| text on a brand fill | `text-fg-on-brand` | white |
+| focus outline | `ring-focus` / global `:focus-visible` | 3px `#a9a4ff`, offset 3px |
+| fills | `bg-fill-{btn,btn-hover,ghost,tap,icon,credits}` | vertical gradients; the button hover is darker, never lighter |
+| radii | `rounded-{card,row,icon,input,pill}` | 28 / 24 / 20 / 18 / full |
+| shadows | `shadow-{container,tap,icon,btn,ghost,well,credits,mark}` | see `globals.css`; black outside, coloured only inside |
+| heading face | `:where(h1,h2,h3)`, `font-head` | Rubik 700 (Latin + Arabic subsets, self-hosted by next/font) |
+
+**Contrast (AA, 4.5:1), computed by `__tests__/design-contrast.test.ts`.** Every text token clears 4.5:1 on
+every surface it may sit on, gradients checked at their lighter stop. The three failures the old greys had
+are gone: eyebrows were 4.03:1 on a card (now `#9490ba`, ≥ 4.7:1), slate-600 was 2.65:1 (retired), brand text
+was 4.27:1 on the page (now `#a9a4ff`, ≥ 6.4:1). White on the button is 4.7:1 at its lightest stop, which is
+why the top stop must never get lighter, and why on-brand text stays white (`#f4f2ff` there is 4.25:1).
+Faint text must not go on a ghost button (4.1:1).
+
+**Shared recipes** (`src/app/dashboard/surface.ts`): `SURFACE` (card, soft depth), `BLOCK` (the same card
+kept flat, for generated results), `TILE` (static, hairline), `ROW` (tappable clay), `EYEBROW` (no
+uppercase, no letter-spacing). Primary button = `bg-brand bg-fill-btn shadow-btn hover:bg-fill-btn-hover
+press text-fg-on-brand`; ghost = `bg-chip bg-fill-ghost shadow-ghost text-fg-link press`.
 
 **Rules of the tier**
-- **Two value forms.** Foreground and focus are RGB triplets, so `text-fg/60` works. Surfaces,
-  lines, fills, radii and shadows are **complete values** (several are translucent today), so
-  `bg-panel/50` **emits nothing, silently**: compose alpha into the token, not the call site.
-- **"No shadow" is `0 0 #0000`, never `none`.** Tailwind composes `box-shadow` as a list with the
-  ring shadows; `none` inside a list voids the whole declaration and takes any ring with it.
-- **Names avoid the shadcn keys** (`card`, `muted`, `accent`, …), which `components/ui` still
-  uses, and a colour may not share a name with a shadow, size or image key (`shadow-<colour>`
-  and `text-<colour>` would collide). The test enforces both.
-- **`cn()` is taught the custom keys** (`src/lib/utils.ts`). Out of the box tailwind-merge reads
-  an unknown `text-<name>` as a colour, so `cn("text-display text-fg")` dropped the size.
-- **Wired today:** `body`, the `.model-html` colours, and the dashboard's shared
-  `SURFACE` / `TILE` / `EYEBROW` (which the auth, account, status and marketing screens also
-  compose). Everything else still uses raw utilities and moves screen by screen with the reskin.
+- **Two value forms.** Foreground and focus are RGB triplets (`text-fg/60` works). Surfaces, lines, fills,
+  radii and shadows are complete values, so `bg-panel/50` **emits nothing, silently**.
+- **"No shadow" is `0 0 #0000`, never `none`** (`none` inside Tailwind's composed shadow list voids it).
+- **No coloured glow, no horizontal offset** (tests enforce both): light comes from above, so nothing mirrors.
+- **Clay only on what you tap** (buttons, rows, icon tiles, quick actions, the credits card). Containers get
+  the soft container shadow; result blocks get none; chips and labels get a hairline at most.
+- **Every gradient sits on a flat background colour**, which is what lite mode shows.
+- **The heading stack is declared on `[dir]`, not `:root`**: next/font defines `--font-rubik*` on the language
+  wrapper, and a custom property resolves where it is declared.
+- **Names avoid the shadcn keys** and each other (a colour sharing a name with a shadow, size or image key
+  collides); **every custom key is also registered in `cn()`** (`src/lib/utils.ts`). Tests enforce both.
+- **Press feedback is the `press` utility** (transform only, honours reduced motion). Never animate box-shadow.
 
-**Not tokens, on purpose.** The Amazon and Shopify listing mock-ups and the Google sign-in button
-reproduce someone else's UI and keep their own colours. Functional emerald (recommended tier) and
-destructive red stay as they are.
+**Lite mode** (`src/lib/lite-mode.ts`). On a low-memory device the shadows lose their blur and the gradients
+and wash are dropped, with the same layout. Trigger: `navigator.deviceMemory <= 2`; where that API is missing
+(**it is missing in Android WebView**, so in the app), an Android device with ≤ 4 cores. Applied before first
+paint through `document.adoptedStyleSheets` (no element, no attribute, no hydration effect).
+`localStorage.ua_lite = '1' | '0'` forces it for testing.
 
-**Outside CSS, so a token change does not reach them:** Paddle checkout `theme: 'dark'`
-(`src/lib/checkout.ts`), Turnstile `theme: 'dark'`, `public/manifest.json` `#070710`, and the
-Capacitor splash / status bar `#000000` (`capacitor.config.ts`; native, needs an app release).
+**Not tokens, on purpose.** The Amazon and Shopify listing mock-ups and the Google and Apple buttons reproduce
+someone else's UI. Functional emerald, amber and red banners keep their tones.
+
+**Outside CSS, so a token change does not reach them:** Paddle checkout `theme: 'dark'`, Turnstile
+`theme: 'dark'`, `public/manifest.json` `#070710`, and the Capacitor splash / status bar `#000000` (native,
+needs an app release).
 
 ## Typography
 

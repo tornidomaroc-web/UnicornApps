@@ -31,25 +31,25 @@ export default function AboutPage() {
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <div className={`${TILE} p-5`}>
-              <h2 className="text-base font-bold text-white">{t('about.who.title')}</h2>
-              <p className="mt-1 text-[15px] leading-relaxed text-slate-400">{t('about.who.body')}</p>
+              <h2 className="text-base font-bold text-fg">{t('about.who.title')}</h2>
+              <p className="mt-1 text-[15px] leading-relaxed text-fg-muted">{t('about.who.body')}</p>
             </div>
             <div className={`${TILE} p-5`}>
-              <h2 className="text-base font-bold text-white">{t('about.how.title')}</h2>
-              <p className="mt-1 text-[15px] leading-relaxed text-slate-400">{t('about.how.body')}</p>
+              <h2 className="text-base font-bold text-fg">{t('about.how.title')}</h2>
+              <p className="mt-1 text-[15px] leading-relaxed text-fg-muted">{t('about.how.body')}</p>
             </div>
             <div className={`${TILE} p-5`}>
-              <h2 className="text-base font-bold text-white">{t('about.cost.title')}</h2>
-              <p className="mt-1 text-[15px] leading-relaxed text-slate-400">
+              <h2 className="text-base font-bold text-fg">{t('about.cost.title')}</h2>
+              <p className="mt-1 text-[15px] leading-relaxed text-fg-muted">
                 {t('about.cost.body')}
                 {showPricing && <> {t('about.cost.web')}</>}
               </p>
             </div>
             <div className={`${TILE} p-5`}>
-              <h2 className="text-base font-bold text-white">{t('about.contact.title')}</h2>
-              <p className="mt-1 text-[15px] leading-relaxed text-slate-400">
+              <h2 className="text-base font-bold text-fg">{t('about.contact.title')}</h2>
+              <p className="mt-1 text-[15px] leading-relaxed text-fg-muted">
                 {t('about.contact.body')}{' '}
-                <a href={`mailto:${SUPPORT_EMAIL}`} dir="ltr" className="font-medium text-brand underline underline-offset-4">
+                <a href={`mailto:${SUPPORT_EMAIL}`} dir="ltr" className="font-medium text-fg-link underline underline-offset-4">
                   {SUPPORT_EMAIL}
                 </a>
                 .

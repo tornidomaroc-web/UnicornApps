@@ -75,10 +75,10 @@ export default function Home() {
       <div className={WRAP}>
         <section className="px-1 pb-10 pt-6 text-center sm:pb-16 sm:pt-12">
           <p className={EYEBROW}>{t('home.eyebrow')}</p>
-          <h1 className="mx-auto mt-4 max-w-3xl text-[32px] font-bold leading-[1.1] text-white sm:text-[52px]">
+          <h1 className="mx-auto mt-4 max-w-3xl text-[32px] font-bold leading-[1.1] text-fg sm:text-[52px]">
             {t('home.title')}
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-slate-400 sm:text-lg">{t('home.sub')}</p>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-fg-muted sm:text-lg">{t('home.sub')}</p>
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <PrimaryLink href="/login">{t('home.cta')}</PrimaryLink>
             <GhostLink href="#output">{t('home.cta2')}</GhostLink>

@@ -33,10 +33,10 @@ import { bannerToneClass, checkoutBannerTone } from '@/lib/dashboard-banner'
  * the client backstop.
  */
 const PILL =
-  'inline-flex min-h-14 w-full items-center justify-center rounded-full px-6 py-3 text-center text-base font-bold leading-snug transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60'
-const PRIMARY = `${PILL} bg-brand text-white shadow-glow-brand hover:bg-brand/90 focus-visible:ring-white/60`
-const GHOST = `${PILL} border border-white/10 bg-white/5 text-white hover:bg-white/10 focus-visible:ring-brand/60`
-const FEATURED = 'rounded-3xl border border-brand/50 bg-brand/[0.06]'
+  'inline-flex min-h-14 w-full items-center justify-center rounded-full px-6 py-3 text-center text-base font-bold leading-snug focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-60'
+const PRIMARY = `${PILL} bg-brand text-fg-on-brand bg-fill-btn shadow-btn hover:bg-fill-btn-hover focus-visible:ring-white/60 press`
+const GHOST = `${PILL} border border-transparent bg-chip bg-fill-ghost text-fg-link shadow-ghost hover:text-fg focus-visible:ring-focus/60 press`
+const FEATURED = 'rounded-card border border-brand/50 bg-panel shadow-container'
 
 export default function PricingClient({
   initialUserId,
@@ -172,30 +172,30 @@ export default function PricingClient({
             return (
               <li key={tier.name} className={`${tier.featured ? FEATURED : SURFACE} flex flex-col p-5 sm:p-6`}>
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-icon bg-chip bg-fill-icon shadow-icon text-fg-link">
                     <Icon className="h-5 w-5" aria-hidden />
                   </span>
-                  <h2 className="min-w-0 text-xl font-bold text-white">{tier.name}</h2>
+                  <h2 className="min-w-0 text-xl font-bold text-fg">{tier.name}</h2>
                   {tier.featured && (
-                    <span className="rounded-full bg-brand/15 px-3 py-1 text-sm font-bold text-brand">
+                    <span className="rounded-full border border-line bg-chip px-3 py-1 text-sm font-bold text-fg-link">
                       {t('pricing.popular')}
                     </span>
                   )}
                 </div>
 
-                <p className="mt-4 text-[15px] leading-relaxed text-slate-400">{tier.description}</p>
+                <p className="mt-4 text-[15px] leading-relaxed text-fg-muted">{tier.description}</p>
 
                 <p className="mt-5 flex flex-wrap items-baseline gap-x-2">
-                  <span dir="ltr" className="text-[40px] font-bold leading-none text-white">
+                  <span dir="ltr" className="text-[40px] font-bold leading-none text-fg">
                     {tier.price}
                   </span>
-                  {tier.period && <span className="text-[15px] font-medium text-slate-500">{tier.period}</span>}
+                  {tier.period && <span className="text-[15px] font-medium text-fg-faint">{tier.period}</span>}
                 </p>
 
                 <ul className="mt-5 flex-grow space-y-3">
                   {tier.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3 text-[15px] leading-relaxed text-slate-300">
-                      <Check className="mt-1 h-4 w-4 shrink-0 text-brand" aria-hidden />
+                    <li key={feature} className="flex items-start gap-3 text-[15px] leading-relaxed text-fg-body">
+                      <Check className="mt-1 h-4 w-4 shrink-0 text-fg-link" aria-hidden />
                       <span className="min-w-0">{feature}</span>
                     </li>
                   ))}
@@ -234,9 +234,9 @@ export default function PricingClient({
             payment copy must not outlive the buttons it belongs to. The Refund
             Policy link adds navigation only, no new claim. */}
         {showPaid && (
-          <p className="mx-auto mt-6 max-w-2xl text-center text-sm leading-relaxed text-slate-500">
+          <p className="mx-auto mt-6 max-w-2xl text-center text-sm leading-relaxed text-fg-faint">
             {t('checkout.mor')}{' '}
-            <Link href="/refund" className="text-slate-300 underline underline-offset-4 hover:text-white">
+            <Link href="/refund" className="text-fg-body underline underline-offset-4 hover:text-fg">
               {t('refund.title')}
             </Link>
           </p>
@@ -244,11 +244,11 @@ export default function PricingClient({
 
         {showPaid && (
           <section className={`${CARD} mt-6 flex flex-col gap-5 sm:flex-row sm:items-center`}>
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-icon bg-chip bg-fill-icon shadow-icon text-fg-link">
               <Mail className="h-5 w-5" aria-hidden />
             </span>
             <div className="min-w-0 flex-1">
-              <h2 className="text-xl font-bold text-white">{t('pricing.contact.title')}</h2>
+              <h2 className="text-xl font-bold text-fg">{t('pricing.contact.title')}</h2>
             </div>
             <div className="sm:w-64 sm:shrink-0">
               <a href="mailto:support@unicornapps.app" className={GHOST}>

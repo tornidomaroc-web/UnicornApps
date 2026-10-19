@@ -5,87 +5,92 @@
 :root {
   /* ── UnicornApps design tokens — see docs/DESIGN-TOKENS.md ──
      RGB channel triplets, consumed as rgb(var(--x) / <alpha-value>) via
-     tailwind.config.ts (bg-surface / text-brand / border-ink-0 …). The brand
-     accent is now wired across the whole public surface (landing, features,
-     about, pricing, auth, chrome — PRs #46/#47/#48/#49/#50); the dashboard body
-     is the remaining wave. The legacy brand vars these were once namespaced
-     against (--obsidian, --violet*, --gold, --silver) are RETIRED — they had
-     zero consumers anywhere in src/. --ua-gold remains defined but unwired. */
+     tailwind.config.ts (bg-surface / bg-brand …). This is the PALETTE; call
+     sites name a role from the semantic tier below instead. The old ink-*
+     greys are retired (ink-4 failed contrast), and so is the brand-glow
+     colour, with the button glow.
+     --ua-gold remains defined but unwired. */
   --ua-surface: 7 7 16;       /* #070710  canonical dark background */
   --ua-surface-2: 13 13 26;   /* #0d0d1a  raised panel */
   --ua-brand: 99 91 255;      /* #635BFF  single brand accent */
-  --ua-brand-glow: 99 91 255; /* #635BFF  brand GLOW color — aliased to --ua-brand today, kept
-                                 separate so glows can later diverge to a lighter tint without
-                                 touching every shadow. Consume as rgb(var(--ua-brand-glow) / <a>)
-                                 inside per-element arbitrary shadows; the blur/spread GEOMETRY
-                                 stays inline (it is per-element by design). Canonical button glow
-                                 is the `shadow-glow-brand` utility (tailwind.config.ts). */
-  --ua-ink-0: 255 255 255;    /* #ffffff  headings / white overlays */
-  --ua-ink-1: 200 207 224;    /* #c8cfe0  body text */
-  --ua-ink-2: 148 163 184;    /* #94a3b8  secondary text (= slate-400) */
-  --ua-ink-3: 100 116 139;    /* #64748b  muted text (= slate-500) */
-  --ua-ink-4: 71 85 105;      /* #475569  faint text (= slate-600) */
   --ua-gold: 232 200 122;     /* #e8c87a  rare secondary accent (unwired) */
 
   /* ── Semantic tier — ROLE names over the palette above ──
-     The redesign retunes these values, never the call sites. Every value
-     below is TODAY's rendering, so introducing this tier changes no pixel;
-     __tests__/design-tokens.test.ts pins each one to what it resolves to.
+     Clay Night values. Call sites name a role; the value lives here, and
+     __tests__/design-tokens.test.ts pins every one of them.
      Two forms, on purpose:
        - foreground + focus are RGB TRIPLETS (alpha-capable: text-fg/60);
-       - surfaces, lines, fills, radii, shadows are COMPLETE values. Several
-         are translucent today (panel = white at 3%), which a triplet cannot
-         carry, so the Tailwind classes for them take no /alpha modifier.
+       - surfaces, lines, fills, radii, shadows are COMPLETE values, so the
+         Tailwind classes for them take no /alpha modifier.
      "No shadow" is spelled 0 0 #0000, never `none`: Tailwind composes
      box-shadow as a list with the ring shadows, and `none` inside a list
-     invalidates the whole declaration, dropping any ring with it. */
+     invalidates the whole declaration, dropping any ring with it.
+     Depth recipe: light from ABOVE. A tappable gets a lit top rim (inset),
+     a dark shade inside its bottom and a tight black contact shadow under it.
+     Nothing coloured is painted outside any element: no glow, no ring.
+     Every offset is vertical, so nothing mirrors under RTL. A low-memory
+     device swaps these for flat values (src/lib/lite-mode.ts). */
 
   /* surfaces */
-  --ua-page: rgb(var(--ua-surface));        /* page background */
-  --ua-page-image: none;                    /* wash painted over the page */
-  --ua-panel: rgb(255 255 255 / 0.03);      /* section card, not tappable (dashboard SURFACE) */
-  --ua-row: rgb(255 255 255 / 0.05);        /* tappable row / option inside a card (dashboard TILE) */
-  --ua-field: rgb(0 0 0 / 0.4);             /* input field fill (auth FIELD) */
-  --ua-line: rgb(255 255 255 / 0.1);        /* hairline border */
-  --ua-line-soft: rgb(255 255 255 / 0.05);  /* fainter hairline */
+  --ua-page: rgb(var(--ua-surface));        /* page background #070710 */
+  --ua-page-image: radial-gradient(70% 34% at 10% -6%, rgb(99 91 255 / 0.28) 0, rgb(99 91 255 / 0) 70%),
+    radial-gradient(38% 26% at 100% 6%, rgb(227 194 111 / 0.11) 0, rgb(227 194 111 / 0) 70%);
+  --ua-panel: #14142b;                      /* section card, not tappable */
+  --ua-row: #1c1c3d;                        /* tappable row: flat colour under --ua-fill-tap */
+  --ua-chip: #22224a;                       /* chip, label and icon-tile fill */
+  --ua-tile: rgb(255 255 255 / 0.03);       /* static tile inside a card (with a hairline ring) */
+  --ua-field: #0e0e22;                      /* input well */
+  --ua-line: rgb(255 255 255 / 0.06);       /* hairline ring on non-tappable chips and tiles */
+  --ua-line-soft: rgb(255 255 255 / 0.04);  /* fainter hairline */
 
-  /* foreground (triplets) */
-  --ua-fg: var(--ua-ink-0);                 /* headings */
-  --ua-fg-body: var(--ua-ink-1);            /* body copy */
-  --ua-fg-muted: var(--ua-ink-2);           /* secondary copy */
-  --ua-fg-faint: var(--ua-ink-3);           /* eyebrows, dates, captions */
-  --ua-fg-link: var(--ua-brand);            /* brand-coloured text and links */
-  --ua-fg-on-brand: var(--ua-ink-0);        /* text on a brand fill */
-  --ua-focus: var(--ua-brand);              /* focus ring colour */
+  /* foreground (triplets); contrast on the lightest surface it sits on */
+  --ua-fg: 244 242 255;                     /* #f4f2ff headings */
+  --ua-fg-body: 201 198 230;                /* #c9c6e6 body copy */
+  --ua-fg-muted: 160 156 196;               /* #a09cc4 secondary copy, >= 5.4:1 */
+  --ua-fg-faint: 148 144 186;               /* #9490ba eyebrows, dates, captions, >= 4.7:1 */
+  --ua-fg-link: 169 164 255;                /* #a9a4ff brand-coloured text and links, >= 6.4:1 */
+  --ua-fg-on-brand: 255 255 255;            /* white on a brand fill (4.7:1 at its lightest stop) */
+  --ua-focus: 169 164 255;                  /* #a9a4ff focus outline */
 
-  /* fills: background-image layers per tappable kind */
-  --ua-fill-btn: none;                      /* primary button */
-  --ua-fill-ghost: none;                    /* ghost button / pill */
-  --ua-fill-tap: none;                      /* rows, quick actions */
-  --ua-fill-icon: none;                     /* icon tile */
-  --ua-fill-credits: none;                  /* credits card */
+  /* fills: background-image layers per tappable kind (each call site also
+     sets a flat background-color, which is what lite mode shows) */
+  --ua-fill-btn: linear-gradient(180deg, #635bff 0%, #4b41e0 100%);       /* top stop never lighter: white text */
+  --ua-fill-btn-hover: linear-gradient(180deg, #5a52f5 0%, #4339d6 100%); /* darker, never lighter */
+  --ua-fill-ghost: linear-gradient(180deg, #2e2e63 0%, #1f1f45 100%);
+  --ua-fill-tap: linear-gradient(180deg, #26264f 0%, #12122a 100%);
+  --ua-fill-icon: linear-gradient(180deg, #3c3c88 0%, #25254f 100%);
+  --ua-fill-credits: linear-gradient(165deg, #635bff 0%, #4338ca 100%);
 
   /* radii */
-  --ua-radius-card: 1.5rem;                 /* = rounded-3xl */
-  --ua-radius-row: 1rem;                    /* = rounded-2xl */
-  --ua-radius-icon: 1rem;                   /* = rounded-2xl */
-  --ua-radius-input: 1rem;                  /* = rounded-2xl */
-  --ua-radius-pill: 9999px;                 /* = rounded-full */
+  --ua-radius-card: 28px;
+  --ua-radius-row: 24px;
+  --ua-radius-icon: 20px;
+  --ua-radius-input: 18px;
+  --ua-radius-pill: 9999px;
 
-  /* shadows: vertical offsets only, so nothing mirrors under RTL */
-  --ua-shadow-container: 0 0 #0000;
-  --ua-shadow-tap: 0 0 #0000;
-  --ua-shadow-icon: 0 0 #0000;
-  --ua-shadow-btn: 0 0 40px -5px rgb(var(--ua-brand-glow) / 0.5); /* = shadow-glow-brand */
-  --ua-shadow-ghost: 0 0 #0000;
-  --ua-shadow-well: 0 0 #0000;
-  --ua-shadow-credits: 0 0 #0000;
-  --ua-shadow-mark: 0 0 #0000;
+  /* shadows */
+  --ua-shadow-container: 0 18px 30px -14px rgb(0 0 0 / 0.78), inset 0 1.5px 0 rgb(255 255 255 / 0.09),
+    inset 0 -6px 12px rgb(0 0 0 / 0.35);
+  --ua-shadow-tap: 0 6px 8px -3px rgb(0 0 0 / 0.85), inset 0 2.5px 0 rgb(200 196 255 / 0.3),
+    inset 0 -10px 12px rgb(0 0 0 / 0.5);
+  --ua-shadow-icon: 0 6px 8px -3px rgb(0 0 0 / 0.85), inset 0 3px 0 rgb(205 200 255 / 0.32),
+    inset 0 -6px 10px rgb(0 0 0 / 0.45);
+  --ua-shadow-btn: 0 6px 8px -3px rgb(0 0 0 / 0.8), inset 0 3px 0 rgb(255 255 255 / 0.44),
+    inset 0 -9px 12px rgb(26 14 130 / 0.6);
+  --ua-shadow-ghost: 0 6px 8px -3px rgb(0 0 0 / 0.85), inset 0 2.5px 0 rgb(190 185 255 / 0.26),
+    inset 0 -7px 10px rgb(0 0 0 / 0.4);
+  --ua-shadow-well: inset 0 3px 8px rgb(0 0 0 / 0.5), inset 0 -1px 0 rgb(255 255 255 / 0.06);
+  --ua-shadow-credits: 0 10px 12px -8px rgb(0 0 0 / 0.75), inset 0 3px 0 rgb(255 255 255 / 0.4),
+    inset 0 -12px 18px rgb(25 12 120 / 0.5);
+  --ua-shadow-mark: 0 6px 8px -3px rgb(0 0 0 / 0.8), inset 0 3px 0 rgb(255 255 255 / 0.4),
+    inset 0 -6px 9px rgb(30 20 130 / 0.5);
 
-  /* type: font roles inherit today (Inter, or IBM Plex Sans Arabic under
-     .font-arabic); sizes are the live mobile steps, widened at sm (640px)
-     below, exactly where today's sm: classes switch */
-  --ua-font-head: inherit;
+  /* type: headings in Rubik 700 (Arabic glyphs from its Arabic subset), body
+     unchanged (Inter, or IBM Plex Sans Arabic under .font-arabic). The Arabic
+     subset is listed FIRST: its unicode-range skips Latin, and the Latin
+     instance carries a metric-matched local fallback that would otherwise
+     catch Arabic glyphs before the Arabic file. Sizes are today's steps. */
+  --ua-font-head: system-ui, sans-serif;   /* resolved per [dir] element below */
   --ua-font-body: inherit;
   --ua-text-display: 32px;                  /* landing h1 */
   --ua-leading-display: 1.1;
@@ -114,6 +119,16 @@
   --input: 217.2 32.6% 17.5%;
   --ring: 212.7 26.8% 83.9%;
   --radius: 0.5rem;
+}
+
+/* The heading stack names --font-rubik*, which next/font defines on the
+   language wrapper ([dir], LanguageContext.tsx), not on :root. A custom
+   property is resolved where it is DECLARED, so declaring this on :root would
+   resolve those names to nothing and every heading would quietly fall back to
+   the body face. Declared on each [dir] element instead: the wrapper resolves
+   it, and every heading inside inherits the resolved value. */
+[dir] {
+  --ua-font-head: var(--font-rubik-ar), var(--font-rubik), system-ui, sans-serif;
 }
 
 @media (min-width: 640px) {
@@ -177,19 +192,54 @@
 
 body {
   @apply min-h-screen relative overflow-x-hidden;
-  /* Wired to the semantic tier; resolves to #070710 / #c8cfe0 / no image — pixel-identical. */
+  /* The wash is painted once, here, and scrolls with the page; page-level
+     wrappers stay transparent so it shows through. */
   background-color: var(--ua-page);
   background-image: var(--ua-page-image);
+  background-repeat: no-repeat;
   color: rgb(var(--ua-fg-body));
 }
 
+@layer base {
+  /* Headings wear the heading face. In the base layer, so a font-* utility on
+     the element still wins. The store mock-ups reproduce another site's page
+     and keep their own font (they set font-sans on their container). */
+  :where(h1, h2, h3) {
+    font-family: var(--ua-font-head);
+  }
+  .font-sans :where(h1, h2, h3) {
+    font-family: inherit;
+  }
+
+  /* One focus outline for every keyboard-focused control. In the base layer,
+     so an element's own outline or ring utilities still win over it. */
+  :where(a, button, input, select, textarea, summary, [role='button'], [tabindex]):focus-visible {
+    outline: 3px solid rgb(var(--ua-focus));
+    outline-offset: 3px;
+  }
+}
+
 @layer utilities {
+  /* The full-screen layer behind the app. The page wash now lives on <body>,
+     so this layer paints nothing; it stays because the layout renders it. */
   .matrix-glow-shell {
     @apply fixed inset-0 z-[-1] pointer-events-none;
-    background-image: 
-      radial-gradient(at 0% 0%, rgb(var(--ua-brand-glow) / 0.15) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(94, 234, 212, 0.05) 0px, transparent 50%),
-      radial-gradient(at 50% 50%, rgba(15, 23, 42, 1) 0px, transparent 100%);
+  }
+
+  /* Press feedback for clay surfaces: transform only, never box-shadow. */
+  .press {
+    transition: transform 120ms ease;
+  }
+  .press:active {
+    transform: translateY(2px) scale(0.98);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .press {
+      transition: none;
+    }
+    .press:active {
+      transform: none;
+    }
   }
 
   .font-arabic {
@@ -256,14 +306,14 @@ body {
   .model-html strong, .model-html b { color: rgb(var(--ua-fg)); font-weight: 700; }
   .custom-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgba(124, 58, 237, 0.4) transparent;
+    scrollbar-color: rgb(var(--ua-brand) / 0.4) transparent;
   }
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(124, 58, 237, 0.4);
+    background: rgb(var(--ua-brand) / 0.4);
     border-radius: 9999px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {

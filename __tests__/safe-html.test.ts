@@ -73,11 +73,29 @@ describe('every dangerouslySetInnerHTML in src/ is fed by sanitizeModelHtml', ()
   }
   walk(join(process.cwd(), 'src'))
 
-  it('finds the two known sites (the test is not scanning nothing)', () => {
-    expect(uses.length).toBe(2)
+  // The ONE exception: the lite-mode switch inlines a script that is a constant
+  // built at module load from literal tokens (lib/lite-mode.ts), with no user
+  // or model input anywhere in it. Matched by exact file and exact line, so any
+  // other use, or any change to this one, still has to pass the gate.
+  const LITE = { file: join('src', 'components', 'Providers.tsx'), line: '<script dangerouslySetInnerHTML={{ __html: LITE_SCRIPT }} />' }
+  const isLite = (u: { file: string; line: string }) => u.file.endsWith(LITE.file) && u.line.trim() === LITE.line
+  const gated = uses.filter((u) => !isLite(u))
+
+  it('finds the two known model-output sites and the one static script (the test is not scanning nothing)', () => {
+    expect(gated.length).toBe(2)
+    expect(uses.filter(isLite).length).toBe(1)
   })
 
-  it.each(uses.map((u) => [u.file.replace(process.cwd(), ''), u.line]))(
+  it('the static script is a constant: no runtime value can reach it', () => {
+    const src = readFileSync(join(process.cwd(), 'src/lib/lite-mode.ts'), 'utf8')
+    // Built only from LITE_CSS, which is built only from the LITE_TOKENS literal.
+    expect(src).toMatch(/export const LITE_SCRIPT = `[^`]*\$\{JSON\.stringify\(\s*LITE_CSS\s*\)\}[^`]*`/)
+    const template = src.slice(src.indexOf('export const LITE_SCRIPT = `'))
+    const body = template.slice(0, template.indexOf('`', template.indexOf('`') + 1))
+    expect((body.match(/\$\{/g) || []).length).toBe(1)
+  })
+
+  it.each(gated.map((u) => [u.file.replace(process.cwd(), ''), u.line]))(
     '%s',
     (_file, line) => {
       expect(line).toMatch(/sanitizeModelHtml\(/)

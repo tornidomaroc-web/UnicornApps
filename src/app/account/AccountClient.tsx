@@ -28,7 +28,7 @@ import { useLang } from '@/lib/i18n/LanguageContext'
  */
 const PILL =
   'flex h-14 w-full items-center justify-center whitespace-nowrap rounded-full px-6 text-base font-bold transition-colors focus-visible:outline-none focus-visible:ring-2'
-const GHOST = `${PILL} border border-white/10 bg-white/5 text-white hover:bg-white/10 focus-visible:ring-brand/60`
+const GHOST = `${PILL} border border-transparent bg-chip bg-fill-ghost text-fg-link shadow-ghost hover:text-fg focus-visible:ring-focus/60`
 
 export default function AccountClient({ email }: { email: string }) {
   const { t } = useLang()
@@ -70,24 +70,24 @@ export default function AccountClient({ email }: { email: string }) {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#070710] px-4 pb-10 pt-6 text-[#c8cfe0] sm:pt-12">
+    <div className="min-h-[100dvh] px-4 pb-10 pt-6 text-fg-body sm:pt-12">
       <div className="mx-auto w-full max-w-xl space-y-4">
         <section className={`${SURFACE} p-5 sm:p-8`}>
-          <h1 className="text-2xl font-bold leading-tight text-white sm:text-3xl">{t('account.title')}</h1>
+          <h1 className="text-2xl font-bold leading-tight text-fg sm:text-3xl">{t('account.title')}</h1>
           <div className={`${TILE} mt-6 p-4`}>
-            <p className="text-sm font-medium text-slate-400">{t('account.email')}</p>
-            <p className="mt-1 text-base font-bold text-white [overflow-wrap:anywhere]">
+            <p className="text-sm font-medium text-fg-muted">{t('account.email')}</p>
+            <p className="mt-1 text-base font-bold text-fg [overflow-wrap:anywhere]">
               <bdi dir="ltr">{email}</bdi>
             </p>
           </div>
         </section>
 
         <section className={`${SURFACE} p-5 sm:p-8`}>
-          <h2 className="text-xl font-bold text-white">{t('account.delete.title')}</h2>
-          <p className="mt-2 text-[15px] leading-relaxed text-slate-400">{t('account.delete.body')}</p>
+          <h2 className="text-xl font-bold text-fg">{t('account.delete.title')}</h2>
+          <p className="mt-2 text-[15px] leading-relaxed text-fg-muted">{t('account.delete.body')}</p>
           <Link
             href="/delete-account"
-            className="mt-2 inline-flex min-h-[44px] items-center text-[15px] font-bold text-brand underline underline-offset-4 hover:text-brand/80"
+            className="mt-2 inline-flex min-h-[44px] items-center text-[15px] font-bold text-fg-link underline underline-offset-4 hover:text-fg-link/80"
           >
             {t('del.what.title')}
           </Link>
@@ -101,7 +101,7 @@ export default function AccountClient({ email }: { email: string }) {
               {t('account.delete.start')}
             </button>
           ) : (
-            <div className="mt-4 space-y-4 rounded-2xl border border-red-500/25 bg-red-500/5 p-4">
+            <div className="mt-4 space-y-4 rounded-row border border-red-500/25 bg-red-500/5 p-4">
               <div>
                 <label htmlFor="delete-word" className={LABEL}>
                   {t('account.delete.confirmLabel')}
@@ -123,7 +123,7 @@ export default function AccountClient({ email }: { email: string }) {
               {errorKey && (
                 <div
                   role="alert"
-                  className="flex items-start gap-3 rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm leading-relaxed text-red-200"
+                  className="flex items-start gap-3 rounded-row border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm leading-relaxed text-red-200"
                 >
                   <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                   <p>{t(errorKey)}</p>
@@ -135,7 +135,7 @@ export default function AccountClient({ email }: { email: string }) {
                 onClick={handleDelete}
                 disabled={!ready || busy}
                 aria-busy={busy}
-                className={`${PILL} bg-red-600 text-white hover:bg-red-500 focus-visible:ring-red-500/50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-red-600`}
+                className={`${PILL} bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500/50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-red-600`}
               >
                 {busy ? (
                   <>
