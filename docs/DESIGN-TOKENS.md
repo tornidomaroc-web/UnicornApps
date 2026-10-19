@@ -107,6 +107,56 @@ color:
   **false as a claim that `brand` is wired to nothing** — `LegalDoc` wired it, and those pages
   visibly recolored to `#635BFF` already.
 
+## Semantic tier (added 2026-10-19, zero visible change)
+
+The tokens above are a **palette** (values with ordinal names: `ink-0` … `ink-4`). The semantic
+tier names **roles** on top of it, so the redesign retunes values in `globals.css` and never
+hunts call sites. Every value below is **today's rendering**; `__tests__/design-tokens.test.ts`
+pins each one, so a value can only change as a visible, reviewed edit to that table.
+
+| Role | CSS var | Tailwind | Today |
+|---|---|---|---|
+| page background | `--ua-page` (+ `--ua-page-image`) | `bg-page`, `bg-page-image` | `#070710`, no image |
+| section card (not tappable) | `--ua-panel` | `bg-panel` | white 3% |
+| row / option inside a card | `--ua-row` | `bg-row` | white 5% |
+| input field fill | `--ua-field` | `bg-field` | black 40% |
+| hairline / fainter hairline | `--ua-line`, `--ua-line-soft` | `border-line`, `border-line-soft` | white 10% / 5% |
+| headings | `--ua-fg` | `text-fg` | `ink-0` white |
+| body copy | `--ua-fg-body` | `text-fg-body` | `ink-1` `#c8cfe0` |
+| secondary copy | `--ua-fg-muted` | `text-fg-muted` | `ink-2` slate-400 |
+| eyebrows, dates, captions | `--ua-fg-faint` | `text-fg-faint` | `ink-3` slate-500 (fails AA today, deliberately unchanged here) |
+| brand text and links | `--ua-fg-link` | `text-fg-link` | `#635BFF` (fails AA on the page today, unchanged) |
+| text on a brand fill | `--ua-fg-on-brand` | `text-fg-on-brand` | white |
+| focus ring | `--ua-focus` | `ring-focus` | `#635BFF` |
+| fills per tappable kind | `--ua-fill-{btn,ghost,tap,icon,credits}` | `bg-fill-*` | none |
+| radii | `--ua-radius-{card,row,icon,input,pill}` | `rounded-{card,row,icon,input,pill}` | 24px, 16px, 16px, 16px, full |
+| shadows | `--ua-shadow-{container,tap,icon,btn,ghost,well,credits,mark}` | `shadow-*` | none, except `btn` = `shadow-glow-brand` |
+| font roles | `--ua-font-head`, `--ua-font-body` | `font-head`, `font-body` | inherit |
+| type steps | `--ua-text-{display,title,page-title}` | `text-display`, `text-title`, `text-page-title` | 32→52px, 28→32px, 24→30px at `sm` |
+
+**Rules of the tier**
+- **Two value forms.** Foreground and focus are RGB triplets, so `text-fg/60` works. Surfaces,
+  lines, fills, radii and shadows are **complete values** (several are translucent today), so
+  `bg-panel/50` **emits nothing, silently**: compose alpha into the token, not the call site.
+- **"No shadow" is `0 0 #0000`, never `none`.** Tailwind composes `box-shadow` as a list with the
+  ring shadows; `none` inside a list voids the whole declaration and takes any ring with it.
+- **Names avoid the shadcn keys** (`card`, `muted`, `accent`, …), which `components/ui` still
+  uses, and a colour may not share a name with a shadow, size or image key (`shadow-<colour>`
+  and `text-<colour>` would collide). The test enforces both.
+- **`cn()` is taught the custom keys** (`src/lib/utils.ts`). Out of the box tailwind-merge reads
+  an unknown `text-<name>` as a colour, so `cn("text-display text-fg")` dropped the size.
+- **Wired today:** `body`, the `.model-html` colours, and the dashboard's shared
+  `SURFACE` / `TILE` / `EYEBROW` (which the auth, account, status and marketing screens also
+  compose). Everything else still uses raw utilities and moves screen by screen with the reskin.
+
+**Not tokens, on purpose.** The Amazon and Shopify listing mock-ups and the Google sign-in button
+reproduce someone else's UI and keep their own colours. Functional emerald (recommended tier) and
+destructive red stay as they are.
+
+**Outside CSS, so a token change does not reach them:** Paddle checkout `theme: 'dark'`
+(`src/lib/checkout.ts`), Turnstile `theme: 'dark'`, `public/manifest.json` `#070710`, and the
+Capacitor splash / status bar `#000000` (`capacitor.config.ts`; native, needs an app release).
+
 ## Typography
 
 - **Latin:** Inter, via `next/font` in `layout.tsx` (unchanged).

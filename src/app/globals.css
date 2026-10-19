@@ -27,6 +27,73 @@
   --ua-ink-4: 71 85 105;      /* #475569  faint text (= slate-600) */
   --ua-gold: 232 200 122;     /* #e8c87a  rare secondary accent (unwired) */
 
+  /* ── Semantic tier — ROLE names over the palette above ──
+     The redesign retunes these values, never the call sites. Every value
+     below is TODAY's rendering, so introducing this tier changes no pixel;
+     __tests__/design-tokens.test.ts pins each one to what it resolves to.
+     Two forms, on purpose:
+       - foreground + focus are RGB TRIPLETS (alpha-capable: text-fg/60);
+       - surfaces, lines, fills, radii, shadows are COMPLETE values. Several
+         are translucent today (panel = white at 3%), which a triplet cannot
+         carry, so the Tailwind classes for them take no /alpha modifier.
+     "No shadow" is spelled 0 0 #0000, never `none`: Tailwind composes
+     box-shadow as a list with the ring shadows, and `none` inside a list
+     invalidates the whole declaration, dropping any ring with it. */
+
+  /* surfaces */
+  --ua-page: rgb(var(--ua-surface));        /* page background */
+  --ua-page-image: none;                    /* wash painted over the page */
+  --ua-panel: rgb(255 255 255 / 0.03);      /* section card, not tappable (dashboard SURFACE) */
+  --ua-row: rgb(255 255 255 / 0.05);        /* tappable row / option inside a card (dashboard TILE) */
+  --ua-field: rgb(0 0 0 / 0.4);             /* input field fill (auth FIELD) */
+  --ua-line: rgb(255 255 255 / 0.1);        /* hairline border */
+  --ua-line-soft: rgb(255 255 255 / 0.05);  /* fainter hairline */
+
+  /* foreground (triplets) */
+  --ua-fg: var(--ua-ink-0);                 /* headings */
+  --ua-fg-body: var(--ua-ink-1);            /* body copy */
+  --ua-fg-muted: var(--ua-ink-2);           /* secondary copy */
+  --ua-fg-faint: var(--ua-ink-3);           /* eyebrows, dates, captions */
+  --ua-fg-link: var(--ua-brand);            /* brand-coloured text and links */
+  --ua-fg-on-brand: var(--ua-ink-0);        /* text on a brand fill */
+  --ua-focus: var(--ua-brand);              /* focus ring colour */
+
+  /* fills: background-image layers per tappable kind */
+  --ua-fill-btn: none;                      /* primary button */
+  --ua-fill-ghost: none;                    /* ghost button / pill */
+  --ua-fill-tap: none;                      /* rows, quick actions */
+  --ua-fill-icon: none;                     /* icon tile */
+  --ua-fill-credits: none;                  /* credits card */
+
+  /* radii */
+  --ua-radius-card: 1.5rem;                 /* = rounded-3xl */
+  --ua-radius-row: 1rem;                    /* = rounded-2xl */
+  --ua-radius-icon: 1rem;                   /* = rounded-2xl */
+  --ua-radius-input: 1rem;                  /* = rounded-2xl */
+  --ua-radius-pill: 9999px;                 /* = rounded-full */
+
+  /* shadows: vertical offsets only, so nothing mirrors under RTL */
+  --ua-shadow-container: 0 0 #0000;
+  --ua-shadow-tap: 0 0 #0000;
+  --ua-shadow-icon: 0 0 #0000;
+  --ua-shadow-btn: 0 0 40px -5px rgb(var(--ua-brand-glow) / 0.5); /* = shadow-glow-brand */
+  --ua-shadow-ghost: 0 0 #0000;
+  --ua-shadow-well: 0 0 #0000;
+  --ua-shadow-credits: 0 0 #0000;
+  --ua-shadow-mark: 0 0 #0000;
+
+  /* type: font roles inherit today (Inter, or IBM Plex Sans Arabic under
+     .font-arabic); sizes are the live mobile steps, widened at sm (640px)
+     below, exactly where today's sm: classes switch */
+  --ua-font-head: inherit;
+  --ua-font-body: inherit;
+  --ua-text-display: 32px;                  /* landing h1 */
+  --ua-leading-display: 1.1;
+  --ua-text-title: 28px;                    /* dashboard section h2 */
+  --ua-leading-title: 1.15;
+  --ua-text-page-title: 1.5rem;             /* auth / account / status h1 */
+  --ua-leading-page-title: 1.25;
+
   --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
   --card: 222.2 84% 4.9%;
@@ -47,6 +114,14 @@
   --input: 217.2 32.6% 17.5%;
   --ring: 212.7 26.8% 83.9%;
   --radius: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --ua-text-display: 52px;
+    --ua-text-title: 32px;
+    --ua-text-page-title: 1.875rem;
+  }
 }
 
 @keyframes float-orb {
@@ -102,9 +177,10 @@
 
 body {
   @apply min-h-screen relative overflow-x-hidden;
-  /* Wired to the design tokens; rgb(7 7 16)=#070710, rgb(200 207 224)=#c8cfe0 — pixel-identical. */
-  background-color: rgb(var(--ua-surface));
-  color: rgb(var(--ua-ink-1));
+  /* Wired to the semantic tier; resolves to #070710 / #c8cfe0 / no image — pixel-identical. */
+  background-color: var(--ua-page);
+  background-image: var(--ua-page-image);
+  color: rgb(var(--ua-fg-body));
 }
 
 @layer utilities {
@@ -169,15 +245,15 @@ body {
      No typography plugin is installed, so `prose` classes emit nothing; these
      are the real heading and list styles. Logical padding so the Arabic surface
      mirrors. No letter-spacing anywhere: this is model output. */
-  .model-html h2 { font-size: 1.25rem; line-height: 1.3; font-weight: 700; color: rgb(var(--ua-ink-0)); margin: 0 0 0.75rem; }
-  .model-html h3 { font-size: 1.05rem; line-height: 1.35; font-weight: 700; color: rgb(var(--ua-ink-0)); margin: 1.25rem 0 0.5rem; }
-  .model-html p { color: rgb(var(--ua-ink-1)); line-height: 1.7; margin: 0 0 0.9rem; }
-  .model-html ul, .model-html ol { padding-inline-start: 1.25rem; margin: 0 0 0.9rem; color: rgb(var(--ua-ink-1)); }
+  .model-html h2 { font-size: 1.25rem; line-height: 1.3; font-weight: 700; color: rgb(var(--ua-fg)); margin: 0 0 0.75rem; }
+  .model-html h3 { font-size: 1.05rem; line-height: 1.35; font-weight: 700; color: rgb(var(--ua-fg)); margin: 1.25rem 0 0.5rem; }
+  .model-html p { color: rgb(var(--ua-fg-body)); line-height: 1.7; margin: 0 0 0.9rem; }
+  .model-html ul, .model-html ol { padding-inline-start: 1.25rem; margin: 0 0 0.9rem; color: rgb(var(--ua-fg-body)); }
   .model-html ul { list-style: disc; }
   .model-html ol { list-style: decimal; }
   .model-html li { margin: 0.35rem 0; line-height: 1.6; }
-  .model-html li::marker { color: rgb(var(--ua-brand)); }
-  .model-html strong, .model-html b { color: rgb(var(--ua-ink-0)); font-weight: 700; }
+  .model-html li::marker { color: rgb(var(--ua-fg-link)); }
+  .model-html strong, .model-html b { color: rgb(var(--ua-fg)); font-weight: 700; }
   .custom-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: rgba(124, 58, 237, 0.4) transparent;
