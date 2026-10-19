@@ -1,0 +1,60 @@
+# After each successful PRODUCTION deployment, checks that every next/font
+# class the live site puts on a tag is defined in the CSS that page links, in
+# English and Arabic, and FAILS when one is not, so GitHub emails the alert.
+# The logic and its unit test: scripts/font-class-check.cjs,
+# __tests__/font-class-check.test.ts.
+#
+# Why: on 2026-10-19 a production build restored from Vercel's build cache
+# served HTML whose font classes its own CSS did not define, so every visitor
+# (web and the Android app) got the system font until a redeploy without the
+# cache. CI never sees Vercel's build; only the deployed site shows this.
+#
+# Trigger: Vercel's GitHub integration creates a deployment per build and posts
+# a status on it, environment "Production" or "Preview"; a dashboard redeploy
+# posts a new status on the same deployment. Preview events start this workflow
+# too and show as skipped. The workflow file is read from the deployed commit,
+# so it runs only for deployments of commits that contain it.
+#
+# Only the public domain is checked: a deployment's own *.vercel.app URL sits
+# behind Vercel's login, and reaching it would need a bypass secret. The log
+# prints the deployment this run was started for and the Next.js build id the
+# domain actually served.
+name: Post-deploy fonts
+
+on:
+  deployment_status:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: post-deploy-fonts
+  cancel-in-progress: true  # a newer deployment supersedes the one being checked
+
+jobs:
+  check:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment.environment == 'Production' && github.event.deployment_status.state == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Name the deployment
+        if: github.event_name == 'deployment_status'
+        env:
+          DEPLOYMENT_ID: ${{ github.event.deployment.id }}
+          DEPLOYMENT_SHA: ${{ github.event.deployment.sha }}
+          STATUS_AT: ${{ github.event.deployment_status.created_at }}
+          DEPLOYMENT_URL: ${{ github.event.deployment_status.environment_url }}
+        run: echo "deployment $DEPLOYMENT_ID, commit $DEPLOYMENT_SHA, success at $STATUS_AT, $DEPLOYMENT_URL"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: Check the live fonts
+        env:
+          CHECK_INITIAL_DELAY_MS: ${{ github.event_name == 'deployment_status' && '60000' || '0' }}
+        run: |
+          node --version
+          node scripts/font-class-check.cjs https://www.unicornapps.app
