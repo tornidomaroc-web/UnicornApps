@@ -4,9 +4,11 @@
  * values with no blur.
  *
  * WHEN. `navigator.deviceMemory` <= 2 (GB). It is rounded and capped by the
- * browser and exists only in Chromium (Chrome, Android WebView, Edge, Opera).
- * Where it is missing, an Android device with <= 4 logical cores counts as low
- * end; anything else keeps the full skin. `localStorage.ua_lite` set to '1'
+ * browser, and only Chromium browsers expose it: it is MISSING in Android
+ * WebView (undefined in WebView 133, measured on an emulator), so inside the
+ * app only the fallback below can fire. Where it is missing, an Android device
+ * with <= 4 logical cores counts as low end; anything else keeps the full
+ * skin. Core count is a weak proxy (many cheap phones have 8 slow cores). `localStorage.ua_lite` set to '1'
  * or '0' forces the decision either way, for testing on a real device.
  *
  * HOW. A constructed stylesheet appended to document.adoptedStyleSheets. It
