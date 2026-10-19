@@ -1,6 +1,8 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Clock, FileDown, ImageIcon } from 'lucide-react'
+import { historyDate } from '@/lib/dashboard-history'
 import { SURFACE, TILE } from './surface'
 
 /**
@@ -40,6 +42,11 @@ export interface HistoryPanelProps<Row extends HistoryRowView> {
 }
 
 export default function HistoryPanel<Row extends HistoryRowView>({ t, rows, onRecall, onExport }: HistoryPanelProps<Row>) {
+  // Dates render in the fixed 'server' form until hydration is done, then in
+  // the reader's locale and timezone (see historyDate).
+  const [datePass, setDatePass] = useState<'server' | 'local'>('server')
+  useEffect(() => setDatePass('local'), [])
+
   return (
     <section className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -82,7 +89,7 @@ export default function HistoryPanel<Row extends HistoryRowView>({ t, rows, onRe
                   </span>
                   <span className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
                     <Clock className="h-3.5 w-3.5" />
-                    {new Date(row.created_at).toLocaleDateString()}
+                    {historyDate(row.created_at, datePass)}
                   </span>
                 </span>
                 <span className="shrink-0 text-xs font-bold uppercase text-slate-500">{t('dash.open')}</span>

@@ -55,3 +55,26 @@ export function prependGeneration<TContent>(
 ): HistoryRow<TContent>[] {
   return [row, ...history].slice(0, limit)
 }
+
+/**
+ * The date shown under a history row, in two passes.
+ *
+ * The reader's timezone and locale exist only in the browser: no request
+ * header carries the timezone, and the server's Intl defaults are its own
+ * (en-US, UTC on Vercel). Formatting with defaults on both sides made the
+ * server HTML and the first browser render disagree for any reader whose
+ * browser is not en-US in the server's timezone (an Arabic or British locale,
+ * or a timezone where the row falls on another day), and React then threw the
+ * server render away.
+ *
+ * 'server' is what the server renders AND what the browser renders while
+ * hydrating: fixed locale, fixed timezone, so both sides agree byte for byte.
+ * 'local' is rendered only after hydration, in the reader's own locale and
+ * timezone, which is what readers have always seen once the page settled.
+ */
+export function historyDate(iso: string, pass: 'server' | 'local'): string {
+  const date = new Date(iso)
+  return pass === 'server'
+    ? date.toLocaleDateString('en-US', { timeZone: 'UTC' })
+    : date.toLocaleDateString()
+}
