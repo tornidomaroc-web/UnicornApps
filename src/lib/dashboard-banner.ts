@@ -33,7 +33,10 @@ export const BANNER_CONTAINER_CLASS =
   // place that can afford a size nothing else uses. It costs height (measured on
   // the dashboard at 411: the container goes 54px -> 74px, because the English
   // copy wraps to a second line) and the first generated line still clears the fold.
-  'max-w-2xl mx-auto mb-8 rounded-2xl border px-6 py-4 text-center text-base font-medium'
+  // No outer margin: each caller spaces the banner itself. A bottom margin once
+  // written here never rendered (Tailwind did not scan this folder), so the
+  // callers' spacing is the one users have always seen.
+  'max-w-2xl mx-auto rounded-2xl border px-6 py-4 text-center text-base font-medium'
 
 const TONE_CLASS: Record<BannerTone, string> = {
   success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200',
