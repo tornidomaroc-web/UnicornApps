@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Clock, FileDown, ImageIcon } from 'lucide-react'
+import { ChevronRight, Clock, FileDown, ImageIcon } from 'lucide-react'
 import { historyDate } from '@/lib/dashboard-history'
 import { ROW, SURFACE } from './surface'
 
@@ -13,7 +13,9 @@ import { ROW, SURFACE } from './surface'
  *
  * SHAPE. A heading with its one-line sub, the CSV export as a pill beside it,
  * then one row per generation: the photo as a thumbnail, the generated title
- * on one line, the date under it, and an "open" label at the end. The old
+ * on one line, the date under it, and a chevron at the end (it points the
+ * other way in Arabic). The word "Open" stays in the row as screen-reader
+ * text, so the button is announced as title, date, Open, in either language. The old
  * five-column table is gone — on a phone it scrolled sideways and every cell
  * but the title was chrome. There is no per-row platform badge: every result
  * covers every platform, so the badge said the same thing on every row.
@@ -95,7 +97,8 @@ export default function HistoryPanel<Row extends HistoryRowView>({ t, rows, onRe
                     {historyDate(row.created_at, datePass)}
                   </span>
                 </span>
-                <span className="shrink-0 text-xs font-bold text-fg-link">{t('dash.open')}</span>
+                <span className="sr-only">{t('dash.open')}</span>
+                <ChevronRight aria-hidden className="h-5 w-5 shrink-0 text-fg-link rtl:rotate-180" />
               </button>
             </li>
           ))}

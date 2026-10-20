@@ -5,6 +5,9 @@ import { Check, Copy, Code2, Eye } from 'lucide-react'
 import { sanitizeModelHtml } from '@/lib/safe-html'
 import { BLOCK, EYEBROW } from './surface'
 
+/** A block's name, as a tinted label pill (hairline ring, no depth: it is not a control). */
+const LABEL = 'inline-flex items-center rounded-full border border-line bg-chip px-2.5 py-1 text-[13px] font-bold text-fg-link'
+
 /**
  * The generated product page, as a stack of blocks the user can act on.
  *
@@ -29,6 +32,10 @@ import { BLOCK, EYEBROW } from './surface'
  * DIRECTION. Logical classes only (ps-/pe-/ms-/me-/start-/end-/text-start), so
  * the Arabic surface mirrors without a second set of rules. A test pins the
  * absence of physical ones.
+ *
+ * DEPTH. Generated text stays on flat blocks (BLOCK): readability first. Only
+ * what is tapped carries the clay stack: the copy buttons, the jump chips, the
+ * preview toggle. A block's name is a tinted label pill, not a control.
  *
  * WEIGHT. No entrance animation, no blur, no WebGL: every install is a phone
  * WebView. The store previews render only once opened.
@@ -55,6 +62,19 @@ export interface ResultsPanelProps {
   previewSlot?: ReactNode
 }
 
+/** The element naming what each copy button copies (its block's label), by copy id. */
+const COPY_LABEL: Record<string, string> = {
+  t: 'result-hero-name',
+  m: 'result-seo-name',
+  d: 'result-description-name',
+  sh: 'result-shopify-name',
+  ab: 'result-amazon-name',
+  hk: 'result-social-name',
+  cc: 'result-concept-name',
+  tg: 'result-tags-name',
+  sd: 'result-data-name',
+}
+
 /** Block ids double as anchor targets for the chip row. Stable: tests pin them. */
 export const BLOCKS = ['seo', 'description', 'shopify', 'amazon', 'social', 'data', 'preview'] as const
 
@@ -73,10 +93,12 @@ function CopyButton({
   onCopy: (text: string, id: string) => void
 }) {
   const done = copiedId === id
+  // Every copy button reads "Copy"; the block's own label tells a screen reader WHICH part it copies.
   return (
     <button
       type="button"
       onClick={() => onCopy(text, id)}
+      aria-describedby={COPY_LABEL[id]}
       aria-live="polite"
       className={`press inline-flex h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-bold ${
         done
@@ -104,7 +126,9 @@ function Block({
   return (
     <section id={`result-${id}`} className={`${BLOCK} scroll-mt-24 p-5 sm:p-8`}>
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h3 className={EYEBROW}>{eyebrow}</h3>
+        <h3 id={`result-${id}-name`} className={LABEL}>
+          {eyebrow}
+        </h3>
         {action}
       </div>
       {children}
@@ -152,7 +176,9 @@ export default function ResultsPanel({ results, t, copiedId, onCopy, previewSlot
     <div className="space-y-5">
       {/* HERO: the one string every block is about, and the first thing copied. */}
       <div className={`${BLOCK} p-5 sm:p-8`}>
-        <p className={`${EYEBROW} mb-3`}>{t('dash.seo.target')}</p>
+        <p id="result-hero-name" className={`${LABEL} mb-3`}>
+          {t('dash.seo.target')}
+        </p>
         <p data-model-output dir="auto" className="break-words text-start text-[28px] font-bold leading-[1.15] text-fg sm:text-[32px]">
           {results.seoTitle}
         </p>
@@ -173,7 +199,7 @@ export default function ResultsPanel({ results, t, copiedId, onCopy, previewSlot
               if (c.id === 'preview') setPreviewOpen(true)
               document.getElementById(`result-${c.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            className="inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-line bg-chip px-4 text-sm font-bold text-fg-link hover:text-fg"
+            className="press inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-full border border-transparent bg-chip bg-fill-ghost px-4 text-sm font-bold text-fg-link shadow-ghost hover:text-fg"
           >
             {c.label}
           </a>
@@ -251,7 +277,9 @@ export default function ResultsPanel({ results, t, copiedId, onCopy, previewSlot
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
           <div className="rounded-row border border-line bg-tile p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <span className={EYEBROW}>{t('dash.social.concept')}</span>
+              <span id="result-concept-name" className={EYEBROW}>
+                {t('dash.social.concept')}
+              </span>
               {copy('cc', results.viralScript?.concept ?? '')}
             </div>
             <p data-model-output dir="auto" className="text-start text-sm leading-relaxed text-fg-body">
@@ -260,7 +288,9 @@ export default function ResultsPanel({ results, t, copiedId, onCopy, previewSlot
           </div>
           <div className="rounded-row border border-line bg-tile p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <span className={EYEBROW}>{t('dash.social.tags')}</span>
+              <span id="result-tags-name" className={EYEBROW}>
+                {t('dash.social.tags')}
+              </span>
               {copy('tg', tags.join(' '))}
             </div>
             <div className="flex flex-wrap gap-2">

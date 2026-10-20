@@ -703,14 +703,14 @@ export default function DashboardClient({
                         <>
                           <section className="space-y-6">
                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-orange-500/20 rounded-lg"><ShoppingBag className="w-5 h-5 text-orange-400" /></div>
+                                <div className="flex h-11 w-11 items-center justify-center rounded-icon bg-chip bg-fill-icon shadow-icon"><ShoppingBag className="w-5 h-5 text-orange-300" /></div>
                                 <h2 className="text-base font-bold text-fg">{t('dash.amazon.live')}</h2>
                              </div>
                              <AmazonMockup />
                           </section>
                           <section className="space-y-6">
                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-green-500/20 rounded-lg"><Store className="w-5 h-5 text-green-400" /></div>
+                                <div className="flex h-11 w-11 items-center justify-center rounded-icon bg-chip bg-fill-icon shadow-icon"><Store className="w-5 h-5 text-green-300" /></div>
                                 <h2 className="text-base font-bold text-fg">{t('dash.shopify.live')}</h2>
                              </div>
                              <ShopifyMockup />
@@ -768,7 +768,7 @@ export default function DashboardClient({
                                key={c.l}
                                onClick={() => handleRefine(c.v)}
                                disabled={isRefining}
-                               className="px-3 py-1.5 bg-chip border border-line rounded-full text-sm font-bold text-fg-link hover:text-fg press disabled:opacity-50"
+                               className="px-3 py-1.5 bg-chip bg-fill-ghost border border-transparent shadow-ghost rounded-full text-sm font-bold text-fg-link hover:text-fg press disabled:opacity-50"
                              >
                                {c.l}
                              </button>

@@ -175,7 +175,7 @@ export default function PricingClient({
                   <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-icon bg-chip bg-fill-icon shadow-icon text-fg-link">
                     <Icon className="h-5 w-5" aria-hidden />
                   </span>
-                  <h2 className="min-w-0 text-xl font-bold text-fg">{tier.name}</h2>
+                  <h2 className="min-w-0 text-2xl font-bold text-fg lg:text-[27px]">{tier.name}</h2>
                   {tier.featured && (
                     <span className="rounded-full border border-line bg-chip px-3 py-1 text-sm font-bold text-fg-link">
                       {t('pricing.popular')}
@@ -186,7 +186,7 @@ export default function PricingClient({
                 <p className="mt-4 text-[15px] leading-relaxed text-fg-muted">{tier.description}</p>
 
                 <p className="mt-5 flex flex-wrap items-baseline gap-x-2">
-                  <span dir="ltr" className="text-[40px] font-bold leading-none text-fg">
+                  <span dir="ltr" className="text-[44px] font-bold leading-none text-fg lg:text-[52px]">
                     {tier.price}
                   </span>
                   {tier.period && <span className="text-[15px] font-medium text-fg-faint">{tier.period}</span>}
@@ -248,7 +248,7 @@ export default function PricingClient({
               <Mail className="h-5 w-5" aria-hidden />
             </span>
             <div className="min-w-0 flex-1">
-              <h2 className="text-xl font-bold text-fg">{t('pricing.contact.title')}</h2>
+              <h2 className="text-2xl font-bold text-fg lg:text-[27px]">{t('pricing.contact.title')}</h2>
             </div>
             <div className="sm:w-64 sm:shrink-0">
               <a href="mailto:support@unicornapps.app" className={GHOST}>

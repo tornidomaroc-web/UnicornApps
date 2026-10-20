@@ -135,7 +135,7 @@ export default function AccountClient({ email }: { email: string }) {
                 onClick={handleDelete}
                 disabled={!ready || busy}
                 aria-busy={busy}
-                className={`${PILL} bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500/50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-red-600`}
+                className={`${PILL} bg-red-600 bg-fill-danger text-white shadow-danger press focus-visible:ring-red-500/50 disabled:cursor-not-allowed disabled:opacity-40`}
               >
                 {busy ? (
                   <>
