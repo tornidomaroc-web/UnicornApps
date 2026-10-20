@@ -1,4 +1,4 @@
-import { isClassString, skeleton, skeletonHash } from './helpers/class-skeleton'
+import { isClassString, readSource, skeleton, skeletonHash, skeletonHashOf } from './helpers/class-skeleton'
 
 /**
  * Restyle fence for files that handle sign-in, sessions or credits.
@@ -19,7 +19,7 @@ const PINNED: Record<string, string> = {
   'src/app/account/page.tsx': '2ad067bccb103352',
   'src/app/auth/confirm/ConfirmForm.tsx': '56e5c9c2490780ab',
   'src/app/auth/confirm/page.tsx': '0ab86d4679a42723',
-  'src/app/dashboard/DashboardClient.tsx': 'fac672e36160dfd5',
+  'src/app/dashboard/DashboardClient.tsx': 'c81280a2464432e3', // PR4: declared insertions below
   'src/app/dashboard/page.tsx': '0e18e232bc8e5d59',
   'src/app/delete-account/DeleteAccountClient.tsx': '1d9f7f520980a17e',
   'src/app/layout.tsx': 'bae6e6b5b0b0e084',
@@ -36,6 +36,55 @@ const PINNED: Record<string, string> = {
 describe('auth, session and credit files change only inside class strings', () => {
   it.each(Object.entries(PINNED))('%s', (file, hash) => {
     expect(skeletonHash(file)).toBe(hash)
+  })
+})
+
+/**
+ * DECLARED LOGIC EXCEPTIONS. The dashboard home (PR4) needed a few lines of
+ * logic in DashboardClient: a flag for "native detection has resolved", set at
+ * the end of the existing check, and the props the home's credits card and
+ * quick actions read. Each is listed here verbatim. The test removes every one
+ * (each must occur exactly once) and requires what is left to have the
+ * skeleton the file had BEFORE PR4. So these insertions are the only logic
+ * change in the file, and nothing else moved. The new pin in PINNED above
+ * then freezes the file as it is now.
+ */
+const DECLARED: Record<string, { before: string; insertions: string[] }> = {
+  'src/app/dashboard/DashboardClient.tsx': {
+    before: 'fac672e36160dfd5',
+    insertions: [
+      `  // False until the client check below has run. "Add credits" on the home
+  // renders only once this is true AND the page is not native, so it can never
+  // flash in the app, even where only Capacitor (not the UA) knows it is native.
+  const [nativeResolved, setNativeResolved] = useState(false)
+`,
+      `      setNativeResolved(true)
+`,
+      `          credits={credits}
+          isNative={isNative}
+          showAddCredits={nativeResolved && !isNative}
+          addCreditsBusy={checkoutPending !== null}
+          onAddCredits={() => void handlePaid('pack')}
+`,
+    ],
+  },
+}
+
+describe('declared logic exceptions are the only logic change', () => {
+  it.each(Object.entries(DECLARED))('%s minus its declared insertions is the file before them', (file, { before, insertions }) => {
+    let text = readSource(file)
+    for (const ins of insertions) {
+      expect(text.split(ins).length - 1).toBe(1)
+      text = text.replace(ins, '')
+    }
+    expect(skeletonHashOf(text, file)).toBe(before)
+  })
+
+  it('the Add credits gate is exactly resolved && !isNative, and it calls the existing checkout handler', () => {
+    const ins = DECLARED['src/app/dashboard/DashboardClient.tsx'].insertions.join('')
+    expect(ins).toContain('showAddCredits={nativeResolved && !isNative}')
+    expect(ins).toContain("onAddCredits={() => void handlePaid('pack')}")
+    expect(ins).not.toMatch(/openCheckout|Paddle|fetch\(|router\./)
   })
 })
 

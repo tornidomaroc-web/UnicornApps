@@ -46,7 +46,14 @@ export function skeleton(source: string, fileName = 'x.tsx'): string {
   return out
 }
 
-export function skeletonHash(relPath: string): string {
-  const text = readFileSync(join(process.cwd(), relPath), 'utf8').replace(/\r\n/g, '\n')
+export function readSource(relPath: string): string {
+  return readFileSync(join(process.cwd(), relPath), 'utf8').replace(/\r\n/g, '\n')
+}
+
+export function skeletonHashOf(text: string, relPath: string): string {
   return createHash('sha256').update(skeleton(text, relPath)).digest('hex').slice(0, 16)
+}
+
+export function skeletonHash(relPath: string): string {
+  return skeletonHashOf(readSource(relPath), relPath)
 }

@@ -51,6 +51,7 @@ const config: Config = {
           faint: "rgb(var(--ua-fg-faint) / <alpha-value>)",
           link: "rgb(var(--ua-fg-link) / <alpha-value>)",
           "on-brand": "rgb(var(--ua-fg-on-brand) / <alpha-value>)",
+          "on-light": "rgb(var(--ua-fg-on-light) / <alpha-value>)",
         },
         focus: "rgb(var(--ua-focus) / <alpha-value>)",
         border: "hsl(var(--border))",
@@ -104,6 +105,7 @@ const config: Config = {
         "fill-tap": "var(--ua-fill-tap)",
         "fill-icon": "var(--ua-fill-icon)",
         "fill-credits": "var(--ua-fill-credits)",
+        "fill-on-credits": "var(--ua-fill-on-credits)",
         "page-image": "var(--ua-page-image)",
       },
       fontFamily: {
@@ -126,6 +128,7 @@ const config: Config = {
         well: "var(--ua-shadow-well)",
         credits: "var(--ua-shadow-credits)",
         mark: "var(--ua-shadow-mark)",
+        "on-credits": "var(--ua-shadow-on-credits)",
       },
     },
   },

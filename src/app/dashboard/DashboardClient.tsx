@@ -113,6 +113,10 @@ export default function DashboardClient({
   // Seeded from the server's native User-Agent check so the Paddle upgrade links
   // never render on native (no flash). Client check only ever upgrades to native.
   const [isNative, setIsNative] = useState(serverIsNative)
+  // False until the client check below has run. "Add credits" on the home
+  // renders only once this is true AND the page is not native, so it can never
+  // flash in the app, even where only Capacitor (not the UA) knows it is native.
+  const [nativeResolved, setNativeResolved] = useState(false)
 
   useEffect(() => {
     const checkNative = async () => {
@@ -122,6 +126,7 @@ export default function DashboardClient({
       } catch {
         // keep server-seeded value
       }
+      setNativeResolved(true)
     }
     checkNative()
   }, [])
@@ -855,6 +860,11 @@ export default function DashboardClient({
           onFileChange={handleFileChange}
           onOpenCamera={openCamera}
           onClear={clearPhoto}
+          credits={credits}
+          isNative={isNative}
+          showAddCredits={nativeResolved && !isNative}
+          addCreditsBusy={checkoutPending !== null}
+          onAddCredits={() => void handlePaid('pack')}
           action={results ? <PrimaryAction {...primaryProps({ allowPurchase: false })} /> : null}
         />
 

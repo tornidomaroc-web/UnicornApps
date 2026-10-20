@@ -58,6 +58,7 @@ const TODAY: Record<string, string> = {
   '--ua-fg-faint': '148 144 186',
   '--ua-fg-link': '169 164 255',
   '--ua-fg-on-brand': '255 255 255',
+  '--ua-fg-on-light': '58 49 196',
   '--ua-focus': '169 164 255',
   '--ua-fill-btn': 'linear-gradient(180deg, #635bff 0%, #4b41e0 100%)',
   '--ua-fill-btn-hover': 'linear-gradient(180deg, #5a52f5 0%, #4339d6 100%)',
@@ -65,6 +66,7 @@ const TODAY: Record<string, string> = {
   '--ua-fill-tap': 'linear-gradient(180deg, #26264f 0%, #12122a 100%)',
   '--ua-fill-icon': 'linear-gradient(180deg, #3c3c88 0%, #25254f 100%)',
   '--ua-fill-credits': 'linear-gradient(165deg, #635bff 0%, #4338ca 100%)',
+  '--ua-fill-on-credits': 'linear-gradient(180deg, #ffffff 0%, #e4e1ff 100%)',
   '--ua-radius-card': '28px',
   '--ua-radius-row': '24px',
   '--ua-radius-icon': '20px',
@@ -85,6 +87,8 @@ const TODAY: Record<string, string> = {
     '0 10px 12px -8px rgb(0 0 0 / 0.75), inset 0 3px 0 rgb(255 255 255 / 0.4), inset 0 -12px 18px rgb(25 12 120 / 0.5)',
   '--ua-shadow-mark':
     '0 6px 8px -3px rgb(0 0 0 / 0.8), inset 0 3px 0 rgb(255 255 255 / 0.4), inset 0 -6px 9px rgb(30 20 130 / 0.5)',
+  '--ua-shadow-on-credits':
+    '0 6px 8px -3px rgb(0 0 0 / 0.45), inset 0 3px 0 rgb(255 255 255 / 1), inset 0 -5px 8px rgb(99 91 255 / 0.25)',
   '--ua-font-head': 'system-ui, sans-serif',
   '--ua-font-body': 'inherit',
   '--ua-text-display': '32px',
