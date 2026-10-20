@@ -50,6 +50,7 @@
   --ua-fg-faint: 148 144 186;               /* #9490ba eyebrows, dates, captions, >= 4.7:1 */
   --ua-fg-link: 169 164 255;                /* #a9a4ff brand-coloured text and links, >= 6.4:1 */
   --ua-fg-on-brand: 255 255 255;            /* white on a brand fill (4.7:1 at its lightest stop) */
+  --ua-fg-on-light: 58 49 196;              /* #3a31c4 text on the light button inside the credits card */
   --ua-focus: 169 164 255;                  /* #a9a4ff focus outline */
 
   /* fills: background-image layers per tappable kind (each call site also
@@ -60,6 +61,7 @@
   --ua-fill-tap: linear-gradient(180deg, #26264f 0%, #12122a 100%);
   --ua-fill-icon: linear-gradient(180deg, #3c3c88 0%, #25254f 100%);
   --ua-fill-credits: linear-gradient(165deg, #635bff 0%, #4338ca 100%);
+  --ua-fill-on-credits: linear-gradient(180deg, #ffffff 0%, #e4e1ff 100%); /* the light button on the credits card */
 
   /* radii */
   --ua-radius-card: 28px;
@@ -84,6 +86,8 @@
     inset 0 -12px 18px rgb(25 12 120 / 0.5);
   --ua-shadow-mark: 0 6px 8px -3px rgb(0 0 0 / 0.8), inset 0 3px 0 rgb(255 255 255 / 0.4),
     inset 0 -6px 9px rgb(30 20 130 / 0.5);
+  --ua-shadow-on-credits: 0 6px 8px -3px rgb(0 0 0 / 0.45), inset 0 3px 0 rgb(255 255 255 / 1),
+    inset 0 -5px 8px rgb(99 91 255 / 0.25);
 
   /* type: headings in Rubik 700 (Arabic glyphs from its Arabic subset), body
      unchanged (Inter, or IBM Plex Sans Arabic under .font-arabic). The Arabic

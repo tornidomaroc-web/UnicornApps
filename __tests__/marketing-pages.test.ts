@@ -47,7 +47,9 @@ describe('light enough for a phone WebView, and the first paint is the final pai
     expect(existsSync(join(process.cwd(), 'public/landing/honey-jar-640.jpg'))).toBe(true)
     expect(code.hero).toMatch(/\[384, 640, 750, 1080\]\.map\(\(w\) => `\/landing\/honey-jar-\$\{w\}\.webp \$\{w\}w`\)/)
     expect(code.hero).toMatch(/<source type="image\/webp" srcSet=\{PHOTO_WEBP\} sizes=\{PHOTO_SIZES\} \/>/)
-    const img = code.hero.slice(code.hero.indexOf('<img\n'), code.hero.indexOf('/>', code.hero.indexOf('<img\n')))
+    // \s, not \n: a Windows checkout has CRLF line endings.
+    const at = code.hero.search(/<img\s/)
+    const img = code.hero.slice(at, code.hero.indexOf('/>', at))
     expect(img).toMatch(/src="\/landing\/honey-jar-640\.jpg"/)
     expect(img).toMatch(/width=\{1080\}\s+height=\{1350\}/)
     expect(img).toMatch(/fetchPriority="high"/)

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, type ChangeEvent, type ReactNode } from 'react'
-import { AlertCircle, Camera, CreditCard, Sparkles, UploadCloud, X } from 'lucide-react'
+import { AlertCircle, Camera, Clock, CreditCard, Plus, Sparkles, Upload, X, Zap } from 'lucide-react'
 import { EYEBROW, ROW, SURFACE, TILE } from './surface'
 
 /**
@@ -13,10 +13,11 @@ import { EYEBROW, ROW, SURFACE, TILE } from './surface'
  * and, once results exist, the primary action as a slot. Nothing here fetches,
  * spends, or mutates.
  *
- * SHAPE. Before a photo: a title, one line of what the model will read from
- * it, and two option tiles — upload and camera — each a round icon chip beside
- * a name and a one-line hint, stacked on a phone and side by side from 640px.
- * After: the one sentence that names the action and its cost comes FIRST in
+ * SHAPE. Before a photo, this is the dashboard home: a greeting and its
+ * subline, the credits card, and three quick actions (upload, camera, history)
+ * as clay tiles, side by side at every width. Upload and camera call the same
+ * handlers the old option tiles did; history is a plain link to the history
+ * list's anchor (#history in HistoryPanel). After: the one sentence that names the action and its cost comes FIRST in
  * the DOM, then the photo in a rounded card with a single remove control, then
  * the action slot. First in the DOM means first on a phone, above a square
  * image that would otherwise push it under the fold; on a wide screen the grid
@@ -32,6 +33,19 @@ import { EYEBROW, ROW, SURFACE, TILE } from './surface'
  * is set with physical top/left inline: image coordinates do not mirror with
  * text direction, and a logical offset here would put every dot on the wrong
  * side of the Arabic surface.
+ *
+ * THE CREDITS CARD shows the live balance (the parent's `credits`, which
+ * follows the credits bus) and what one generation costs. Its end slot holds
+ * ONE of three things, decided by the parent:
+ *   - native: a lightning tile, no purchase entry (the Android build ships
+ *     payment-free);
+ *   - web, once native detection has resolved: "Add credits", which calls the
+ *     parent's existing checkout handler (onAddCredits);
+ *   - before that: an empty box of the same size, so nothing flashes in the
+ *     app and nothing shifts on the web when the button arrives.
+ * The home renders only while there is no photo, and every other purchase
+ * entry needs one (the fixed bar: a photo and no results; the band: results),
+ * so the dashboard still never shows two purchase actions at once.
  *
  * DIRECTION. Logical classes only (start-/end-/ps-/pe-/text-start).
  *
@@ -105,7 +119,19 @@ export interface InputPanelProps {
   onClear: () => void
   /** The primary action, once results exist. Before that the parent's fixed bar carries it. */
   action?: ReactNode
+  /** The live balance, for the credits card. */
+  credits: number
+  isNative: boolean
+  /** True only on web once native detection has resolved; see THE CREDITS CARD. */
+  showAddCredits: boolean
+  /** A checkout is opening; the button disables, as the other purchase buttons do. */
+  addCreditsBusy: boolean
+  onAddCredits: () => void
 }
+
+/** A quick action: a clay tile holding an icon tile over its name. */
+const ACTION = `${ROW} flex flex-col items-center justify-start gap-3 px-2 py-4 text-center`
+const ICON_TILE = 'flex h-12 w-12 shrink-0 items-center justify-center rounded-icon bg-chip bg-fill-icon shadow-icon text-fg-link'
 
 export default function InputPanel({
   t,
@@ -116,43 +142,69 @@ export default function InputPanel({
   onOpenCamera,
   onClear,
   action,
+  credits,
+  isNative,
+  showAddCredits,
+  addCreditsBusy,
+  onAddCredits,
 }: InputPanelProps) {
   const fileRef = useRef<HTMLInputElement>(null)
 
   if (!preview) {
     return (
-      <section className={`${SURFACE} p-5 sm:p-8`}>
-        <h2 className="text-[28px] font-bold leading-[1.15] text-fg sm:text-[32px]">{t('dash.inputSource')}</h2>
-        <p className="mt-2 text-base text-fg-muted">{t('dash.uploadSub')}</p>
+      <section className="space-y-6">
+        <div>
+          <h1 className="text-[34px] font-bold leading-[1.15] text-fg rtl:leading-[1.35] lg:text-[46px]">{t('dash.greet')}</h1>
+          <p className="mt-2 text-base text-fg-muted">{t('dash.greet.sub')}</p>
+        </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className={`${ROW} flex items-center gap-4 p-4 text-start sm:p-5`}
-          >
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-icon bg-chip bg-fill-icon shadow-icon text-fg-link">
-              <UploadCloud className="h-6 w-6" />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-base font-bold text-fg">{t('dash.uploadBtn')}</span>
-              <span className="block text-sm text-fg-muted">{t('dash.uploadFormat')}</span>
-            </span>
-          </button>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr),minmax(0,1fr)] lg:items-stretch">
+          <div className="rounded-card bg-brand bg-fill-credits p-[22px] text-fg-on-brand shadow-credits lg:p-7">
+            <p className="text-base font-medium">{t('dash.credits')}</p>
+            <div className="mt-1 flex min-h-[64px] items-center justify-between gap-4">
+              <span className="font-head text-[64px] font-bold leading-none">{credits}</span>
+              {isNative ? (
+                <span aria-hidden className={`${ICON_TILE} h-14 w-14`}>
+                  <Zap className="h-6 w-6" />
+                </span>
+              ) : showAddCredits ? (
+                <button
+                  type="button"
+                  onClick={onAddCredits}
+                  disabled={addCreditsBusy}
+                  aria-busy={addCreditsBusy}
+                  className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full bg-fg bg-fill-on-credits px-5 text-[15px] font-bold text-fg-on-light shadow-on-credits press disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Plus className="h-4 w-4" />
+                  {addCreditsBusy ? t('checkout.pending') : t('dash.addCredits')}
+                </button>
+              ) : (
+                <span aria-hidden className="h-12 w-px" />
+              )}
+            </div>
+            <p className="mt-3 text-[15px]">{t('dash.credits.cost')}</p>
+          </div>
 
-          <button
-            type="button"
-            onClick={onOpenCamera}
-            className={`${ROW} flex items-center gap-4 p-4 text-start sm:p-5`}
-          >
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-icon bg-chip bg-fill-icon shadow-icon text-fg-link">
-              <Camera className="h-6 w-6" />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-base font-bold text-fg">{t('dash.cameraBtn')}</span>
-              <span className="block text-sm text-fg-muted">{t('dash.cameraSub')}</span>
-            </span>
-          </button>
+          <div className="grid grid-cols-3 gap-3">
+            <button type="button" onClick={() => fileRef.current?.click()} className={ACTION}>
+              <span className={ICON_TILE}>
+                <Upload className="h-5 w-5" />
+              </span>
+              <span className="text-sm font-bold leading-tight text-fg">{t('dash.uploadBtn')}</span>
+            </button>
+            <button type="button" onClick={onOpenCamera} className={ACTION}>
+              <span className={ICON_TILE}>
+                <Camera className="h-5 w-5" />
+              </span>
+              <span className="text-sm font-bold leading-tight text-fg">{t('dash.cameraBtn')}</span>
+            </button>
+            <a href="#history" className={ACTION}>
+              <span className={ICON_TILE}>
+                <Clock className="h-5 w-5" />
+              </span>
+              <span className="text-sm font-bold leading-tight text-fg">{t('dash.qa.history')}</span>
+            </a>
+          </div>
         </div>
 
         <input ref={fileRef} id="file-upload" type="file" accept="image/*" className="hidden" onChange={onFileChange} />

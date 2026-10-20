@@ -23,6 +23,9 @@ import { ROW, SURFACE } from './surface'
  *
  * DIRECTION. Logical classes only; the row mirrors on the Arabic surface.
  *
+ * ANCHOR. `id="history"` is the target of the home's History quick action;
+ * scroll-mt-24 keeps the heading clear of the fixed navbar.
+ *
  * EMPTY STATE. A card that says what will appear here and what to do first,
  * not a table with no rows. Export is disabled when there is nothing to export.
  */
@@ -48,7 +51,7 @@ export default function HistoryPanel<Row extends HistoryRowView>({ t, rows, onRe
   useEffect(() => setDatePass('local'), [])
 
   return (
-    <section className="space-y-5">
+    <section id="history" className="scroll-mt-24 space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h2 className="text-[28px] font-bold leading-[1.15] text-fg sm:text-[32px]">{t('dash.history')}</h2>
