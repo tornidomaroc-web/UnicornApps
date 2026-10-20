@@ -97,6 +97,7 @@ const translations = {
     'nav.getStarted': 'Get Started',
     'nav.dashboard': 'Dashboard',
     'nav.credits': 'Credits',
+    'nav.credits.unknown': 'Unavailable',
     'nav.account': 'Account',
     'nav.logout': 'Sign out',
     // Marketing pages (landing, features, about) and the site footer.
@@ -228,6 +229,8 @@ const translations = {
     'dash.generate': 'Generate Content',
     'dash.credits': 'Credits remaining',
     'dash.credits.cost': 'One generation costs one credit.',
+    'dash.credits.unknown': "Couldn't load your credits",
+    'dash.credits.unknownSub': "You can generate as usual, and we'll check your balance then.",
     'dash.greet': 'Welcome',
     'dash.greet.sub': 'Add a product photo to get its full page.',
     'dash.qa.history': 'History',
@@ -587,6 +590,7 @@ const translations = {
     'nav.getStarted': 'ابدأ الآن',
     'nav.dashboard': 'لوحة التحكم',
     'nav.credits': 'رصيد',
+    'nav.credits.unknown': 'غير متاح',
     'nav.account': 'الحساب',
     'nav.logout': 'تسجيل الخروج',
     // Marketing pages (landing, features, about) and the site footer.
@@ -724,6 +728,8 @@ const translations = {
     'dash.generate': 'توليد المحتوى',
     'dash.credits': 'الرصيد المتبقي',
     'dash.credits.cost': 'كل توليد يكلّف رصيداً واحداً.',
+    'dash.credits.unknown': 'تعذّر تحميل رصيدك',
+    'dash.credits.unknownSub': 'يمكنك التوليد كالمعتاد، وسنتحقق من رصيدك عندها.',
     'dash.greet': 'أهلاً بك',
     'dash.greet.sub': 'أضف صورة منتج لتحصل على صفحته كاملة.',
     'dash.qa.history': 'السجل',

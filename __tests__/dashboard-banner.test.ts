@@ -262,7 +262,10 @@ describe('structural - DashboardClient actually renders and routes the state', (
   })
 
   it('both request paths raise a UserFacingError, never a bare Error', () => {
-    expect(count('throw new UserFacingError(')).toBe(2)
+    // generate: the server's 403 (translated out-of-credits copy) and every
+    // other failure; refine: every failure except its own 403 chat message.
+    expect(count('throw new UserFacingError(')).toBe(3)
+    expect(src).toMatch(/throw new UserFacingError\(isNative \? t\('dash\.limitReached'\) : t\('dash\.noCredits'\)\)/)
     expect(count('throw new Error(')).toBe(0)
   })
 

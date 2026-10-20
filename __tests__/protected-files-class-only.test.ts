@@ -19,15 +19,15 @@ const PINNED: Record<string, string> = {
   'src/app/account/page.tsx': '2ad067bccb103352',
   'src/app/auth/confirm/ConfirmForm.tsx': '56e5c9c2490780ab',
   'src/app/auth/confirm/page.tsx': '0ab86d4679a42723',
-  'src/app/dashboard/DashboardClient.tsx': 'c81280a2464432e3', // PR4: declared insertions below
-  'src/app/dashboard/page.tsx': '0e18e232bc8e5d59',
+  'src/app/dashboard/DashboardClient.tsx': '608d39f0d162eeb3', // declared layers below: PR4, unknown balance
+  'src/app/dashboard/page.tsx': '6fc7032261c8ebfc', // declared layer below: unknown balance
   'src/app/delete-account/DeleteAccountClient.tsx': '1d9f7f520980a17e',
-  'src/app/layout.tsx': 'bae6e6b5b0b0e084',
+  'src/app/layout.tsx': '273b1b02703bb4da', // declared layer below: unknown balance
   'src/app/pricing/PricingClient.tsx': 'fea86915fb5c9e68',
   'src/app/pricing/page.tsx': '385b1e96f8df586c',
   'src/app/welcome/WelcomeClient.tsx': '1016ef4c7bb98846',
   'src/app/welcome/page.tsx': '419519675f41d01b',
-  'src/components/Navbar.tsx': '2360e9d4dd13061d',
+  'src/components/Navbar.tsx': 'a905ebdb818e853c', // declared layer below: unknown balance
   'src/components/auth/AuthShell.tsx': '8060c1017cffffe5',
   'src/components/auth/SocialButtons.tsx': '2c36d8e8cb492dc7',
   'src/components/auth/TurnstileWidget.tsx': '2b0d00d6aba6b446',
@@ -40,51 +40,177 @@ describe('auth, session and credit files change only inside class strings', () =
 })
 
 /**
- * DECLARED LOGIC EXCEPTIONS. The dashboard home (PR4) needed a few lines of
- * logic in DashboardClient: a flag for "native detection has resolved", set at
- * the end of the existing check, and the props the home's credits card and
- * quick actions read. Each is listed here verbatim. The test removes every one
- * (each must occur exactly once) and requires what is left to have the
- * skeleton the file had BEFORE PR4. So these insertions are the only logic
- * change in the file, and nothing else moved. The new pin in PINNED above
- * then freezes the file as it is now.
+ * DECLARED LOGIC EXCEPTIONS, as layers. A layer is one PR's logic edits to one
+ * protected file, each written as the exact text BEFORE and AFTER (an insertion
+ * has an empty `before`). The test undoes a file's layers newest first: every
+ * `after` must occur exactly once and is replaced by its `before`, and after
+ * each layer the skeleton must equal the pin the file had before that PR. So a
+ * layer's edits are provably the only logic change that PR made, and nothing
+ * else moved. PINNED above then freezes the file as it is now.
  */
-const DECLARED: Record<string, { before: string; insertions: string[] }> = {
-  'src/app/dashboard/DashboardClient.tsx': {
-    before: 'fac672e36160dfd5',
-    insertions: [
-      `  // False until the client check below has run. "Add credits" on the home
+type Edit = { before: string; after: string }
+type Layer = { pr: string; pinBefore: string; edits: Edit[] }
+const ins = (after: string): Edit => ({ before: '', after })
+
+// PR4, the dashboard home: "native detection has resolved", and the home's props.
+const PR4_DASHBOARD: Layer = {
+  pr: 'PR4 dashboard home',
+  pinBefore: 'fac672e36160dfd5',
+  edits: [
+    ins(`  // False until the client check below has run. "Add credits" on the home
   // renders only once this is true AND the page is not native, so it can never
   // flash in the app, even where only Capacitor (not the UA) knows it is native.
   const [nativeResolved, setNativeResolved] = useState(false)
-`,
-      `      setNativeResolved(true)
-`,
-      `          credits={credits}
+`),
+    ins(`      setNativeResolved(true)
+`),
+    ins(`          credits={credits}
           isNative={isNative}
           showAddCredits={nativeResolved && !isNative}
           addCreditsBusy={checkoutPending !== null}
           onAddCredits={() => void handlePaid('pack')}
+`),
+  ],
+}
+
+// The unknown balance: a failed read is null, never an invented 0.
+const UNKNOWN = 'unknown credit balance'
+const LAYERS: Record<string, Layer[]> = {
+  'src/app/dashboard/DashboardClient.tsx': [
+    {
+      pr: UNKNOWN,
+      pinBefore: 'c81280a2464432e3',
+      edits: [
+        { before: "import { refreshCredits } from '@/lib/credits-bus'", after: "import { refreshCredits, subscribeCredits } from '@/lib/credits-bus'" },
+        { before: '  initialCredits: number,', after: '  initialCredits: number | null,' },
+        {
+          before: '  const { checkoutStatus, setCheckoutStatus, credits } = useCreditGrantPoll(initialCredits)\n',
+          after: `  const { checkoutStatus, setCheckoutStatus, credits } = useCreditGrantPoll(initialCredits ?? 0)
+  // initialCredits is null when the server could not read the balance. Then
+  // the hook's 0 is a placeholder, not a balance: it stays unknown until a real
+  // read is published (the self-heal read below, a generate, or a purchase
+  // poll), and every gate below reads shownCredits, never the placeholder.
+  const [creditsKnown, setCreditsKnown] = useState(initialCredits !== null)
+  useEffect(() => setCreditsKnown(initialCredits !== null), [initialCredits])
+  useEffect(() => subscribeCredits(() => setCreditsKnown(true)), [])
+  useEffect(() => {
+    if (initialCredits === null) void refreshCredits()
+  }, [initialCredits])
+  const shownCredits = creditsKnown ? credits : null
 `,
-    ],
-  },
+        },
+        ins(`        // 403 is the server's own credit check (reserve_credit) saying no. Show
+        // the same out-of-credits copy the bar would, and re-read the balance so
+        // an unknown one becomes a confirmed 0.
+        if (response.status === 403) {
+          void refreshCredits()
+          throw new UserFacingError(isNative ? t('dash.limitReached') : t('dash.noCredits'))
+        }
+`),
+        { before: '    const outOfCredits = credits <= 0', after: '    const outOfCredits = shownCredits !== null && shownCredits <= 0' },
+        { before: '        {results && !isNative && (', after: '        {results && !isNative && shownCredits !== null && (' },
+        { before: '          credits={credits}\n', after: '          credits={shownCredits}\n' },
+        {
+          before: '          showAddCredits={nativeResolved && !isNative}\n',
+          after: '          showAddCredits={nativeResolved && !isNative && shownCredits !== null}\n',
+        },
+      ],
+    },
+    PR4_DASHBOARD,
+  ],
+  'src/app/dashboard/page.tsx': [
+    {
+      pr: UNKNOWN,
+      pinBefore: '0e18e232bc8e5d59',
+      edits: [
+        { before: '  let credits = 0\n', after: '  let credits: number | null = 0\n' },
+        ins(`        credits = null
+`),
+      ],
+    },
+  ],
+  'src/app/layout.tsx': [
+    {
+      pr: UNKNOWN,
+      pinBefore: 'bae6e6b5b0b0e084',
+      edits: [
+        {
+          before: 'async function getNavSeed(): Promise<{ user: User | null; credits: number }> {',
+          after: 'async function getNavSeed(): Promise<{ user: User | null; credits: number | null }> {',
+        },
+        {
+          before: `    // no row -> 0. That is what keeps the getSession seed safe from spoofing.`,
+          after: `    // no row -> an error -> null. That is what keeps the getSession seed safe
+    // from spoofing. null means "could not read": the navbar shows it as
+    // unavailable, never as an invented 0.`,
+        },
+        { before: '    const { data } = await supabase', after: '    const { data, error } = await supabase' },
+        { before: '    return { user, credits: data?.credits ?? 0 };', after: '    return { user, credits: error ? null : (data?.credits ?? 0) };' },
+      ],
+    },
+  ],
+  'src/components/Navbar.tsx': [
+    {
+      pr: UNKNOWN,
+      pinBefore: '2360e9d4dd13061d',
+      edits: [
+        { before: '  initialCredits?: number;\n', after: '  initialCredits?: number | null;\n' },
+        { before: '  const [credits, setCredits] = useState(initialCredits);', after: '  const [credits, setCredits] = useState<number | null>(initialCredits);' },
+        {
+          before: `              {/* 🔴 THIS IS THE ONLY PLACE A CREDIT BALANCE RENDERS ANYWHERE IN THE APP.
+                  The dashboard used to carry a header bar of its own; that bar has been
+                  deleted outright, so there is no second surface to fall back on.
+                  Putting ANY breakpoint gate on the NUMBER leaves a phone user with no
+                  credit count at all, on every screen, and nothing else will show it to
+                  them. Only the WORD beside it gives way, below 640px and only while
+                  the dashboard pill is taking the room; it stays in the tree for
+                  assistive technology. */}`,
+          after: `              {/* 🔴 THE ONLY CREDIT BALANCE ON EVERY SCREEN. The dashboard home's credits
+                  card shows it too, but only there, so this chip is still what a user
+                  sees everywhere else. Putting ANY breakpoint gate on the NUMBER leaves
+                  a phone user with no credit count on those screens. Only the WORD
+                  beside it gives way, below 640px and only while the dashboard pill is
+                  taking the room; it stays in the tree for assistive technology.
+                  null = the server could not read the balance: a dash and
+                  "Unavailable", never an invented 0. */}`,
+        },
+        { before: '                <span>{credits}</span>', after: "                <span>{credits === null ? '–' : credits}</span>" },
+        {
+          before: '                  {creditsWord(credits, lang)}',
+          after: "                  {credits === null ? t('nav.credits.unknown') : creditsWord(credits, lang)}",
+        },
+      ],
+    },
+  ],
 }
 
 describe('declared logic exceptions are the only logic change', () => {
-  it.each(Object.entries(DECLARED))('%s minus its declared insertions is the file before them', (file, { before, insertions }) => {
+  it.each(Object.entries(LAYERS))('%s, undone layer by layer, matches each earlier pin', (file, layers) => {
     let text = readSource(file)
-    for (const ins of insertions) {
-      expect(text.split(ins).length - 1).toBe(1)
-      text = text.replace(ins, '')
+    for (const layer of layers) {
+      for (const { before, after } of layer.edits) {
+        expect({ layer: layer.pr, after, count: text.split(after).length - 1 }).toEqual({ layer: layer.pr, after, count: 1 })
+        text = text.replace(after, before)
+      }
+      expect({ layer: layer.pr, hash: skeletonHashOf(text, file) }).toEqual({ layer: layer.pr, hash: layer.pinBefore })
     }
-    expect(skeletonHashOf(text, file)).toBe(before)
   })
 
-  it('the Add credits gate is exactly resolved && !isNative, and it calls the existing checkout handler', () => {
-    const ins = DECLARED['src/app/dashboard/DashboardClient.tsx'].insertions.join('')
-    expect(ins).toContain('showAddCredits={nativeResolved && !isNative}')
-    expect(ins).toContain("onAddCredits={() => void handlePaid('pack')}")
-    expect(ins).not.toMatch(/openCheckout|Paddle|fetch\(|router\./)
+  it('the Add credits gate is resolved && !isNative on a confirmed balance, and it calls the existing checkout handler', () => {
+    const pr4 = PR4_DASHBOARD.edits.map((e) => e.after).join('')
+    expect(pr4).toContain("onAddCredits={() => void handlePaid('pack')}")
+    const now = readSource('src/app/dashboard/DashboardClient.tsx')
+    expect(now).toContain('showAddCredits={nativeResolved && !isNative && shownCredits !== null}')
+    const all = Object.values(LAYERS).flat().flatMap((l) => l.edits.map((e) => e.after)).join('')
+    expect(all).not.toMatch(/openCheckout|Paddle|router\./)
+  })
+
+  it('no purchase entry and no zero-credit bar is driven by an unconfirmed balance', () => {
+    const now = readSource('src/app/dashboard/DashboardClient.tsx')
+    expect(now).toContain('const outOfCredits = shownCredits !== null && shownCredits <= 0')
+    expect(now).toContain('{results && !isNative && shownCredits !== null && (')
+    // The purchase hook is untouched: the dashboard only ever hands it a number.
+    expect(now).toContain('useCreditGrantPoll(initialCredits ?? 0)')
   })
 })
 

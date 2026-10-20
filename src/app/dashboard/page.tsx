@@ -4,7 +4,7 @@ import DashboardClient from './DashboardClient'
 import { isNativeRequest } from '@/lib/native-request'
 
 export default async function DashboardPage() {
-  let credits = 0
+  let credits: number | null = 0
   let history: any[] = []
   let mustRedirect = false
   // An account made outside our server (a Google sign-in) holds no credits
@@ -43,6 +43,7 @@ export default async function DashboardPage() {
 
       if (profileError) {
         console.error('Error fetching profile:', profileError)
+        credits = null
       } else {
         credits = profile?.credits ?? 0
         mustClaim = profile != null && profile.free_credits_claimed_at === null

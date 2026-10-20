@@ -10,7 +10,7 @@ import { takePicture } from '@/lib/capacitor'
 import Link from 'next/link'
 import { openCheckout } from '@/lib/checkout'
 import { useCreditGrantPoll } from '@/hooks/useCreditGrantPoll'
-import { refreshCredits } from '@/lib/credits-bus'
+import { refreshCredits, subscribeCredits } from '@/lib/credits-bus'
 import { localGenerationRow, prependGeneration } from '@/lib/dashboard-history'
 import { resolveApiError } from '@/lib/api-error'
 import { prepareImageForUpload } from '@/lib/prepare-image'
@@ -80,7 +80,7 @@ export default function DashboardClient({
   serverIsNative = false
 }: {
   userId: string,
-  initialCredits: number,
+  initialCredits: number | null,
   initialHistory: Generation[],
   serverIsNative?: boolean
 }) {
@@ -138,7 +138,18 @@ export default function DashboardClient({
   // (server prop, or a post-purchase read published on lib/credits-bus.ts) and
   // is what the out-of-credits gate below must read, so a purchase made at zero
   // flips the bar back to Generate without a server re-render.
-  const { checkoutStatus, setCheckoutStatus, credits } = useCreditGrantPoll(initialCredits)
+  const { checkoutStatus, setCheckoutStatus, credits } = useCreditGrantPoll(initialCredits ?? 0)
+  // initialCredits is null when the server could not read the balance. Then
+  // the hook's 0 is a placeholder, not a balance: it stays unknown until a real
+  // read is published (the self-heal read below, a generate, or a purchase
+  // poll), and every gate below reads shownCredits, never the placeholder.
+  const [creditsKnown, setCreditsKnown] = useState(initialCredits !== null)
+  useEffect(() => setCreditsKnown(initialCredits !== null), [initialCredits])
+  useEffect(() => subscribeCredits(() => setCreditsKnown(true)), [])
+  useEffect(() => {
+    if (initialCredits === null) void refreshCredits()
+  }, [initialCredits])
+  const shownCredits = creditsKnown ? credits : null
 
   // Which product is opening, from the click until Paddle's overlay is up (or
   // the attempt failed). Both CTAs disable so the dynamic-import + CDN
@@ -306,6 +317,13 @@ export default function DashboardClient({
       // are text/plain, so parsing first turned them into a raw SyntaxError and
       // hid the real status. See @/lib/api-error.
       if (!response.ok) {
+        // 403 is the server's own credit check (reserve_credit) saying no. Show
+        // the same out-of-credits copy the bar would, and re-read the balance so
+        // an unknown one becomes a confirmed 0.
+        if (response.status === 403) {
+          void refreshCredits()
+          throw new UserFacingError(isNative ? t('dash.limitReached') : t('dash.noCredits'))
+        }
         // UserFacingError, not Error: the catch below shows this message, and
         // only a message we translated ourselves may be shown. See toUserMessage.
         throw new UserFacingError(await resolveApiError(response, t))
@@ -620,7 +638,7 @@ export default function DashboardClient({
      so on a Play install the purchase kind must never exist and the neutral
      out-of-credits kind renders instead — with copy that steers nowhere. */
   const primaryProps = ({ allowPurchase }: { allowPurchase: boolean }): PrimaryActionProps => {
-    const outOfCredits = credits <= 0
+    const outOfCredits = shownCredits !== null && shownCredits <= 0
     const purchaseHere = allowPurchase && outOfCredits && !isNative
     const busy = checkoutPending !== null
     if (loading) {
@@ -812,7 +830,7 @@ export default function DashboardClient({
             `!isNative` per the Android architecture: the app ships payment-free, so on
             every Play install this block does not exist and the screen simply ends at
             the results. */}
-        {results && !isNative && (
+        {results && !isNative && shownCredits !== null && (
           <div className="border-y border-line bg-tile px-4 py-6 space-y-4">
             <span className="block text-sm font-bold text-fg-link">{t('dash.addCredits')}</span>
             <div className="grid grid-cols-2 gap-4">
@@ -860,9 +878,9 @@ export default function DashboardClient({
           onFileChange={handleFileChange}
           onOpenCamera={openCamera}
           onClear={clearPhoto}
-          credits={credits}
+          credits={shownCredits}
           isNative={isNative}
-          showAddCredits={nativeResolved && !isNative}
+          showAddCredits={nativeResolved && !isNative && shownCredits !== null}
           addCreditsBusy={checkoutPending !== null}
           onAddCredits={() => void handlePaid('pack')}
           action={results ? <PrimaryAction {...primaryProps({ allowPurchase: false })} /> : null}

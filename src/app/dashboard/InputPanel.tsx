@@ -43,6 +43,9 @@ import { EYEBROW, ROW, SURFACE, TILE } from './surface'
  *     parent's existing checkout handler (onAddCredits);
  *   - before that: an empty box of the same size, so nothing flashes in the
  *     app and nothing shifts on the web when the button arrives.
+ * When the balance could not be read (credits === null) the card says so in
+ * place of the number and the line under it, and the parent passes
+ * showAddCredits=false: no purchase is offered on a balance nobody confirmed.
  * The home renders only while there is no photo, and every other purchase
  * entry needs one (the fixed bar: a photo and no results; the band: results),
  * so the dashboard still never shows two purchase actions at once.
@@ -119,8 +122,8 @@ export interface InputPanelProps {
   onClear: () => void
   /** The primary action, once results exist. Before that the parent's fixed bar carries it. */
   action?: ReactNode
-  /** The live balance, for the credits card. */
-  credits: number
+  /** The live balance, for the credits card; null when it could not be read. */
+  credits: number | null
   isNative: boolean
   /** True only on web once native detection has resolved; see THE CREDITS CARD. */
   showAddCredits: boolean
@@ -162,7 +165,11 @@ export default function InputPanel({
           <div className="rounded-card bg-brand bg-fill-credits p-[22px] text-fg-on-brand shadow-credits lg:p-7">
             <p className="text-base font-medium">{t('dash.credits')}</p>
             <div className="mt-1 flex min-h-[64px] items-center justify-between gap-4">
-              <span className="font-head text-[64px] font-bold leading-none">{credits}</span>
+              {credits === null ? (
+                <span className="text-xl font-bold leading-snug">{t('dash.credits.unknown')}</span>
+              ) : (
+                <span className="font-head text-[64px] font-bold leading-none">{credits}</span>
+              )}
               {isNative ? (
                 <span aria-hidden className={`${ICON_TILE} h-14 w-14`}>
                   <Zap className="h-6 w-6" />
@@ -182,7 +189,7 @@ export default function InputPanel({
                 <span aria-hidden className="h-12 w-px" />
               )}
             </div>
-            <p className="mt-3 text-[15px]">{t('dash.credits.cost')}</p>
+            <p className="mt-3 text-[15px]">{credits === null ? t('dash.credits.unknownSub') : t('dash.credits.cost')}</p>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
