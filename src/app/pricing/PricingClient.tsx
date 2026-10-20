@@ -45,8 +45,9 @@ export default function PricingClient({
   initialUserId: string | null
   // The server-rendered balance (same read the navbar counter is seeded from).
   // The post-purchase poll watches THIS prop move; without it, a buyer who paid
-  // here saw the counter frozen until a full reload.
-  initialCredits: number
+  // here saw the counter frozen until a full reload. null = the server could not
+  // read it; the hook then never confirms a grant by comparison.
+  initialCredits: number | null
 }) {
   const { t } = useLang()
   // Backstop: the server already redirects /pricing → / on native, but if that

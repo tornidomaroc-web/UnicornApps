@@ -42,13 +42,14 @@ import { refreshCredits, subscribeCredits } from '@/lib/credits-bus'
  * appeared and the counter never moved, while the grant had already landed.
  * Nothing here re-renders the server tree, so nothing here can be remounted by
  * its own doing. `initialCredits` (the server-rendered balance the page was
- * given) is only the baseline: the number the buyer was looking at.
+ * given) is only the baseline: the number the buyer was looking at. null means
+ * the server could not read it, and then no read can confirm a grant (Phase 1).
  *
  * Every value the listeners need is reached through a ref, so the effects are
  * installed once per mount. Event-name → status lives in lib/checkout.ts so
  * the two surfaces cannot drift.
  */
-export function useCreditGrantPoll(initialCredits: number) {
+export function useCreditGrantPoll(initialCredits: number | null) {
   const [checkoutStatus, setCheckoutStatus] = useState<CheckoutStatus | null>(null)
   // The latest balance any surface has seen: server prop, or a published read.
   const [credits, setCredits] = useState(initialCredits)
@@ -104,12 +105,19 @@ export function useCreditGrantPoll(initialCredits: number) {
       if (next !== 'success') return
 
       // Phase 1. Baseline = the number the user is looking at right now.
-      baselineRef.current = creditsRef.current
-      void pollForCreditGrant(creditsRef.current, {
+      // An unknown (null) baseline has nothing a read can be compared with: the
+      // first real number may be the old balance or the granted one. The poll
+      // still reads and publishes on its schedule, so the counter settles on the
+      // real balance, but readCredits holds still, so it can only end exhausted
+      // (success_pending), never confirmed. A null baseline also keeps
+      // statusAfterLateCredits from confirming later.
+      const baseline = creditsRef.current
+      baselineRef.current = baseline
+      void pollForCreditGrant(baseline ?? 0, {
         refresh: () => {
           void readAndPublish()
         },
-        readCredits: () => creditsRef.current,
+        readCredits: () => (baseline === null ? 0 : (creditsRef.current ?? baseline)),
         sleep: (ms) =>
           new Promise<void>((resolve) => {
             const id = setTimeout(resolve, ms)
