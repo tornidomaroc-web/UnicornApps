@@ -14,6 +14,7 @@ const strip = (s: string) =>
 
 const FILES = {
   home: 'src/app/page.tsx',
+  hero: 'src/components/marketing/LandingHero.tsx',
   features: 'src/app/features/page.tsx',
   about: 'src/app/about/page.tsx',
   shared: 'src/components/marketing/Marketing.tsx',
@@ -25,7 +26,7 @@ const code = Object.fromEntries(Object.entries(FILES).map(([k, p]) => [k, strip(
   keyof typeof FILES,
   string
 >
-const PAGES = ['home', 'features', 'about', 'shared', 'footer'] as const
+const PAGES = ['home', 'hero', 'features', 'about', 'shared', 'footer'] as const
 
 describe('light enough for a phone WebView, and the first paint is the final paint', () => {
   it.each(PAGES)('%s imports no motion library and paints no blur', (k) => {
@@ -35,7 +36,20 @@ describe('light enough for a phone WebView, and the first paint is the final pai
   })
 
   it('the landing hero ships nothing hidden to fade in later', () => {
-    expect(code.home).not.toMatch(/initial=|animate=|whileInView|opacity-0/)
+    for (const k of ['home', 'hero'] as const) expect(code[k]).not.toMatch(/initial=|animate=|whileInView|opacity-0/)
+  })
+
+  it('the hero photo is self-hosted, preloaded and sized, with no placeholder', () => {
+    expect(code.hero).toMatch(/import honeyJar from '@\/assets\/landing\/honey-jar\.jpg'/)
+    expect(code.hero).toMatch(/<Image\s+src=\{honeyJar\}[\s\S]*?priority[\s\S]*?sizes="/)
+    expect(code.hero).not.toMatch(/placeholder=|images\.unsplash|unsplash\.com\/photos\/[^\s]*\.jpg/)
+  })
+
+  it('the example is labelled as one, and its Copy pill is a picture, not a control', () => {
+    expect(code.hero).toMatch(/<figcaption[^>]*>\{t\('home\.hero\.example'\)\}<\/figcaption>/)
+    const pill = code.hero.slice(code.hero.lastIndexOf('<span', code.hero.indexOf("t('dash.seo.copy')")))
+    expect(pill).toMatch(/^<span\s+aria-hidden/)
+    expect(code.hero).not.toMatch(/<button|onClick|href=\{?["']#copy/)
   })
 
   it('the navbar no longer blurs what scrolls under it', () => {
@@ -63,6 +77,10 @@ describe('the pages are built on the dashboard surface vocabulary', () => {
     expect(code.shared).toMatch(/import \{ EYEBROW, SURFACE, TILE \} from '@\/app\/dashboard\/surface'/)
     expect(code.shared).toMatch(/\$\{SURFACE\}/)
     expect(code.shared).toMatch(/\$\{TILE\}/)
+  })
+
+  it('the landing hero builds on the shared module too', () => {
+    expect(code.hero).toMatch(/from '\.\/Marketing'/)
   })
 
   it.each(['home', 'features', 'about'] as const)('%s renders through the shared module and ends on the footer', (k) => {
@@ -101,7 +119,7 @@ describe('pricing stays hidden in the native app', () => {
   })
 
   it('no page states a price of its own', () => {
-    for (const k of ['home', 'features', 'about', 'footer'] as const) expect(code[k]).not.toMatch(/\$\d/)
+    for (const k of ['home', 'hero', 'features', 'about', 'footer'] as const) expect(code[k]).not.toMatch(/\$\d/)
   })
 })
 
@@ -202,7 +220,7 @@ describe('the dictionary', () => {
   })
 
   it('every key the pages ask for exists', () => {
-    const src = [code.home, code.features, code.about, code.footer, code.navbar, code.shared].join('\n')
+    const src = [code.home, code.hero, code.features, code.about, code.footer, code.navbar, code.shared].join('\n')
     const asked = new Set<string>()
     for (const m of Array.from(src.matchAll(/t\('([^']+)'\)/g))) asked.add(m[1])
     for (const m of Array.from(src.matchAll(/t\(`([^`$]+)\$\{/g))) {
@@ -218,7 +236,8 @@ describe('the dictionary', () => {
   it('makes no claim the product cannot back: no logos, ratings, counts, quotes or superlatives', () => {
     for (const k of marketingKeys) {
       const v = en.get(k)!
-      expect(v).not.toMatch(/testimonial|rated|stars?\b|trusted by|veterans?|enterprise|guarantee|#1|\bbest\b|fastest|100\+|4K|\d[\d,]*\+ (users|sellers|merchants)/i)
+      // `\brated` so "Generated" is not read as a rating.
+      expect(v).not.toMatch(/testimonial|\brated|stars?\b|trusted by|veterans?|enterprise|guarantee|#1|\bbest\b|fastest|100\+|4K|\d[\d,]*\+ (users|sellers|merchants)/i)
       expect(v).not.toMatch(/\bads?\b|ad-free|advert/i)
     }
     expect(code.home).not.toMatch(/Amazon", "Shopify"|Twitter|LinkedIn|Instagram/)
