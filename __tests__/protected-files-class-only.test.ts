@@ -23,14 +23,15 @@ const PINNED: Record<string, string> = {
   'src/app/dashboard/page.tsx': '6fc7032261c8ebfc', // declared layer below: unknown balance
   'src/app/delete-account/DeleteAccountClient.tsx': '1d9f7f520980a17e',
   'src/app/layout.tsx': '273b1b02703bb4da', // declared layer below: unknown balance
-  'src/app/pricing/PricingClient.tsx': 'fea86915fb5c9e68',
-  'src/app/pricing/page.tsx': '385b1e96f8df586c',
+  'src/app/pricing/PricingClient.tsx': '907be88880c895c6', // declared layer below: unknown purchase baseline
+  'src/app/pricing/page.tsx': 'c2e457a688b1f476', // declared layer below: unknown purchase baseline
   'src/app/welcome/WelcomeClient.tsx': '1016ef4c7bb98846',
   'src/app/welcome/page.tsx': '419519675f41d01b',
   'src/components/Navbar.tsx': 'a905ebdb818e853c', // declared layer below: unknown balance
   'src/components/auth/AuthShell.tsx': '8060c1017cffffe5',
   'src/components/auth/SocialButtons.tsx': '2c36d8e8cb492dc7',
   'src/components/auth/TurnstileWidget.tsx': '2b0d00d6aba6b446',
+  'src/hooks/useCreditGrantPoll.ts': 'f427ceb204a719e0', // declared layer below: unknown purchase baseline
 }
 
 describe('auth, session and credit files change only inside class strings', () => {
@@ -75,7 +76,82 @@ const PR4_DASHBOARD: Layer = {
 
 // The unknown balance: a failed read is null, never an invented 0.
 const UNKNOWN = 'unknown credit balance'
+// The unknown purchase baseline: /pricing carries null too, and the purchase
+// poll never confirms a grant by comparing against it.
+const UNKNOWN_BASELINE = 'unknown purchase baseline'
 const LAYERS: Record<string, Layer[]> = {
+  'src/app/pricing/page.tsx': [
+    {
+      pr: UNKNOWN_BASELINE,
+      pinBefore: '385b1e96f8df586c',
+      edits: [
+        {
+          before: `  // poll then reads /api/credits, never a server re-render. Failure degrades to
+  // 0, which is only ever a baseline — a grant still moves the value.
+  let initialCredits = 0`,
+          after: `  // poll then reads /api/credits, never a server re-render. A failed read is
+  // null, never 0: a 0 baseline made the first real read look like a grant.
+  let initialCredits: number | null = 0`,
+        },
+        { before: '        const { data: profile } = await supabase', after: '        const { data: profile, error } = await supabase' },
+        { before: '        initialCredits = profile?.credits ?? 0', after: '        initialCredits = error ? null : (profile?.credits ?? 0)' },
+      ],
+    },
+  ],
+  'src/app/pricing/PricingClient.tsx': [
+    {
+      pr: UNKNOWN_BASELINE,
+      pinBefore: 'fea86915fb5c9e68',
+      edits: [
+        {
+          before: `  // here saw the counter frozen until a full reload.
+  initialCredits: number
+`,
+          after: `  // here saw the counter frozen until a full reload. null = the server could not
+  // read it; the hook then never confirms a grant by comparison.
+  initialCredits: number | null
+`,
+        },
+      ],
+    },
+  ],
+  'src/hooks/useCreditGrantPoll.ts': [
+    {
+      pr: UNKNOWN_BASELINE,
+      pinBefore: '7ba8e9476d295f70',
+      edits: [
+        {
+          before: ' * given) is only the baseline: the number the buyer was looking at.\n',
+          after: ` * given) is only the baseline: the number the buyer was looking at. null means
+ * the server could not read it, and then no read can confirm a grant (Phase 1).
+`,
+        },
+        {
+          before: 'export function useCreditGrantPoll(initialCredits: number) {',
+          after: 'export function useCreditGrantPoll(initialCredits: number | null) {',
+        },
+        {
+          before: `      baselineRef.current = creditsRef.current
+      void pollForCreditGrant(creditsRef.current, {
+`,
+          after: `      // An unknown (null) baseline has nothing a read can be compared with: the
+      // first real number may be the old balance or the granted one. The poll
+      // still reads and publishes on its schedule, so the counter settles on the
+      // real balance, but readCredits holds still, so it can only end exhausted
+      // (success_pending), never confirmed. A null baseline also keeps
+      // statusAfterLateCredits from confirming later.
+      const baseline = creditsRef.current
+      baselineRef.current = baseline
+      void pollForCreditGrant(baseline ?? 0, {
+`,
+        },
+        {
+          before: '        readCredits: () => creditsRef.current,',
+          after: '        readCredits: () => (baseline === null ? 0 : (creditsRef.current ?? baseline)),',
+        },
+      ],
+    },
+  ],
   'src/app/dashboard/DashboardClient.tsx': [
     {
       pr: UNKNOWN,

@@ -35,9 +35,9 @@ export default async function PricingPage() {
   // The server-rendered balance, read the same way the root layout reads it for
   // the navbar counter (RLS-scoped "select own"). It is the post-purchase poll's
   // BASELINE: the number the buyer is looking at when checkout completes. The
-  // poll then reads /api/credits, never a server re-render. Failure degrades to
-  // 0, which is only ever a baseline — a grant still moves the value.
-  let initialCredits = 0
+  // poll then reads /api/credits, never a server re-render. A failed read is
+  // null, never 0: a 0 baseline made the first real read look like a grant.
+  let initialCredits: number | null = 0
   try {
     const supabase = createClient()
     if (supabase) {
@@ -46,12 +46,12 @@ export default async function PricingPage() {
       } = await supabase.auth.getUser()
       initialUserId = user?.id ?? null
       if (user) {
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('credits')
           .eq('id', user.id)
           .single()
-        initialCredits = profile?.credits ?? 0
+        initialCredits = error ? null : (profile?.credits ?? 0)
       }
     }
   } catch {
