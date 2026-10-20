@@ -199,7 +199,7 @@ describe('the bar is in the same visual language, and light', () => {
   })
 
   it('the credit NUMBER renders at every width; only the word beside it gives way', () => {
-    const at = code.navbar.indexOf('<span>{credits}</span>')
+    const at = code.navbar.indexOf("<span>{credits === null ? '–' : credits}</span>")
     expect(at).toBeGreaterThan(0)
     const chip = code.navbar.slice(code.navbar.lastIndexOf('<div', at), at)
     expect(chip).toMatch(/^<div className="flex h-11 /)

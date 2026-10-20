@@ -39,7 +39,7 @@ export default function Navbar({
   initialCredits = 0,
 }: {
   initialUser?: AuthUser | null;
-  initialCredits?: number;
+  initialCredits?: number | null;
 }) {
   const { lang, toggleLang, t } = useLang();
   // Seed from the SERVER session (passed down by the root layout). The browser
@@ -48,7 +48,7 @@ export default function Navbar({
   // correct server seed (that was the original bug). `undefined` remains a valid
   // state (neutral placeholder, never LOGIN) purely as a defensive fallback.
   const [user, setUser] = useState<AuthUser | null | undefined>(initialUser);
-  const [credits, setCredits] = useState(initialCredits);
+  const [credits, setCredits] = useState<number | null>(initialCredits);
 
   // Every auth transition (login/signup/logout/updatePassword) calls
   // revalidatePath('/', 'layout'), which re-renders this layout and passes a
@@ -170,19 +170,19 @@ export default function Navbar({
             <div className="h-11 w-28 rounded-full bg-chip" aria-hidden="true" />
           ) : view === 'authed' ? (
             <>
-              {/* 🔴 THIS IS THE ONLY PLACE A CREDIT BALANCE RENDERS ANYWHERE IN THE APP.
-                  The dashboard used to carry a header bar of its own; that bar has been
-                  deleted outright, so there is no second surface to fall back on.
-                  Putting ANY breakpoint gate on the NUMBER leaves a phone user with no
-                  credit count at all, on every screen, and nothing else will show it to
-                  them. Only the WORD beside it gives way, below 640px and only while
-                  the dashboard pill is taking the room; it stays in the tree for
-                  assistive technology. */}
+              {/* 🔴 THE ONLY CREDIT BALANCE ON EVERY SCREEN. The dashboard home's credits
+                  card shows it too, but only there, so this chip is still what a user
+                  sees everywhere else. Putting ANY breakpoint gate on the NUMBER leaves
+                  a phone user with no credit count on those screens. Only the WORD
+                  beside it gives way, below 640px and only while the dashboard pill is
+                  taking the room; it stays in the tree for assistive technology.
+                  null = the server could not read the balance: a dash and
+                  "Unavailable", never an invented 0. */}
               <div className="flex h-11 items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-chip px-3.5 text-[15px] font-bold text-fg">
                 <Zap aria-hidden className="h-4 w-4 shrink-0 text-fg-link" />
-                <span>{credits}</span>
+                <span>{credits === null ? '–' : credits}</span>
                 <span className={onDashboard ? 'font-medium text-fg-muted' : 'sr-only sm:not-sr-only sm:font-medium sm:text-fg-muted'}>
-                  {creditsWord(credits, lang)}
+                  {credits === null ? t('nav.credits.unknown') : creditsWord(credits, lang)}
                 </span>
               </div>
               {/* A link to the page you are already on is the cheapest thing in this

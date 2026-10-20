@@ -42,7 +42,7 @@ export const viewport = {
 // behavior (page still renders, navbar shows signed-out) rather than throwing
 // out of the root layout and white-screening every route for live Android
 // WebView users.
-async function getNavSeed(): Promise<{ user: User | null; credits: number }> {
+async function getNavSeed(): Promise<{ user: User | null; credits: number | null }> {
   try {
     const supabase = createClient();
     if (!supabase) return { user: null, credits: 0 };
@@ -57,14 +57,16 @@ async function getNavSeed(): Promise<{ user: User | null; credits: number }> {
     // is the anon server client, NOT the service role — so PostgREST validates
     // the session's JWT signature: a real session returns the true balance, a
     // forged cookie (which getSession does not cryptographically verify) returns
-    // no row -> 0. That is what keeps the getSession seed safe from spoofing.
-    const { data } = await supabase
+    // no row -> an error -> null. That is what keeps the getSession seed safe
+    // from spoofing. null means "could not read": the navbar shows it as
+    // unavailable, never as an invented 0.
+    const { data, error } = await supabase
       .from("profiles")
       .select("credits")
       .eq("id", user.id)
       .single();
 
-    return { user, credits: data?.credits ?? 0 };
+    return { user, credits: error ? null : (data?.credits ?? 0) };
   } catch {
     return { user: null, credits: 0 };
   }
