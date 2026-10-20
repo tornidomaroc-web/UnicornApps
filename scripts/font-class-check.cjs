@@ -115,6 +115,11 @@ async function main() {
     if (i < attempts) await new Promise((r) => setTimeout(r, delayMs))
   }
   console.log(`::error::font classes on ${base} are not defined in its CSS after ${attempts} attempts: ${last.flatMap((r) => r.problems).join('; ')}. Redeploy production with the build cache off.`)
+  // The last attempt, for the alert job (scripts/font-alert.cjs) to post.
+  if (process.env.GITHUB_OUTPUT) {
+    const report = { base, attempts, results: last.map(({ lang, ok, buildId, missing, problems }) => ({ lang, ok, buildId, missing, problems })) }
+    require('fs').appendFileSync(process.env.GITHUB_OUTPUT, `report=${JSON.stringify(report)}\n`)
+  }
   return 1
 }
 
