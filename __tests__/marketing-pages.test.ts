@@ -39,17 +39,31 @@ describe('light enough for a phone WebView, and the first paint is the final pai
     for (const k of ['home', 'hero'] as const) expect(code[k]).not.toMatch(/initial=|animate=|whileInView|opacity-0/)
   })
 
-  it('the hero photo is self-hosted, preloaded and sized, with no placeholder', () => {
-    expect(code.hero).toMatch(/import honeyJar from '@\/assets\/landing\/honey-jar\.jpg'/)
-    expect(code.hero).toMatch(/<Image\s+src=\{honeyJar\}[\s\S]*?priority[\s\S]*?sizes="/)
-    expect(code.hero).not.toMatch(/placeholder=|images\.unsplash|unsplash\.com\/photos\/[^\s]*\.jpg/)
+  it('the hero photo is committed files, never the image optimiser, fetched first and sized', () => {
+    // Vercel's optimiser caps free transformations; past the cap the photo would stop loading.
+    expect(code.hero).not.toMatch(/next\/image|_next\/image|images\.unsplash/)
+    const widths = [384, 640, 750, 1080]
+    for (const w of widths) expect(existsSync(join(process.cwd(), `public/landing/honey-jar-${w}.webp`))).toBe(true)
+    expect(existsSync(join(process.cwd(), 'public/landing/honey-jar-640.jpg'))).toBe(true)
+    expect(code.hero).toMatch(/\[384, 640, 750, 1080\]\.map\(\(w\) => `\/landing\/honey-jar-\$\{w\}\.webp \$\{w\}w`\)/)
+    expect(code.hero).toMatch(/<source type="image\/webp" srcSet=\{PHOTO_WEBP\} sizes=\{PHOTO_SIZES\} \/>/)
+    const img = code.hero.slice(code.hero.indexOf('<img\n'), code.hero.indexOf('/>', code.hero.indexOf('<img\n')))
+    expect(img).toMatch(/src="\/landing\/honey-jar-640\.jpg"/)
+    expect(img).toMatch(/width=\{1080\}\s+height=\{1350\}/)
+    expect(img).toMatch(/fetchPriority="high"/)
+    expect(img).not.toMatch(/loading="lazy"/)
   })
 
-  it('the example is labelled as one, and its Copy pill is a picture, not a control', () => {
+  it('the photo files are cached as immutable', () => {
+    expect(read('next.config.mjs')).toMatch(/source: '\/landing\/:file\*', headers: \[\{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' \}\]/)
+  })
+
+  it('the example is labelled as one, and its Copy label is a quiet label, not a control', () => {
     expect(code.hero).toMatch(/<figcaption[^>]*>\{t\('home\.hero\.example'\)\}<\/figcaption>/)
-    const pill = code.hero.slice(code.hero.lastIndexOf('<span', code.hero.indexOf("t('dash.seo.copy')")))
-    expect(pill).toMatch(/^<span\s+aria-hidden/)
-    expect(code.hero).not.toMatch(/<button|onClick|href=\{?["']#copy/)
+    const label = code.hero.slice(code.hero.lastIndexOf('<span', code.hero.indexOf("t('dash.seo.copy')")), code.hero.indexOf("t('dash.seo.copy')"))
+    expect(label).toMatch(/^<span aria-hidden className=\{`\$\{CHIP\} /)
+    expect(label).not.toMatch(/bg-brand|bg-fill|shadow-|press|cursor-pointer|tabIndex|role=/)
+    expect(code.hero).not.toMatch(/<button|onClick|tabIndex|href=\{?["']#copy/)
   })
 
   it('the navbar no longer blurs what scrolls under it', () => {

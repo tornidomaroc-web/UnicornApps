@@ -149,11 +149,11 @@ const translations = {
     'home.end.sub': 'Three free credits. No card.',
     // The landing hero object. The example is written in the generator's own
     // shape (a title, Amazon bullets, hashtags) and says only what the photo
-    // shows; the page labels it an example.
+    // shows; it is not a real generation, and the page labels it illustrative.
     'home.hero.photo': 'Your photo',
     'home.hero.photo.alt': 'A glass jar of honey with a wooden dipper',
     'home.hero.generated': 'Generated page',
-    'home.hero.example': 'Example output',
+    'home.hero.example': 'Illustrative example',
     'home.ex.title': 'Golden Honey in a Glass Jar with a Wooden Honey Dipper',
     'home.ex.b1': 'GOLDEN AND SMOOTH: pours slowly from the wooden dipper',
     'home.ex.b2': 'GLASS JAR WITH TWINE: ready to give as a gift',
@@ -636,7 +636,7 @@ const translations = {
     'home.hero.photo': 'صورتك',
     'home.hero.photo.alt': 'برطمان زجاجي من العسل مع ملعقة عسل خشبية',
     'home.hero.generated': 'الصفحة المُولَّدة',
-    'home.hero.example': 'مثال على الناتج',
+    'home.hero.example': 'مثال توضيحي',
     'home.ex.title': 'عسل ذهبي في برطمان زجاجي مع ملعقة عسل خشبية',
     'home.ex.b1': 'ذهبي وسلس القوام: ينساب ببطء من الملعقة الخشبية',
     'home.ex.b2': 'برطمان زجاجي بخيط جوت: جاهز للإهداء',
