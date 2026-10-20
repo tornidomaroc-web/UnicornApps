@@ -34,6 +34,20 @@ export const CARD = `${SURFACE} p-5 sm:p-8`
 export const H2 = 'text-[28px] font-bold leading-[1.15] text-fg sm:text-[32px]'
 export const SUB = 'mt-2 text-base leading-relaxed text-fg-muted'
 
+/**
+ * THE LANDING ONLY: a larger section title (27px, 34px from lg) with taller
+ * Arabic lines, and the eyebrow as a tinted pill with a dot. The other pages
+ * keep H2 and EYEBROW until their own pass.
+ */
+export const LANDING_H2 = 'text-[27px] font-bold leading-[1.2] text-fg rtl:leading-[1.4] lg:text-[34px]'
+export const PILL_EYEBROW =
+  'inline-flex items-center gap-2 rounded-pill border border-line bg-chip px-4 py-2 text-sm font-medium leading-tight text-fg-link'
+
+/** The dot inside PILL_EYEBROW. */
+export function Dot() {
+  return <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-fg-link" />
+}
+
 const PILL = 'inline-flex h-14 w-full items-center justify-center whitespace-nowrap rounded-full px-8 text-base font-bold sm:w-auto'
 
 export function PrimaryLink({ href, children }: { href: string; children: ReactNode }) {
@@ -82,21 +96,29 @@ export function Step({ n, name, desc }: { n: number; name: string; desc: string 
   )
 }
 
-export function SectionHead({ eyebrow, title, sub }: { eyebrow?: string; title: string; sub?: string }) {
+export function SectionHead({ eyebrow, title, sub, landing }: { eyebrow?: string; title: string; sub?: string; landing?: boolean }) {
   return (
     <div>
-      {eyebrow && <p className={`${EYEBROW} mb-3`}>{eyebrow}</p>}
-      <h2 className={H2}>{title}</h2>
+      {eyebrow &&
+        (landing ? (
+          <p className={`${PILL_EYEBROW} mb-4`}>
+            <Dot />
+            {eyebrow}
+          </p>
+        ) : (
+          <p className={`${EYEBROW} mb-3`}>{eyebrow}</p>
+        ))}
+      <h2 className={landing ? LANDING_H2 : H2}>{title}</h2>
       {sub && <p className={SUB}>{sub}</p>}
     </div>
   )
 }
 
 /** The closing card every marketing page ends on. */
-export function EndCard({ title, sub, cta }: { title: string; sub: string; cta: string }) {
+export function EndCard({ title, sub, cta, landing }: { title: string; sub: string; cta: string; landing?: boolean }) {
   return (
     <section className={`${CARD} mt-6 text-center`}>
-      <h2 className={H2}>{title}</h2>
+      <h2 className={landing ? LANDING_H2 : H2}>{title}</h2>
       <p className={SUB}>{sub}</p>
       <div className="mt-6">
         <PrimaryLink href="/login">{cta}</PrimaryLink>

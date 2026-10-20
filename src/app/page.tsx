@@ -13,20 +13,18 @@ import {
   Store,
   Type,
 } from 'lucide-react'
-import { EYEBROW } from '@/app/dashboard/surface'
 import Footer from '@/components/layout/Footer'
 import {
   CARD,
   EndCard,
-  GhostLink,
   PAGE,
   PricingTeaser,
-  PrimaryLink,
   SectionHead,
   Step,
   Tile,
   WRAP,
 } from '@/components/marketing/Marketing'
+import { LandingHero } from '@/components/marketing/LandingHero'
 import { useIsNative } from '@/hooks/useIsNative'
 import { useLang } from '@/lib/i18n/LanguageContext'
 
@@ -35,7 +33,7 @@ import { useLang } from '@/lib/i18n/LanguageContext'
  * part of a product page out, each part copied in one tap, in Arabic or
  * English, for a seller working alone.
  *
- * THE HERO IS PLAIN HTML. It used to be a framer-motion tree whose hidden
+ * THE HERO (LandingHero) IS PLAIN HTML. It used to be a framer-motion tree whose hidden
  * variant was opacity:0; the entrance animation was traded away so the first
  * paint would not be a black rectangle on a slow phone. There is no motion
  * library on this page now, so the first paint is the final paint by
@@ -73,20 +71,10 @@ export default function Home() {
   return (
     <main className={PAGE}>
       <div className={WRAP}>
-        <section className="px-1 pb-10 pt-6 text-center sm:pb-16 sm:pt-12">
-          <p className={EYEBROW}>{t('home.eyebrow')}</p>
-          <h1 className="mx-auto mt-4 max-w-3xl text-[32px] font-bold leading-[1.1] text-fg sm:text-[52px]">
-            {t('home.title')}
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-fg-muted sm:text-lg">{t('home.sub')}</p>
-          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <PrimaryLink href="/login">{t('home.cta')}</PrimaryLink>
-            <GhostLink href="#output">{t('home.cta2')}</GhostLink>
-          </div>
-        </section>
+        <LandingHero t={t} />
 
         <section id="output" className={`${CARD} scroll-mt-24`}>
-          <SectionHead eyebrow={t('home.out.eyebrow')} title={t('home.out.title')} sub={t('home.out.sub')} />
+          <SectionHead landing eyebrow={t('home.out.eyebrow')} title={t('home.out.title')} sub={t('home.out.sub')} />
           <ul className="mt-6 grid gap-3 sm:grid-cols-2">
             {outputs.map(({ icon, key }) => (
               <Tile key={key} icon={icon} name={t(`home.out.${key}.name`)} desc={t(`home.out.${key}.desc`)} />
@@ -95,7 +83,7 @@ export default function Home() {
         </section>
 
         <section className={`${CARD} mt-6`}>
-          <SectionHead eyebrow={t('home.how.eyebrow')} title={t('home.how.title')} />
+          <SectionHead landing eyebrow={t('home.how.eyebrow')} title={t('home.how.title')} />
           <ol className="mt-6 grid gap-3 sm:grid-cols-3">
             {[1, 2, 3].map((n) => (
               <Step key={n} n={n} name={t(`home.how.${n}.name`)} desc={t(`home.how.${n}.desc`)} />
@@ -104,7 +92,7 @@ export default function Home() {
         </section>
 
         <section className={`${CARD} mt-6`}>
-          <SectionHead eyebrow={t('home.solo.eyebrow')} title={t('home.solo.title')} />
+          <SectionHead landing eyebrow={t('home.solo.eyebrow')} title={t('home.solo.title')} />
           <ul className="mt-6 grid gap-3 sm:grid-cols-3">
             {solo.map(({ icon, key }) => (
               <Tile key={key} icon={icon} name={t(`home.solo.${key}.name`)} desc={t(`home.solo.${key}.desc`)} />
@@ -114,7 +102,7 @@ export default function Home() {
 
         {showPricing && <PricingTeaser t={t} />}
 
-        <EndCard title={t('home.end.title')} sub={t('home.end.sub')} cta={t('home.cta')} />
+        <EndCard landing title={t('home.end.title')} sub={t('home.end.sub')} cta={t('home.cta')} />
       </div>
       <Footer />
     </main>
