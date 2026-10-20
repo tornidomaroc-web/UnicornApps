@@ -33,6 +33,7 @@ export const LITE_TOKENS: Readonly<Record<string, string>> = {
   '--ua-fill-icon': 'none',
   '--ua-fill-credits': 'none',
   '--ua-fill-on-credits': 'none',
+  '--ua-fill-danger': 'none',
   '--ua-shadow-container': 'inset 0 1px 0 rgb(255 255 255 / 0.06)',
   '--ua-shadow-tap': NO_BLUR_RIM,
   '--ua-shadow-icon': NO_BLUR_RIM,
@@ -42,6 +43,7 @@ export const LITE_TOKENS: Readonly<Record<string, string>> = {
   '--ua-shadow-credits': 'inset 0 1px 0 rgb(255 255 255 / 0.3)',
   '--ua-shadow-mark': 'inset 0 1px 0 rgb(255 255 255 / 0.3)',
   '--ua-shadow-on-credits': 'inset 0 -1px 0 rgb(99 91 255 / 0.25)',
+  '--ua-shadow-danger': 'inset 0 1px 0 rgb(255 255 255 / 0.2)',
 }
 
 export const LITE_CSS = `:root{${Object.entries(LITE_TOKENS)

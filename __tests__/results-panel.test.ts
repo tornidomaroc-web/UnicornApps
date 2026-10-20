@@ -114,3 +114,25 @@ describe('DashboardClient keeps its state and hands the panel what it needs', ()
     expect(c).toMatch(/<ShopifyMockup \/>/)
   })
 })
+
+describe('screen readers can tell the copy buttons and the history rows apart', () => {
+  it('every copy id names an element that exists, through aria-describedby', () => {
+    expect(panel).toMatch(/aria-describedby=\{COPY_LABEL\[id\]\}/)
+    const used = Array.from(panel.matchAll(/copy\('(\w+)'/g)).map((m) => m[1])
+    expect(used.length).toBeGreaterThan(8)
+    const map = Object.fromEntries(Array.from(panel.matchAll(/^\s+(\w+): '(result-[\w-]+-name)',$/gm)).map((m) => [m[1], m[2]]))
+    for (const id of used) {
+      const target = map[id]
+      expect({ id, target }).toEqual({ id, target: expect.stringMatching(/^result-/) })
+      // a literal id="…" or the Block heading's id={`result-${id}-name`}
+      const block = target.match(/^result-(\w+)-name$/)![1]
+      expect(panel.includes(`id="${target}"`) || /id=\{`result-\$\{id\}-name`\}/.test(panel) && /(seo|description|shopify|amazon|social|data)/.test(block)).toBe(true)
+    }
+  })
+
+  it('a history row shows a chevron and keeps "Open" as screen-reader text', () => {
+    const history = readFileSync(join(process.cwd(), 'src/app/dashboard/HistoryPanel.tsx'), 'utf8')
+    expect(history).toMatch(/<span className="sr-only">\{t\('dash\.open'\)\}<\/span>/)
+    expect(history).toMatch(/<ChevronRight aria-hidden className="[^"]*rtl:rotate-180"/)
+  })
+})

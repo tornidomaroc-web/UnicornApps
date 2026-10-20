@@ -106,6 +106,7 @@ const config: Config = {
         "fill-icon": "var(--ua-fill-icon)",
         "fill-credits": "var(--ua-fill-credits)",
         "fill-on-credits": "var(--ua-fill-on-credits)",
+        "fill-danger": "var(--ua-fill-danger)",
         "page-image": "var(--ua-page-image)",
       },
       fontFamily: {
@@ -129,6 +130,7 @@ const config: Config = {
         credits: "var(--ua-shadow-credits)",
         mark: "var(--ua-shadow-mark)",
         "on-credits": "var(--ua-shadow-on-credits)",
+        danger: "var(--ua-shadow-danger)",
       },
     },
   },
