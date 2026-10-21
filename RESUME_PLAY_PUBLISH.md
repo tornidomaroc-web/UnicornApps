@@ -11,8 +11,7 @@
 Both hard blockers are resolved. There is now a **signed, uploadable AAB.**
 
 - **B1 (keystore) — RESOLVED.** The "backup" keystore was the genuine original
-  signing key. Password recovered (your Candidate 1, exact; store = key password;
-  alias `unicornapps_key`). It is installed at `android/app/unicornapps-release.jks`;
+  signing key. Password recovered. It is installed at `android/app/unicornapps-release.jks`;
   the locked stray keystore was preserved as `unicornapps-release.jks.locked-orphan.bak`.
 - **B2 (package name) — RESOLVED.** Code renamed `com.unicornapps.app` →
   **`com.unicornappsai.app`** to match the Console listing.
@@ -157,16 +156,16 @@ The build ran cleanly through every step and **failed only at signing**:
   ".../android/app/unicornapps-release.jks": keystore password was incorrect
 ```
 
-I verified directly with `keytool`. The password in `android/keystore.properties`
-(`Hayatmokwabak20302017$`) is **rejected by both keystore files**:
+I verified directly with `keytool`. The password then in `android/keystore.properties`
+was **rejected by both keystore files**:
 
-| Keystore | Size | Password `Hayatmokwabak20302017$` |
+| Keystore | Size | Stored password |
 |---|---|---|
 | `android/app/unicornapps-release.jks` | 2770 bytes | ❌ incorrect |
-| `D:\RAGHAD JAD\keystoreunicornapps.jks\keystoreunicornapps.jks` | 2666 bytes | ❌ incorrect |
+| Offline backup copy | 2666 bytes | ❌ incorrect |
 
-(Your "offline backup" path is actually a *folder* named `keystoreunicornapps.jks`
-containing a file of the same name. And the two keystores are **different files** —
+(Your "offline backup" path is actually a *folder* holding a keystore file.
+And the two keystores are **different files** —
 different sizes — so one of them may not even be the right key.)
 
 Both files are valid keystores (keytool says "password incorrect", not "corrupt"),
@@ -175,9 +174,7 @@ paused, and it cannot be worked around by me.
 
 ### What I need from you — answer in this order:
 
-1. **Find the correct keystore password.** It is almost certainly a near-variant of
-   `Hayatmokwabak20302017$` — a typo, different capitalisation, or an extra/missing
-   character. Check wherever you first generated it. Test it:
+1. **Find the correct keystore password.** Check wherever you first generated it. Test it:
    `keytool -list -keystore android/app/unicornapps-release.jks` (it will prompt).
    When it works, put the correct value in `android/keystore.properties` (both
    `storePassword` and `keyPassword`) and tell me — I'll rebuild and sign.
