@@ -162,10 +162,10 @@ was **rejected by both keystore files**:
 | Keystore | Size | Stored password |
 |---|---|---|
 | `android/app/unicornapps-release.jks` | 2770 bytes | ❌ incorrect |
-| `D:\RAGHAD JAD\keystoreunicornapps.jks\keystoreunicornapps.jks` | 2666 bytes | ❌ incorrect |
+| Offline backup copy | 2666 bytes | ❌ incorrect |
 
-(Your "offline backup" path is actually a *folder* named `keystoreunicornapps.jks`
-containing a file of the same name. And the two keystores are **different files** —
+(Your "offline backup" path is actually a *folder* holding a keystore file.
+And the two keystores are **different files** —
 different sizes — so one of them may not even be the right key.)
 
 Both files are valid keystores (keytool says "password incorrect", not "corrupt"),
