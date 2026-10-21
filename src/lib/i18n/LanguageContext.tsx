@@ -263,7 +263,8 @@ const translations = {
     'dash.addToCart': 'Add to Cart',
     'dash.buyNow': 'Buy Now',
     'dash.fastShipping': 'Fast worldwide shipping',
-    'dash.matrixInit': 'Welcome! Upload a product photo and we will turn it into ready-to-publish content.',
+    // Opens the refine console, which only renders beside a result: never ask for a photo here.
+    'dash.matrixInit': 'Your content is ready. Pick an option below or describe the change you want.',
     'dash.refineSuccess': 'Done, your content has been updated.',
     'dash.cameraReady': 'Ready to Analyze',
     'dash.cameraPoint': 'Point camera at your product',
@@ -282,8 +283,9 @@ const translations = {
     'dash.exportCsv': 'Export CSV',
     'dash.noHistory': 'Your generated listings will appear here',
     'dash.noSignatures': 'Nothing here yet, generate your first listing',
-    'dash.vectorSent': 'Sent',
-    'dash.matrixRefined': 'Updated',
+    // Chat stamps name who wrote the message, not a status: the greeting stamped "Updated" said nothing was updated.
+    'dash.vectorSent': 'You',
+    'dash.matrixRefined': 'AI',
     // Deliberately states NO number. The real ceiling is not a fixed file size:
     // the image is base64-encoded (+33%) and the request limit counts headers,
     // so auth-cookie size shifts it per session. Naming "4MB" was a false claim.
@@ -332,7 +334,8 @@ const translations = {
     'dash.seo.meta': 'Meta Description',
     'dash.seo.copy': 'Copy',
     'dash.amazon.title': 'Amazon Bullet Points',
-    'dash.shopify.title': 'Shopify Integration',
+    // HTML to paste into Shopify; there is no Shopify integration. Same wording as home.out.shopify.name.
+    'dash.shopify.title': 'Shopify HTML',
     'dash.shopify.preview': 'Preview',
     'dash.shopify.code': 'HTML Code',
     'dash.social.hook': 'TikTok / Reels Hook',
@@ -758,7 +761,7 @@ const translations = {
     'dash.addToCart': 'أضف إلى السلة',
     'dash.buyNow': 'اشتري الآن',
     'dash.fastShipping': 'شحن دولي سريع',
-    'dash.matrixInit': 'مرحباً! ارفع صورة منتجك وسنحوّلها إلى محتوى جاهز للنشر.',
+    'dash.matrixInit': 'المحتوى جاهز. اختر أحد الخيارات أدناه أو صِف التعديل الذي تريده.',
     'dash.refineSuccess': 'تم، جرى تحديث المحتوى بنجاح.',
     'dash.cameraReady': 'جاهز للتحليل',
     'dash.cameraPoint': 'وجه الكاميرا نحو المنتج',
@@ -773,8 +776,8 @@ const translations = {
     'dash.exportCsv': 'تصدير CSV',
     'dash.noHistory': 'ستظهر منتجاتك المُولَّدة هنا',
     'dash.noSignatures': 'لا يوجد شيء هنا بعد، أنشئ أول محتوى لك',
-    'dash.vectorSent': 'تم الإرسال',
-    'dash.matrixRefined': 'تم التحديث',
+    'dash.vectorSent': 'أنت',
+    'dash.matrixRefined': 'المساعد',
     // Counterparts of the EN 'dash.filesizeError' / 'dash.requestFailed' notes above.
     'dash.filesizeError': 'هذه الصورة كبيرة جداً للرفع. يرجى تجربة صورة أصغر.',
     'dash.requestFailed': 'حدث خطأ ما. يرجى المحاولة مرة أخرى.',
@@ -806,7 +809,7 @@ const translations = {
     'dash.seo.meta': 'الوصف التعريفي',
     'dash.seo.copy': 'نسخ',
     'dash.amazon.title': 'النقاط التسويقية لأمازون',
-    'dash.shopify.title': 'تكامل شوبيفاي',
+    'dash.shopify.title': 'HTML لمتجر Shopify',
     'dash.shopify.preview': 'معاينة',
     'dash.shopify.code': 'كود HTML',
     'dash.social.hook': 'افتتاحية TikTok / Reels',
