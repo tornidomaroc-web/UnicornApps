@@ -13,7 +13,7 @@ const strip = (s: string) =>
   s.replace(/\{\/\*[\s\S]*?\*\/\}/g, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
 
 const FILES = {
-  home: 'src/app/page.tsx',
+  home: 'src/app/(home)/page.tsx',
   hero: 'src/components/marketing/LandingHero.tsx',
   features: 'src/app/features/page.tsx',
   about: 'src/app/about/page.tsx',

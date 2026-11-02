@@ -5,8 +5,8 @@ import { isNativeRequest } from '@/lib/native-request'
 import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
-  title: "Pricing — Simple Plans for Global Sellers",
-  description: "Simple, transparent pricing for global e-commerce sellers. Start free, upgrade when ready.",
+  title: "Pricing: Credits for AI Product Descriptions | UnicornApps",
+  description: "Every account starts with three free credits, no card needed. Then buy a one-time credit pack or a monthly plan. One generation or one change costs one credit.",
 }
 
 // Must render per-request so the native check (below) always runs — never
