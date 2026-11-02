@@ -96,7 +96,24 @@ export function Step({ n, name, desc }: { n: number; name: string; desc: string 
   )
 }
 
-export function SectionHead({ eyebrow, title, sub, landing }: { eyebrow?: string; title: string; sub?: string; landing?: boolean }) {
+/**
+ * `as="h1"` makes this the page's main heading. Only the element changes: the
+ * classes are the same, and the base heading rule in globals.css treats h1 and
+ * h2 alike, so it renders identically.
+ */
+export function SectionHead({
+  eyebrow,
+  title,
+  sub,
+  landing,
+  as: Heading = 'h2',
+}: {
+  eyebrow?: string
+  title: string
+  sub?: string
+  landing?: boolean
+  as?: 'h1' | 'h2'
+}) {
   return (
     <div>
       {eyebrow &&
@@ -108,7 +125,7 @@ export function SectionHead({ eyebrow, title, sub, landing }: { eyebrow?: string
         ) : (
           <p className={`${EYEBROW} mb-3`}>{eyebrow}</p>
         ))}
-      <h2 className={landing ? LANDING_H2 : H2}>{title}</h2>
+      <Heading className={landing ? LANDING_H2 : H2}>{title}</Heading>
       {sub && <p className={SUB}>{sub}</p>}
     </div>
   )

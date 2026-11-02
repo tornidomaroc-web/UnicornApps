@@ -23,8 +23,8 @@ const PINNED: Record<string, string> = {
   'src/app/dashboard/page.tsx': '6fc7032261c8ebfc', // declared layer below: unknown balance
   'src/app/delete-account/DeleteAccountClient.tsx': '1d9f7f520980a17e',
   'src/app/layout.tsx': '273b1b02703bb4da', // declared layer below: unknown balance
-  'src/app/pricing/PricingClient.tsx': '907be88880c895c6', // declared layer below: unknown purchase baseline
-  'src/app/pricing/page.tsx': 'c2e457a688b1f476', // declared layer below: unknown purchase baseline
+  'src/app/pricing/PricingClient.tsx': 'e9948dcff80d31e1', // declared layers below: unknown purchase baseline, search titles
+  'src/app/pricing/page.tsx': '14cbe3fce175ab33', // declared layers below: unknown purchase baseline, search titles
   'src/app/welcome/WelcomeClient.tsx': '1016ef4c7bb98846',
   'src/app/welcome/page.tsx': '419519675f41d01b',
   'src/components/Navbar.tsx': 'a905ebdb818e853c', // declared layer below: unknown balance
@@ -79,8 +79,24 @@ const UNKNOWN = 'unknown credit balance'
 // The unknown purchase baseline: /pricing carries null too, and the purchase
 // poll never confirms a grant by comparing against it.
 const UNKNOWN_BASELINE = 'unknown purchase baseline'
+// Search titles: /pricing gets an honest title and description (the old title
+// carried no brand), and its main heading becomes the page's h1. Copy and one
+// element only: no logic, no handler, no state.
+const SEARCH_TITLES = 'search titles and h1'
 const LAYERS: Record<string, Layer[]> = {
   'src/app/pricing/page.tsx': [
+    {
+      pr: SEARCH_TITLES,
+      pinBefore: 'c2e457a688b1f476',
+      edits: [
+        {
+          before: `  title: "Pricing — Simple Plans for Global Sellers",
+  description: "Simple, transparent pricing for global e-commerce sellers. Start free, upgrade when ready.",`,
+          after: `  title: "Pricing: Credits for AI Product Descriptions | UnicornApps",
+  description: "Every account starts with three free credits, no card needed. Then buy a one-time credit pack or a monthly plan. One generation or one change costs one credit.",`,
+        },
+      ],
+    },
     {
       pr: UNKNOWN_BASELINE,
       pinBefore: '385b1e96f8df586c',
@@ -99,6 +115,16 @@ const LAYERS: Record<string, Layer[]> = {
     },
   ],
   'src/app/pricing/PricingClient.tsx': [
+    {
+      pr: SEARCH_TITLES,
+      pinBefore: '907be88880c895c6',
+      edits: [
+        {
+          before: "          <SectionHead eyebrow={t('pricing.badge')} title={t('pricing.title')} sub={t('pricing.sub')} />",
+          after: "          <SectionHead as=\"h1\" eyebrow={t('pricing.badge')} title={t('pricing.title')} sub={t('pricing.sub')} />",
+        },
+      ],
+    },
     {
       pr: UNKNOWN_BASELINE,
       pinBefore: 'fea86915fb5c9e68',

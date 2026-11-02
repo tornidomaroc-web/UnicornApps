@@ -147,7 +147,7 @@ export default function PricingClient({
     <main className={PAGE}>
       <div className={WRAP}>
         <section className={CARD}>
-          <SectionHead eyebrow={t('pricing.badge')} title={t('pricing.title')} sub={t('pricing.sub')} />
+          <SectionHead as="h1" eyebrow={t('pricing.badge')} title={t('pricing.title')} sub={t('pricing.sub')} />
         </section>
 
         {/* Same container and tone table as the dashboard's checkout banner

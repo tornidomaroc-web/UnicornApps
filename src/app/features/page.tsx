@@ -51,7 +51,7 @@ export default function FeaturesPage() {
     <main className={PAGE}>
       <div className={WRAP}>
         <section className={CARD}>
-          <SectionHead eyebrow={t('feat.eyebrow')} title={t('feat.title')} sub={t('feat.sub')} />
+          <SectionHead as="h1" eyebrow={t('feat.eyebrow')} title={t('feat.title')} sub={t('feat.sub')} />
           <ul className="mt-6 grid gap-3 sm:grid-cols-2">
             {outputs.map(({ icon, key }) => (
               <Tile key={key} icon={icon} name={t(`home.out.${key}.name`)} desc={t(`home.out.${key}.desc`)} />
