@@ -47,4 +47,4 @@ PADDLE_WEBHOOK_SECRET=
 
 ## Built by
 
-[AboJad](https://github.com/tornidomaroc-web) — Full Stack AI Engineer, Marrakesh 🇲🇦
+[Abdelfettah Amellah](https://github.com/tornidomaroc-web) — Full Stack AI Engineer, Marrakesh 🇲🇦
